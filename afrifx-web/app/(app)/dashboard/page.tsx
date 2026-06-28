@@ -144,7 +144,7 @@ function DashboardContent() {
                   formatter={(v: number) => [`$${formatAmount(v)}`, 'Volume']}
                 />
                 <Bar dataKey="volume" radius={[4,4,0,0]}>
-                  {(stats?.chartData ?? []).map((entry, i) => (
+                  {(stats?.chartData ?? []).map((entry: { volume: number; label: string }, i: number) => (
                     <Cell key={i} fill={entry.volume > 0 ? '#378ADD' : '#1B2B4B'} />
                   ))}
                 </Bar>
