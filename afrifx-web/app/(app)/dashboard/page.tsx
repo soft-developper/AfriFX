@@ -9,17 +9,13 @@ import { ClientOnly }         from '@/components/ui/client-only'
 import { ProfileAvatar }      from '@/components/profile/ProfileAvatar'
 import { Badge }              from '@/components/ui/badge'
 import {
-  BarChart, Bar, AreaChart, Area,
-  XAxis, YAxis, Tooltip, Legend,
-  ResponsiveContainer, Cell,
-} from 'recharts'
 import {
 
 // ── Dashboard types ───────────────────────────────────────
-interface ChartDay   { label: string; volume: number }
-interface FlowDay    { label: string; inflow: number; outflow: number }
-interface PairStat   { pair: string; volume: number; txs: number }
-interface RecentTx   {
+interface ChartDay { label: string; volume: number }
+interface FlowDay  { label: string; inflow: number; outflow: number }
+interface PairStat { pair: string; volume: number; txs: number }
+interface RecentTx {
   id: string; fromCurrency: string; toCurrency: string
   fromAmount: number; toAmount: number; usdVolume: number
   status: string; reference: string; arcTxHash: string; createdAt: number
@@ -35,12 +31,14 @@ interface DashboardStats {
   recent:          RecentTx[]
 }
 
-
+  BarChart, Bar, AreaChart, Area,
+  XAxis, YAxis, Tooltip, Legend,
+  ResponsiveContainer, Cell,
+} from 'recharts'
   TrendingUp, TrendingDown, ArrowLeftRight,
   ExternalLink, RefreshCw, Wallet,
   Store, CheckCircle, AlertTriangle,
 } from 'lucide-react'
-
 export default function DashboardPage() {
   return (
     <ClientOnly fallback={<DashboardSkeleton />}>
@@ -48,14 +46,12 @@ export default function DashboardPage() {
     </ClientOnly>
   )
 }
-
 function DashboardContent() {
   const { address }            = useAccount()
   const { formatted: balance } = useUSDCBalance()
   const { data: rates }        = useFXRates()
   const { data: profile }      = useProfile()
-  const { data: stats, isLoading, refetch } = useDashboardStats()
-
+  const { data: stats, isLoading, refetch } = useDashboardStats() as { data: DashboardStats | undefined; isLoading: boolean }
   const statCards = [
     {
       label: 'USDC balance',
@@ -86,7 +82,6 @@ function DashboardContent() {
       color: 'text-emerald-400',
     },
   ]
-
   return (
     <div>
       {/* Header — shows profile name + avatar */}
@@ -126,7 +121,6 @@ function DashboardContent() {
           </button>
         </div>
       </div>
-
       {/* Stat cards — 4 across */}
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map(({ label, value, sub, icon: Icon, color }) => (
@@ -144,7 +138,6 @@ function DashboardContent() {
           </div>
         ))}
       </div>
-
       {/* Row 1: Weekly volume + Top pairs */}
       <div className="mb-4 grid gap-4 grid-cols-1 lg:grid-cols-3">
         <div className="lg:col-span-2 rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
@@ -174,7 +167,6 @@ function DashboardContent() {
             </ResponsiveContainer>
           )}
         </div>
-
         <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
           <p className="mb-4 text-sm font-medium text-[#E2E8F0]">Top pairs</p>
           {isLoading ? (
@@ -196,7 +188,6 @@ function DashboardContent() {
           )}
         </div>
       </div>
-
       {/* Row 2: Inflow / Outflow chart */}
       <div className="mb-4 rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
         <div className="mb-4 flex items-center justify-between">
@@ -271,7 +262,6 @@ function DashboardContent() {
           </div>
         )}
       </div>
-
       {/* Row 3: Recent activity + Live rates */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
@@ -314,7 +304,6 @@ function DashboardContent() {
             <p className="text-xs text-[#64748B]">No transactions yet</p>
           )}
         </div>
-
         <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
           <p className="mb-4 text-sm font-medium text-[#E2E8F0]">Live rates</p>
           <div className="space-y-2.5">
@@ -337,7 +326,6 @@ function DashboardContent() {
     </div>
   )
 }
-
 function DashboardSkeleton() {
   return (
     <div className="space-y-6">
