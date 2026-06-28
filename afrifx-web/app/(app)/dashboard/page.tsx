@@ -14,6 +14,28 @@ import {
   ResponsiveContainer, Cell,
 } from 'recharts'
 import {
+
+// ── Dashboard types ───────────────────────────────────────
+interface ChartDay   { label: string; volume: number }
+interface FlowDay    { label: string; inflow: number; outflow: number }
+interface PairStat   { pair: string; volume: number; txs: number }
+interface RecentTx   {
+  id: string; fromCurrency: string; toCurrency: string
+  fromAmount: number; toAmount: number; usdVolume: number
+  status: string; reference: string; arcTxHash: string; createdAt: number
+}
+interface DashboardStats {
+  monthly:         { volume: number; txCount: number }
+  allTime:         { totalVolume: number; txCount: number }
+  p2p:             { completedTrades: number; activeTrades: number; openOffers: number }
+  disputeWarnings: number
+  chartData:       ChartDay[]
+  flowData:        FlowDay[]
+  pairBreakdown:   PairStat[]
+  recent:          RecentTx[]
+}
+
+
   TrendingUp, TrendingDown, ArrowLeftRight,
   ExternalLink, RefreshCw, Wallet,
   Store, CheckCircle, AlertTriangle,
@@ -144,7 +166,7 @@ function DashboardContent() {
                   formatter={(v: number) => [`$${formatAmount(v)}`, 'Volume']}
                 />
                 <Bar dataKey="volume" radius={[4,4,0,0]}>
-                  {(stats?.chartData ?? []).map((entry: { volume: number; label: string }, i: number) => (
+                  {(stats?.chartData ?? []).map((entry: ChartDay, i: number) => (
                     <Cell key={i} fill={entry.volume > 0 ? '#378ADD' : '#1B2B4B'} />
                   ))}
                 </Bar>
@@ -159,7 +181,7 @@ function DashboardContent() {
             <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-8 animate-pulse rounded bg-[#1B2B4B]" />)}</div>
           ) : stats?.pairBreakdown.length ? (
             <div className="space-y-2.5">
-              {stats.pairBreakdown.map((p: { pair: string; volume: number; txs: number }) => (
+              {stats.pairBreakdown.map((p: PairStat) => (
                 <div key={p.pair} className="flex items-center justify-between text-xs">
                   <span className="font-medium text-[#E2E8F0]">{p.pair}</span>
                   <div className="text-right">
@@ -224,8 +246,8 @@ function DashboardContent() {
         {stats?.flowData && (
           <div className="mt-3 flex items-center gap-6 border-t border-[#1B2B4B] pt-3">
             {(() => {
-              const totalIn  = stats.flowData.reduce((s, d) => s + d.inflow,  0)
-              const totalOut = stats.flowData.reduce((s, d) => s + d.outflow, 0)
+              const totalIn  = stats.flowData.reduce((s: number, d: FlowDay) => s + d.inflow, 0)
+              const totalOut = stats.flowData.reduce((s: number, d: FlowDay) => s + d.outflow, 0)
               const net      = totalIn - totalOut
               return (
                 <>
