@@ -92,7 +92,7 @@ function PayContent() {
     address?.toLowerCase() !== invoice.payer_address.toLowerCase()
 
   async function handlePay() {
-    if (!address || !isConnected || usdcAmount <= 0) return
+    if (!address || !isConnected || !invoice || usdcAmount <= 0) return
     setStatus('submitting')
     setErrMsg(null)
     setTxHash(null)
