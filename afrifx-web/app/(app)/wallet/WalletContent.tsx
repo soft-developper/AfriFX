@@ -172,8 +172,6 @@ export function WalletContent() {
                     labelStyle={{ color: '#E2E8F0' }}
                     itemStyle={{ color: '#E2E8F0' }}
                     formatter={(v: number, name: string) => [`$${formatAmount(v)} USD`, name]}
-                    labelStyle={{ color: '#E2E8F0' }}
-                    itemStyle={{ color: '#E2E8F0' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
