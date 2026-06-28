@@ -33,11 +33,11 @@ export default function HistoryPage() {
   const corridorGroups = new Map<string, Transaction[]>()
   const standalone: Transaction[] = []
 
-  filtered.forEach((tx) => {
+  (filtered as any[]).forEach((tx) => {
     if (tx.corridor_id ?? tx.corridorId) {
-      const group = corridorGroups.get(tx.corridor_id ?? tx.corridorId) ?? []
+      const group = corridorGroups.get(tx.corridor_id ?? tx.corridorId ?? '') ?? []
       group.push(tx)
-      corridorGroups.set(tx.corridor_id ?? tx.corridorId, group)
+      corridorGroups.set(tx.corridor_id ?? tx.corridorId ?? '', group)
     } else {
       standalone.push(tx)
     }
@@ -92,8 +92,8 @@ export default function HistoryPage() {
                 <span className="ml-auto font-mono text-[10px] text-[#378ADD]">{cid}</span>
               </div>
               {steps
-                .sort((a, b) => (a.corridorStep ?? 0) - (b.corridorStep ?? 0))
-                .map((tx) => <TxRow key={tx.id} tx={tx} isCorridorStep />)
+                .sort((a: any, b: any) => (a.corridor_step ?? a.corridorStep ?? 0) - (b.corridor_step ?? b.corridorStep ?? 0))
+                .map((tx: any) => <TxRow key={tx.id} tx={tx} isCorridorStep />)
               }
             </div>
           )
