@@ -35,7 +35,7 @@ export function PayrollExecuteContent() {
     </div>
   )
 
-  const recipients = batch.recipients ?? []
+  const recipients = batch!.recipients ?? []
   const sentCount  = recipients.filter(r => r.status === 'sent').length
   const pct        = recipients.length > 0 ? Math.round((sentCount / recipients.length) * 100) : 0
 
@@ -81,7 +81,7 @@ export function PayrollExecuteContent() {
 
         await updateRecipient.mutateAsync({
           id:      recipient.id,
-          batchId: batch.id,
+          batchId: batch!.id,
           status:  'sent',
           txHash:  hash,
         })
@@ -89,7 +89,7 @@ export function PayrollExecuteContent() {
         const msg = err?.shortMessage ?? err?.message ?? 'Transaction failed'
         await updateRecipient.mutateAsync({
           id:      recipient.id,
-          batchId: batch.id,
+          batchId: batch!.id,
           status:  'failed',
         })
         setErrorMsg(`Payment to ${recipient.name ?? recipient.wallet_address.slice(0,10)} failed: ${msg}`)
@@ -106,7 +106,7 @@ export function PayrollExecuteContent() {
     processing: 'arc',
     completed:  'success',
     failed:     'danger',
-  }[batch.status] as any
+  }[batch!.status] as any
 
   return (
     <div>
@@ -118,18 +118,18 @@ export function PayrollExecuteContent() {
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold text-[#E2E8F0]">{batch.name}</h1>
-            <Badge variant={statusBadge}>{batch.status}</Badge>
+            <h1 className="text-xl font-semibold text-[#E2E8F0]">{batch!.name}</h1>
+            <Badge variant={statusBadge}>{batch!.status}</Badge>
           </div>
           <p className="text-xs text-[#64748B]">
-            {batch.recipient_count} recipients · ${formatAmount(batch.total_amount)} USDC
-            · Created {new Date(batch.created_at * 1000).toLocaleDateString()}
+            {batch.recipient_count} recipients · ${formatAmount(batch!.total_amount)} USDC
+            · Created {new Date(batch!.created_at * 1000).toLocaleDateString()}
           </p>
         </div>
       </div>
 
       {/* Progress bar */}
-      {(executing || batch.status === 'completed') && (
+      {(executing || batch!.status === 'completed') && (
         <div className="mb-4 rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
           <div className="mb-2 flex items-center justify-between text-xs">
             <span className="text-[#64748B]">
@@ -158,7 +158,7 @@ export function PayrollExecuteContent() {
           <CheckCircle className="mx-auto mb-2 h-8 w-8 text-emerald-400" />
           <p className="text-sm font-medium text-emerald-400">All payments sent successfully!</p>
           <p className="mt-1 text-xs text-emerald-600">
-            ${formatAmount(batch.total_amount)} USDC distributed to {sentCount} recipients
+            ${formatAmount(batch!.total_amount)} USDC distributed to {sentCount} recipients
           </p>
         </div>
       )}
@@ -232,7 +232,7 @@ export function PayrollExecuteContent() {
             <div className="space-y-2 text-xs">
               {[
                 ['Recipients', String(batch.recipient_count)],
-                ['Total',      `${formatAmount(batch.total_amount)} USDC`],
+                ['Total',      `${formatAmount(batch!.total_amount)} USDC`],
                 ['Sent',       `${sentCount} / ${batch.recipient_count}`],
               ].map(([l,v]) => (
                 <div key={l} className="flex justify-between">
@@ -242,7 +242,7 @@ export function PayrollExecuteContent() {
               ))}
             </div>
 
-            {batch.status !== 'completed' && (
+            {batch!.status !== 'completed' && (
               <Button className="mt-4 w-full" size="lg"
                 onClick={executePayroll}
                 disabled={executing || done || sentCount === recipients.length}>
@@ -255,7 +255,7 @@ export function PayrollExecuteContent() {
               </Button>
             )}
 
-            {batch.status === 'completed' && (
+            {batch!.status === 'completed' && (
               <div className="mt-4 flex items-center gap-2 rounded-lg bg-emerald-900/20 px-3 py-2 text-xs text-emerald-400">
                 <CheckCircle className="h-3.5 w-3.5" />
                 Payroll complete
