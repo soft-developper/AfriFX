@@ -34,10 +34,10 @@ export default function HistoryPage() {
   const standalone: Transaction[] = []
 
   filtered.forEach((tx) => {
-    if (tx.corridorId) {
-      const group = corridorGroups.get(tx.corridorId) ?? []
+    if (tx.corridor_id ?? tx.corridorId) {
+      const group = corridorGroups.get(tx.corridor_id ?? tx.corridorId) ?? []
       group.push(tx)
-      corridorGroups.set(tx.corridorId, group)
+      corridorGroups.set(tx.corridor_id ?? tx.corridorId, group)
     } else {
       standalone.push(tx)
     }
@@ -74,19 +74,19 @@ export default function HistoryPage() {
       <div className="space-y-3">
         {/* Corridor groups */}
         {Array.from(corridorGroups.entries()).map(([cid, steps]) => {
-          const step1 = steps.find(s => s.corridorStep === 1)
-          const step2 = steps.find(s => s.corridorStep === 2)
+          const step1 = steps.find(s => s.corridor_step ?? s.corridorStep === 1)
+          const step2 = steps.find(s => s.corridor_step ?? s.corridorStep === 2)
           return (
             <div key={cid} className="rounded-xl border border-[#378ADD]/20 bg-[#0F1729]">
               <div className="flex items-center gap-2 border-b border-[#1B2B4B] px-4 py-2.5">
                 <Badge variant="arc">Corridor</Badge>
                 {step1 && step2 && (
                   <span className="flex items-center gap-1 text-xs text-[#64748B]">
-                    {step1.fromCurrency ?? ''}
+                    {step1.from_currency ?? step1.fromCurrency ?? ''}
                     <ArrowRight className="h-3 w-3" />
                     USDC
                     <ArrowRight className="h-3 w-3" />
-                    {step2.toCurrency ?? ''}
+                    {step2.to_currency ?? step2.toCurrency ?? ''}
                   </span>
                 )}
                 <span className="ml-auto font-mono text-[10px] text-[#378ADD]">{cid}</span>
@@ -120,7 +120,7 @@ function TxRow({ tx, isCorridorStep = false }: { tx: Transaction; isCorridorStep
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-[#E2E8F0]">
           {isCorridorStep && (
-            <span className="mr-1.5 text-[10px] text-[#64748B]">Step {tx.corridorStep}</span>
+            <span className="mr-1.5 text-[10px] text-[#64748B]">Step {tx.corridor_step ?? tx.corridorStep}</span>
           )}
           {tx.fromCurrency ?? ''} → {tx.toCurrency ?? ''}
         </p>
