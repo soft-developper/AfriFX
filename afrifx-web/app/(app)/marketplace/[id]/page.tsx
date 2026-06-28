@@ -451,7 +451,7 @@ export default function OfferDetailPage() {
                     </div>
                   )}
 
-                  {offer.maker_confirmed && offer.taker_confirmed && offer.status !== 'released' && (
+                  {offer.maker_confirmed && offer.taker_confirmed && (offer.status as string) !== 'released' && (
                     <div className="flex items-center gap-2 rounded-lg border border-emerald-900/30 bg-emerald-900/10 px-3 py-2.5 text-xs text-emerald-400">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       Both confirmed — releasing USDC within 15 seconds…
