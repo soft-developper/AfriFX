@@ -2,9 +2,12 @@ import cors from 'cors'
 
 export const corsMiddleware = cors({
   origin: [
-    process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    'http://localhost:3000',
+    'https://afrifx.xyz',
+    'https://www.afrifx.xyz',
     'https://afrifx.vercel.app',
-  ],
-  methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+    process.env.FRONTEND_URL ?? '',
+  ].filter(Boolean),
+  methods:        ['GET', 'POST', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 })
