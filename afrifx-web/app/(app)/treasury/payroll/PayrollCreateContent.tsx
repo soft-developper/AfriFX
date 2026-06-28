@@ -52,10 +52,11 @@ export function PayrollCreateContent() {
   function updateRecipient(i: number, field: keyof Recipient, value: string) {
     setRecipients(prev => prev.map((r, idx) => {
       if (idx !== i) return r
-      const updated = { ...r, [field]: value, error: undefined }
-      if (field === 'walletAddress' && value && !isValidAddress(value)) {
-        updated.error = 'Invalid address'
-      }
+      const validationError: string | undefined =
+        field === 'walletAddress' && value && !isValidAddress(value)
+          ? 'Invalid address'
+          : undefined
+      const updated: Recipient = { ...r, [field]: value, error: validationError }
       return updated
     }))
   }

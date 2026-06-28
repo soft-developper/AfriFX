@@ -66,7 +66,7 @@ export function CreateOfferClient() {
       })
       setSubmitted(true)
       setTimeout(() => router.push('/marketplace'), 2500)
-    } catch {}
+    } catch (_e) {}
   }
 
   if (!isConnected) {

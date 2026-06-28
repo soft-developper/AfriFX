@@ -36,7 +36,7 @@ export default function AdminAnalytics() {
             <p className="mb-4 text-sm font-medium text-[#E2E8F0]">Volume by corridor</p>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={data?.corridors ?? []} layout="vertical" barSize={16}>
-                <XAxis type="number" tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
+                <XAxis type="number" tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${v}`} />
                 <YAxis type="category" dataKey="pair" tick={{ fill: '#E2E8F0', fontSize: 10 }} axisLine={false} tickLine={false} width={70} />
                 <Tooltip
                   contentStyle={{ background: '#0F1729', border: '1px solid #1B2B4B', borderRadius: 8, fontSize: 12 }}

@@ -72,7 +72,7 @@ export default function AdminDashboard() {
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={data?.chartData ?? []} barSize={20}>
                 <XAxis dataKey="label" tick={{ fill: '#64748B', fontSize: 10 }} axisLine={{ stroke: '#1B2B4B' }} tickLine={false} />
-                <YAxis tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
+                <YAxis tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${v}`} />
                 <Tooltip
                   contentStyle={{ background: '#0F1729', border: '1px solid #1B2B4B', borderRadius: 8, fontSize: 12 }}
                   labelStyle={{ color: '#E2E8F0' }} itemStyle={{ color: '#E2E8F0' }}

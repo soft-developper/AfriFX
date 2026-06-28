@@ -28,7 +28,7 @@ export default function RatesPage() {
       {isLoading && <p className="text-sm text-[#64748B]">Fetching rates…</p>}
 
       <div className="space-y-2">
-        {(rates ?? []).map((r) => {
+        {(rates ?? []).map((r: Record<string, unknown>) => {
           const [from] = r.pair.split('/')
           const up = r.change24h >= 0
           return (
