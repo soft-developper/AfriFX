@@ -21,44 +21,60 @@ const CURRENCY_FLAG: Record<string, string> = {
   NGN: '🇳🇬', GHS: '🇬🇭', KES: '🇰🇪', ZAR: '🇿🇦', EGP: '🇪🇬'
 }
 
-function normalizeOffer(row: any): P2POffer | null {
-  if (!row || row.error) return null
-  if (Array.isArray(row)) {
-    return {
-      id: row[0], maker_address: row[1], taker_address: row[2],
-      usdc_amount: row[3], local_currency: row[4], local_amount: row[5],
-      rate_offered: row[6], status: row[7],
-      maker_confirmed: Number(row[8]), taker_confirmed: Number(row[9]),
-      arc_tx_hash: row[10], release_tx_hash: row[11],
-      expires_at: row[12], created_at: row[13], updated_at: row[14],
-    }
-  }
-  return {
-    ...row,
-    maker_confirmed:     Number(row.maker_confirmed     ?? 0),
-    taker_confirmed:     Number(row.taker_confirmed     ?? 0),
-    taker_deadline:      row.taker_deadline  ? Number(row.taker_deadline)  : null,
-    maker_deadline:      row.maker_deadline  ? Number(row.maker_deadline)  : null,
-    dispute_raised:      Number(row.dispute_raised      ?? 0),
-    maker_timer_seconds: Number(row.maker_timer_seconds ?? 1800),
-    order_type:          row.order_type ?? 'market',
-  } as P2POffer
+// Extend P2POffer with extra fields we use
+interface OfferExtended extends P2POffer {
+  taker_deadline?:      number | null
+  maker_deadline?:      number | null
+  dispute_raised?:      number
+  maker_timer_seconds?: number
+  order_type?:          string
 }
 
-function shortenAddr(a: string) { return `${a.slice(0,6)}…${a.slice(-4)}` }
+function normalizeOffer(row: unknown): OfferExtended | null {
+  if (!row || (row as Record<string, unknown>).error) return null
+  if (Array.isArray(row)) {
+    return {
+      id:              row[0],
+      maker_address:   row[1],
+      taker_address:   row[2],
+      usdc_amount:     row[3],
+      local_currency:  row[4],
+      local_amount:    row[5],
+      rate_offered:    row[6],
+      status:          row[7],
+      maker_confirmed: Number(row[8]),
+      taker_confirmed: Number(row[9]),
+      arc_tx_hash:     row[10],
+      release_tx_hash: row[11],
+      expires_at:      row[12],
+      created_at:      row[13],
+      updated_at:      row[14],
+    } as OfferExtended
+  }
+  const r = row as Record<string, unknown>
+  return {
+    ...(r as unknown as P2POffer),
+    maker_confirmed:     Number(r.maker_confirmed     ?? 0),
+    taker_confirmed:     Number(r.taker_confirmed     ?? 0),
+    taker_deadline:      r.taker_deadline  ? Number(r.taker_deadline)  : null,
+    maker_deadline:      r.maker_deadline  ? Number(r.maker_deadline)  : null,
+    dispute_raised:      Number(r.dispute_raised      ?? 0),
+    maker_timer_seconds: Number(r.maker_timer_seconds ?? 1800),
+    order_type:          (r.order_type as string) ?? 'market',
+  } as OfferExtended
+}
 
 export default function OfferDetailPage() {
-  const params        = useParams()
-  const searchParams  = useSearchParams()
-  const { address }   = useAccount()
+  const params       = useParams()
+  const searchParams = useSearchParams()
+  const { address }  = useAccount()
 
-  // ?accepted=1 means this user JUST accepted — treat as taker immediately
-  const justAccepted  = searchParams.get('accepted') === '1'
+  const justAccepted = searchParams.get('accepted') === '1'
 
-  const [offer, setOffer]         = useState<P2POffer | null>(null)
-  const [loading, setLoading]     = useState(true)
-  const [notFound, setNotFound]   = useState(false)
-  const [disputing, setDisputing] = useState(false)
+  const [offer,       setOffer]       = useState<OfferExtended | null>(null)
+  const [loading,     setLoading]     = useState(true)
+  const [notFound,    setNotFound]    = useState(false)
+  const [disputing,   setDisputing]   = useState(false)
   const [disputeDone, setDisputeDone] = useState(false)
 
   const {
@@ -69,7 +85,6 @@ export default function OfferDetailPage() {
   const load = useCallback(async () => {
     try {
       const res  = await fetch(`${API}/offers/${params.id}`)
-      // Never show notFound when user just accepted — race condition
       if (res.status === 404) {
         if (!justAccepted) setNotFound(true)
         return
@@ -78,19 +93,19 @@ export default function OfferDetailPage() {
       const norm = normalizeOffer(data)
       if (norm) {
         setOffer(norm)
-        setNotFound(false) // clear any previous notFound
+        setNotFound(false)
       } else if (!justAccepted) {
         setNotFound(true)
       }
     } catch {
       if (!justAccepted) setNotFound(true)
+    } finally {
+      setLoading(false)
     }
-    finally  { setLoading(false) }
   }, [params.id, justAccepted])
 
   useEffect(() => { load() }, [load])
 
-  // Poll: fast (2s) if justAccepted until taker_address syncs, then normal (5s)
   useEffect(() => {
     const isStillSyncing = justAccepted && !offer?.taker_address
     const interval = setInterval(load, isStillSyncing ? 2000 : 5000)
@@ -114,62 +129,69 @@ export default function OfferDetailPage() {
     </div>
   )
 
-  // Determine role:
-  // - Normal: check address against DB maker/taker
-  // - justAccepted=1: treat current user as taker even if DB hasn't synced yet
-  const isMaker = address?.toLowerCase() === offer.maker_address?.toLowerCase()
-  const isTaker = justAccepted
-    ? !isMaker && !!address  // user just accepted — they ARE the taker
+  const offerStatus = offer.status as string
+
+  const isMaker    = address?.toLowerCase() === offer.maker_address?.toLowerCase()
+  const isTaker    = justAccepted
+    ? !isMaker && !!address
     : address?.toLowerCase() === offer.taker_address?.toLowerCase()
   const isInvolved = isMaker || isTaker
   const offerId    = offer.id as `0x${string}`
-  const timerSecs  = (offer as any).maker_timer_seconds ?? 1800
+  const timerSecs  = offer.maker_timer_seconds ?? 1800
 
-  // Third-party access control for accepted trades
-  if (offer.status === 'accepted' && !isInvolved && address) {
+  if (offerStatus === 'accepted' && !isInvolved && address) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-3">
         <p className="text-sm font-medium text-[#E2E8F0]">This trade is in progress.</p>
         <p className="text-xs text-[#64748B]">Only the two parties involved can view an active trade.</p>
-        <Link href="/marketplace"><Button variant="outline" size="sm">← Back to marketplace</Button></Link>
+        <Link href="/marketplace">
+          <Button variant="outline" size="sm">← Back to marketplace</Button>
+        </Link>
       </div>
     )
   }
 
-  const statusBadge = {
+  const statusBadgeMap: Record<string, string> = {
     open: 'warning', accepted: 'arc', released: 'success', cancelled: 'danger',
-  }[offer.status] as any
+  }
+  const statusBadge = (statusBadgeMap[offerStatus] ?? 'default') as
+    'warning' | 'arc' | 'success' | 'danger' | 'default'
 
   const steps = [
-    { n:1, done: offer.status !== 'open',     label: 'Taker accepted offer',               desc: 'USDC locked in vault' },
-    { n:2, done: offer.status !== 'open',     label: `Taker sends ${Number(offer.local_amount).toLocaleString()} ${offer.local_currency} to maker`, desc: 'Off-chain payment' },
-    { n:3, done: !!offer.taker_confirmed,     label: 'Taker confirmed: "I sent the money"',desc: 'Taker window' },
-    { n:4, done: !!offer.maker_confirmed,     label: 'Maker confirmed: "I received it"',   desc: 'Maker window' },
-    { n:5, done: offer.status === 'released', label: 'Platform releases USDC to taker',    desc: 'Auto within 15s' },
+    { n:1, done: offerStatus !== 'open',     label: 'Taker accepted offer',               desc: 'USDC locked in vault' },
+    { n:2, done: offerStatus !== 'open',     label: `Taker sends ${Number(offer.local_amount).toLocaleString()} ${offer.local_currency} to maker`, desc: 'Off-chain payment' },
+    { n:3, done: !!offer.taker_confirmed,     label: 'Taker confirmed: "I sent the money"', desc: 'Taker window' },
+    { n:4, done: !!offer.maker_confirmed,     label: 'Maker confirmed: "I received it"',    desc: 'Maker window' },
+    { n:5, done: offerStatus === 'released',  label: 'Platform releases USDC to taker',     desc: 'Auto within 15s' },
   ]
 
-  const showTakerTimer = offer.status === 'accepted' && !offer.taker_confirmed && !!(offer as any).taker_deadline
-  const showMakerTimer = offer.status === 'accepted' && !!offer.taker_confirmed && !offer.maker_confirmed && !!(offer as any).maker_deadline
+  const showTakerTimer = offerStatus === 'accepted' && !offer.taker_confirmed && !!offer.taker_deadline
+  const showMakerTimer = offerStatus === 'accepted' && !!offer.taker_confirmed && !offer.maker_confirmed && !!offer.maker_deadline
 
-  // Show chat when involved and trade is in progress or just accepted
   const showChat = isInvolved && (
-    offer.status === 'accepted' ||
-    offer.status === 'released' ||
+    offerStatus === 'accepted' ||
+    offerStatus === 'released' ||
     justAccepted
   ) && !!offer.taker_address
 
-  // If just accepted but DB hasn't synced taker_address yet — show syncing state
   const isSyncing = justAccepted && !offer.taker_address
 
   async function handleDispute() {
-    if (!address) return
+    if (!address || !offer) return
     setDisputing(true)
     try {
-      await raiseDispute(offer!.id, 'Maker did not confirm receipt within agreed window')
+      await raiseDispute(offer.id, 'Maker did not confirm receipt within agreed window')
       setDisputeDone(true)
       await load()
-    } catch {} finally { setDisputing(false) }
+    } catch {
+      // error handled by useP2P
+    } finally {
+      setDisputing(false)
+    }
   }
+
+  const localAmountFormatted = Number(offer.local_amount).toLocaleString()
+  const nowTs = Math.floor(Date.now() / 1000)
 
   return (
     <div>
@@ -184,10 +206,10 @@ export default function OfferDetailPage() {
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl font-semibold text-[#E2E8F0]">Offer detail</h1>
             <Badge variant={statusBadge}>{offer.status}</Badge>
-            <Badge variant={(offer as any).order_type === 'limit' ? 'warning' : 'arc'}>
-              {(offer as any).order_type ?? 'market'}
+            <Badge variant={offer.order_type === 'limit' ? 'warning' : 'arc'}>
+              {offer.order_type ?? 'market'}
             </Badge>
-            {!!(offer as any).dispute_raised && <Badge variant="danger">Disputed</Badge>}
+            {!!offer.dispute_raised && <Badge variant="danger">Disputed</Badge>}
             {isTaker && <Badge variant="success">You are the taker</Badge>}
           </div>
           <p className="font-mono text-xs text-[#64748B]">{offer.id.slice(0,26)}…</p>
@@ -198,7 +220,6 @@ export default function OfferDetailPage() {
         </button>
       </div>
 
-      {/* Syncing banner — shown briefly after accepting while DB catches up */}
       {isSyncing && (
         <div className="mb-4 flex items-center gap-2 rounded-xl border border-[#378ADD]/30 bg-[#378ADD]/10 px-4 py-3 text-sm text-[#378ADD]">
           <Loader2 className="h-4 w-4 animate-spin shrink-0" />
@@ -206,12 +227,11 @@ export default function OfferDetailPage() {
         </div>
       )}
 
-      {/* Timer banners */}
       <ClientOnly>
         {showTakerTimer && (
           <div className="mb-4">
             <TimerBanner
-              deadline={(offer as any).taker_deadline}
+              deadline={offer.taker_deadline as number}
               totalSeconds={timerSecs}
               phase="taker"
               isMine={isTaker}
@@ -221,7 +241,7 @@ export default function OfferDetailPage() {
         {showMakerTimer && (
           <div className="mb-4">
             <TimerBanner
-              deadline={(offer as any).maker_deadline}
+              deadline={offer.maker_deadline as number}
               totalSeconds={timerSecs}
               phase="maker"
               isMine={isMaker}
@@ -230,7 +250,6 @@ export default function OfferDetailPage() {
         )}
       </ClientOnly>
 
-      {/* 3-column when chat is visible, 2-column otherwise */}
       <div className={`grid gap-4 ${showChat ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
 
         {/* Summary */}
@@ -245,7 +264,7 @@ export default function OfferDetailPage() {
             <ArrowRight className="h-5 w-5 text-[#64748B]" />
             <div className="text-center">
               <p className="text-2xl">{CURRENCY_FLAG[offer.local_currency] ?? '🌍'}</p>
-              <p className="mt-1 font-mono text-xl font-semibold text-[#E2E8F0]">{Number(offer.local_amount).toLocaleString()}</p>
+              <p className="mt-1 font-mono text-xl font-semibold text-[#E2E8F0]">{localAmountFormatted}</p>
               <p className="text-xs text-[#64748B]">{offer.local_currency} (to maker)</p>
             </div>
           </div>
@@ -261,7 +280,7 @@ export default function OfferDetailPage() {
             <span className="text-[#64748B]">Rate</span>
             <span className="font-mono text-[#E2E8F0]">
               1 USDC = {Number(offer.rate_offered) > 0
-                ? (1/Number(offer.rate_offered)).toFixed(2) : '—'} {offer.local_currency}
+                ? (1 / Number(offer.rate_offered)).toFixed(2) : '—'} {offer.local_currency}
             </span>
           </div>
 
@@ -286,7 +305,7 @@ export default function OfferDetailPage() {
             </div>
           )}
 
-          {isMaker && offer.status === 'open' && (
+          {isMaker && offerStatus === 'open' && (
             <Button variant="danger" size="sm" className="mt-4 w-full"
               onClick={async () => { await cancelOwnOffer(offerId); await load() }}
               disabled={actionLoading}>
@@ -315,7 +334,7 @@ export default function OfferDetailPage() {
 
           <ClientOnly>
             <div className="space-y-3">
-              {offer.status === 'released' && (
+              {offerStatus === 'released' && (
                 <div className="rounded-lg border border-emerald-900/50 bg-emerald-900/20 p-4 text-center">
                   <CheckCircle className="mx-auto mb-2 h-6 w-6 text-emerald-400" />
                   <p className="text-sm font-medium text-emerald-400">Trade complete</p>
@@ -323,14 +342,14 @@ export default function OfferDetailPage() {
                 </div>
               )}
 
-              {offer.status === 'cancelled' && (
+              {offerStatus === 'cancelled' && (
                 <div className="rounded-lg border border-red-900/50 bg-red-900/20 p-4 text-center">
                   <AlertCircle className="mx-auto mb-2 h-6 w-6 text-red-400" />
                   <p className="text-sm font-medium text-red-400">Offer cancelled</p>
                 </div>
               )}
 
-              {!!(offer as any).dispute_raised && offer.status === 'accepted' && (
+              {!!offer.dispute_raised && offerStatus === 'accepted' && (
                 <div className="rounded-lg border border-amber-900/50 bg-amber-900/20 p-3 text-xs">
                   <div className="flex items-start gap-2">
                     <Flag className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
@@ -342,33 +361,31 @@ export default function OfferDetailPage() {
                 </div>
               )}
 
-              {offer.status === 'open' && isMaker && (
+              {offerStatus === 'open' && isMaker && (
                 <div className="rounded-lg bg-[#080D1B] p-3 text-center text-xs text-[#64748B]">
                   Waiting for a seller to accept your offer…
                 </div>
               )}
 
-              {/* Syncing: just accepted but DB not updated yet */}
               {isSyncing && (
                 <div className="flex items-center gap-2 rounded-lg border border-[#378ADD]/30 bg-[#378ADD]/10 px-3 py-3 text-xs text-[#378ADD]">
                   <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                   <div>
                     <p className="font-medium">Offer accepted on Arc!</p>
-                    <p className="mt-0.5 opacity-70">Syncing trade details — this takes a few seconds…</p>
+                    <p className="mt-0.5 opacity-70">Syncing trade details…</p>
                   </div>
                 </div>
               )}
 
-              {offer.status === 'accepted' && !isSyncing && (
+              {offerStatus === 'accepted' && !isSyncing && (
                 <>
                   {isTaker && !offer.taker_confirmed && (
                     <div className="rounded-lg border border-[#378ADD]/30 bg-[#378ADD]/10 p-3 text-xs">
                       <p className="font-medium text-[#E2E8F0]">Your turn — send {offer.local_currency} to maker</p>
                       <p className="mt-1 text-[#64748B]">
                         Send <strong className="text-[#E2E8F0]">
-                          {Number(offer.local_amount).toLocaleString()} {offer.local_currency}
+                          {localAmountFormatted} {offer.local_currency}
                         </strong> via bank or mobile money, then confirm below.
-                        Use the chat to share your payment details or proof.
                       </p>
                     </div>
                   )}
@@ -376,7 +393,7 @@ export default function OfferDetailPage() {
                   {isMaker && !offer.taker_confirmed && (
                     <div className="flex items-center gap-2 rounded-lg bg-[#080D1B] p-3 text-xs text-[#64748B]">
                       <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                      Waiting for taker to send and confirm {Number(offer.local_amount).toLocaleString()} {offer.local_currency}…
+                      Waiting for taker to send and confirm {localAmountFormatted} {offer.local_currency}…
                     </div>
                   )}
 
@@ -385,13 +402,12 @@ export default function OfferDetailPage() {
                       <p className="font-medium text-[#E2E8F0]">Check your account</p>
                       <p className="mt-1 text-[#64748B]">
                         Taker says they sent <strong className="text-[#E2E8F0]">
-                          {Number(offer.local_amount).toLocaleString()} {offer.local_currency}
+                          {localAmountFormatted} {offer.local_currency}
                         </strong>. Confirm receipt to release USDC.
                       </p>
                     </div>
                   )}
 
-                  {/* Taker confirm button */}
                   {isTaker && (
                     <Button className="w-full"
                       onClick={async () => { await takerConfirm(offerId, timerSecs); await load() }}
@@ -401,12 +417,11 @@ export default function OfferDetailPage() {
                         ? <><Loader2 className="h-4 w-4 animate-spin" /> Confirming…</>
                         : offer.taker_confirmed
                         ? <><CheckCircle className="h-4 w-4 text-emerald-400" /> Sent confirmed</>
-                        : `✓ I sent ${Number(offer.local_amount).toLocaleString()} ${offer.local_currency} to maker`
+                        : `✓ I sent ${localAmountFormatted} ${offer.local_currency} to maker`
                       }
                     </Button>
                   )}
 
-                  {/* Maker confirm button */}
                   {isMaker && (
                     <Button className="w-full"
                       onClick={async () => { await makerConfirm(offerId); await load() }}
@@ -418,13 +433,12 @@ export default function OfferDetailPage() {
                         ? <><CheckCircle className="h-4 w-4 text-emerald-400" /> Receipt confirmed</>
                         : !offer.taker_confirmed
                         ? 'Waiting for taker to send first…'
-                        : `✓ I received ${Number(offer.local_amount).toLocaleString()} ${offer.local_currency}`
+                        : `✓ I received ${localAmountFormatted} ${offer.local_currency}`
                       }
                     </Button>
                   )}
 
-                  {isTaker && offer.taker_confirmed && !offer.maker_confirmed &&
-                   !(offer as any).dispute_raised && (
+                  {isTaker && offer.taker_confirmed && !offer.maker_confirmed && !offer.dispute_raised && (
                     <div className="flex items-center gap-2 rounded-lg bg-[#080D1B] px-3 py-2 text-xs text-[#64748B]">
                       <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
                       Waiting for maker to confirm receipt…
@@ -432,9 +446,8 @@ export default function OfferDetailPage() {
                   )}
 
                   {isTaker && offer.taker_confirmed && !offer.maker_confirmed &&
-                   !(offer as any).dispute_raised &&
-                   (offer as any).maker_deadline &&
-                   (offer as any).maker_deadline < Math.floor(Date.now() / 1000) && (
+                   !offer.dispute_raised && offer.maker_deadline &&
+                   offer.maker_deadline < nowTs && (
                     <div className="space-y-2">
                       <p className="text-xs text-red-400">⚠️ Maker has not confirmed within the agreed window.</p>
                       {!disputeDone ? (
@@ -444,14 +457,13 @@ export default function OfferDetailPage() {
                           {disputing ? 'Raising dispute…' : 'Raise dispute'}
                         </Button>
                       ) : (
-                        <p className="text-xs text-emerald-400">
-                          ✓ Dispute raised — USDC auto-releases in 24h.
-                        </p>
+                        <p className="text-xs text-emerald-400">✓ Dispute raised — USDC auto-releases in 24h.</p>
                       )}
                     </div>
                   )}
 
-                  {offer.maker_confirmed && offer.taker_confirmed && (offer.status as string) !== 'released' && (
+                  {/* Both confirmed — waiting for release */}
+                  {offer.maker_confirmed && offer.taker_confirmed && (
                     <div className="flex items-center gap-2 rounded-lg border border-emerald-900/30 bg-emerald-900/10 px-3 py-2.5 text-xs text-emerald-400">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       Both confirmed — releasing USDC within 15 seconds…
@@ -476,7 +488,6 @@ export default function OfferDetailPage() {
           )}
         </div>
 
-        {/* Chat — visible to maker/taker once offer is accepted */}
         {showChat && offer.taker_address && (
           <ClientOnly>
             <ChatWindow
