@@ -27,14 +27,14 @@ export default function HistoryPage() {
       .finally(() => setLoading(false))
   }, [address])
 
-  const filtered = txs.filter((tx) => status === 'all' || tx.status === status)
+  const filtered: any[] = txs.filter((tx) => status === 'all' || tx.status === status)
 
   // Group corridor steps together
-  const corridorGroups = new Map<string, Transaction[]>()
-  const standalone: Transaction[] = [];
+  const corridorGroups = new Map<string, any[]>()
+  const standalone: any[] = [];
 
 
-  (filtered as any[]).forEach((tx) => {
+  filtered.forEach((tx) => {
     if (tx.corridor_id ?? tx.corridorId) {
       const group = corridorGroups.get(tx.corridor_id ?? tx.corridorId ?? '') ?? []
       group.push(tx)
@@ -75,8 +75,8 @@ export default function HistoryPage() {
       <div className="space-y-3">
         {/* Corridor groups */}
         {Array.from(corridorGroups.entries()).map(([cid, steps]) => {
-          const step1 = steps.find(s => s.corridor_step ?? s.corridorStep === 1)
-          const step2 = steps.find(s => s.corridor_step ?? s.corridorStep === 2)
+          const step1 = steps.find((s: any) => Number(s.corridor_step ?? s.corridorStep) === 1)
+          const step2 = steps.find((s: any) => Number(s.corridor_step ?? s.corridorStep) === 2)
           return (
             <div key={cid} className="rounded-xl border border-[#378ADD]/20 bg-[#0F1729]">
               <div className="flex items-center gap-2 border-b border-[#1B2B4B] px-4 py-2.5">
@@ -101,7 +101,7 @@ export default function HistoryPage() {
         })}
 
         {/* Standalone transactions */}
-        {standalone.map((tx) => (
+        {standalone.map((tx: any) => (
           <div key={tx.id} className="rounded-xl border border-[#1B2B4B] bg-[#0F1729]">
             <TxRow tx={tx} />
           </div>
