@@ -41,7 +41,7 @@ function InvoiceDetail() {
 
   async function cancel() {
     if (!confirm('Cancel this invoice?')) return
-    await updateStatus.mutateAsync({ id: invoice.id, status: 'cancelled' })
+    await updateStatus.mutateAsync({ id: invoice!.id, status: 'cancelled' })
   }
 
   return (
