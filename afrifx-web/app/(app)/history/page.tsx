@@ -82,11 +82,11 @@ export default function HistoryPage() {
                 <Badge variant="arc">Corridor</Badge>
                 {step1 && step2 && (
                   <span className="flex items-center gap-1 text-xs text-[#64748B]">
-                    {step1.fromCurrency ?? step1.from_currency}
+                    {step1.fromCurrency ?? ''}
                     <ArrowRight className="h-3 w-3" />
                     USDC
                     <ArrowRight className="h-3 w-3" />
-                    {step2.toCurrency ?? step2.to_currency}
+                    {step2.toCurrency ?? ''}
                   </span>
                 )}
                 <span className="ml-auto font-mono text-[10px] text-[#378ADD]">{cid}</span>
@@ -122,10 +122,10 @@ function TxRow({ tx, isCorridorStep = false }: { tx: Transaction; isCorridorStep
           {isCorridorStep && (
             <span className="mr-1.5 text-[10px] text-[#64748B]">Step {tx.corridorStep}</span>
           )}
-          {tx.fromCurrency ?? tx.from_currency} → {tx.toCurrency ?? tx.to_currency}
+          {tx.fromCurrency ?? ''} → {tx.toCurrency ?? ''}
         </p>
         <div className="flex items-center gap-2 text-[10px] text-[#64748B]">
-          <span>{new Date(Number(tx.createdAt ?? tx.created_at ?? 0) * 1000).toLocaleString()}</span>
+          <span>{new Date(Number(tx.createdAt ?? 0) * 1000).toLocaleString()}</span>
           {tx.reference && (
             <span className="font-mono text-[#378ADD]">{tx.reference}</span>
           )}
@@ -133,10 +133,10 @@ function TxRow({ tx, isCorridorStep = false }: { tx: Transaction; isCorridorStep
       </div>
       <div className="shrink-0 text-right">
         <p className="font-mono text-sm text-red-400">
-          -{Number(tx.fromAmount ?? tx.from_amount ?? 0).toLocaleString()} {tx.fromCurrency ?? tx.from_currency}
+          -{Number(tx.fromAmount ?? 0).toLocaleString()} {tx.fromCurrency ?? ''}
         </p>
         <p className="font-mono text-sm text-emerald-400">
-          +{Number(tx.toAmount ?? tx.to_amount ?? 0).toFixed(4)} {tx.toCurrency ?? tx.to_currency}
+          +{Number(tx.toAmount ?? 0).toFixed(4)} {tx.toCurrency ?? ''}
         </p>
       </div>
       <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
