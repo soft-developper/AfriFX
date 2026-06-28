@@ -51,7 +51,7 @@ export function PayrollExecuteContent() {
       setCurrentIdx(i)
       try {
         const usdcRaw = parseUnits(recipient.amount.toFixed(6), USDC_DECIMALS)
-        const memoId  = buildMemoId(`payroll-${batch.id}-${recipient.id}`)
+        const memoId  = buildMemoId(`payroll-${batch!.id}-${recipient.id}`)
 
         // Check if Memo is available
         let hash: `0x${string}`
