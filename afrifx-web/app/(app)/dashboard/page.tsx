@@ -1,17 +1,25 @@
 'use client'
-import { useAccount } from 'wagmi'
-import { useUSDCBalance }     from '@/hooks/useUSDCBalance'
-import { useFXRates }         from '@/hooks/useFXRate'
-import { useDashboardStats }  from '@/hooks/useDashboardStats'
-import { useProfile }         from '@/hooks/useProfile'
-import { formatAmount }       from '@/lib/utils'
-import { ClientOnly }         from '@/components/ui/client-only'
-import { ProfileAvatar }      from '@/components/profile/ProfileAvatar'
-import { Badge }              from '@/components/ui/badge'
+import { useAccount }        from 'wagmi'
+import { useUSDCBalance }    from '@/hooks/useUSDCBalance'
+import { useFXRates }        from '@/hooks/useFXRate'
+import { useDashboardStats } from '@/hooks/useDashboardStats'
+import { useProfile }        from '@/hooks/useProfile'
+import { formatAmount }      from '@/lib/utils'
+import { ClientOnly }        from '@/components/ui/client-only'
+import { ProfileAvatar }     from '@/components/profile/ProfileAvatar'
+import { Badge }             from '@/components/ui/badge'
 import {
+  BarChart, Bar, AreaChart, Area,
+  XAxis, YAxis, Tooltip,
+  ResponsiveContainer, Cell,
+} from 'recharts'
 import {
+  TrendingUp, TrendingDown, ArrowLeftRight,
+  ExternalLink, RefreshCw, Wallet,
+  Store, AlertTriangle,
+} from 'lucide-react'
 
-// ── Dashboard types ───────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────
 interface ChartDay { label: string; volume: number }
 interface FlowDay  { label: string; inflow: number; outflow: number }
 interface PairStat { pair: string; volume: number; txs: number }
@@ -31,14 +39,6 @@ interface DashboardStats {
   recent:          RecentTx[]
 }
 
-  BarChart, Bar, AreaChart, Area,
-  XAxis, YAxis, Tooltip, Legend,
-  ResponsiveContainer, Cell,
-} from 'recharts'
-  TrendingUp, TrendingDown, ArrowLeftRight,
-  ExternalLink, RefreshCw, Wallet,
-  Store, CheckCircle, AlertTriangle,
-} from 'lucide-react'
 export default function DashboardPage() {
   return (
     <ClientOnly fallback={<DashboardSkeleton />}>
@@ -46,12 +46,15 @@ export default function DashboardPage() {
     </ClientOnly>
   )
 }
+
 function DashboardContent() {
   const { address }            = useAccount()
   const { formatted: balance } = useUSDCBalance()
   const { data: rates }        = useFXRates()
   const { data: profile }      = useProfile()
-  const { data: stats, isLoading, refetch } = useDashboardStats() as { data: DashboardStats | undefined; isLoading: boolean }
+  const { data: stats, isLoading, refetch } =
+    useDashboardStats() as { data: DashboardStats | undefined; isLoading: boolean; refetch: () => void }
+
   const statCards = [
     {
       label: 'USDC balance',
@@ -82,9 +85,10 @@ function DashboardContent() {
       color: 'text-emerald-400',
     },
   ]
+
   return (
     <div>
-      {/* Header — shows profile name + avatar */}
+      {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {profile && (
@@ -105,7 +109,6 @@ function DashboardContent() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {/* Dispute warning */}
           {(stats?.disputeWarnings ?? 0) > 0 && (
             <div className="flex items-center gap-1.5 rounded-lg border border-amber-900/50 bg-amber-900/20 px-3 py-1.5 text-xs text-amber-400">
               <AlertTriangle className="h-3.5 w-3.5" />
@@ -121,7 +124,8 @@ function DashboardContent() {
           </button>
         </div>
       </div>
-      {/* Stat cards — 4 across */}
+
+      {/* Stat cards */}
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map(({ label, value, sub, icon: Icon, color }) => (
           <div key={label} className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
@@ -138,6 +142,7 @@ function DashboardContent() {
           </div>
         ))}
       </div>
+
       {/* Row 1: Weekly volume + Top pairs */}
       <div className="mb-4 grid gap-4 grid-cols-1 lg:grid-cols-3">
         <div className="lg:col-span-2 rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
@@ -150,7 +155,7 @@ function DashboardContent() {
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={stats?.chartData ?? []} barSize={24}>
                 <XAxis dataKey="label" tick={{ fill: '#E2E8F0', fontSize: 11 }} axisLine={{ stroke: '#1B2B4B' }} tickLine={false} />
-                <YAxis tick={{ fill: '#E2E8F0', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => v > 0 ? `$${v}` : '0'} />
+                <YAxis tick={{ fill: '#E2E8F0', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => v > 0 ? `$${v}` : '0'} />
                 <Tooltip
                   contentStyle={{ background: '#0F1729', border: '1px solid #1B2B4B', borderRadius: 8, fontSize: 12 }}
                   labelStyle={{ color: '#E2E8F0' }}
@@ -158,7 +163,7 @@ function DashboardContent() {
                   cursor={{ fill: '#1B2B4B' }}
                   formatter={(v: number) => [`$${formatAmount(v)}`, 'Volume']}
                 />
-                <Bar dataKey="volume" radius={[4,4,0,0]}>
+                <Bar dataKey="volume" radius={[4, 4, 0, 0]}>
                   {(stats?.chartData ?? []).map((entry: ChartDay, i: number) => (
                     <Cell key={i} fill={entry.volume > 0 ? '#378ADD' : '#1B2B4B'} />
                   ))}
@@ -167,10 +172,13 @@ function DashboardContent() {
             </ResponsiveContainer>
           )}
         </div>
+
         <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
           <p className="mb-4 text-sm font-medium text-[#E2E8F0]">Top pairs</p>
           {isLoading ? (
-            <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-8 animate-pulse rounded bg-[#1B2B4B]" />)}</div>
+            <div className="space-y-2">
+              {[1,2,3].map(i => <div key={i} className="h-8 animate-pulse rounded bg-[#1B2B4B]" />)}
+            </div>
           ) : stats?.pairBreakdown.length ? (
             <div className="space-y-2.5">
               {stats.pairBreakdown.map((p: PairStat) => (
@@ -188,18 +196,19 @@ function DashboardContent() {
           )}
         </div>
       </div>
-      {/* Row 2: Inflow / Outflow chart */}
+
+      {/* Row 2: Inflow / Outflow */}
       <div className="mb-4 rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
         <div className="mb-4 flex items-center justify-between">
           <p className="text-sm font-medium text-[#E2E8F0]">Inflow vs Outflow (14 days)</p>
           <div className="flex items-center gap-4 text-xs text-[#64748B]">
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400" />
-              Inflow (USDC received)
+              Inflow
             </span>
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#378ADD]" />
-              Outflow (USDC sent)
+              Outflow
             </span>
           </div>
         </div>
@@ -221,7 +230,7 @@ function DashboardContent() {
                 </linearGradient>
               </defs>
               <XAxis dataKey="label" tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} interval={1} />
-              <YAxis tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => v > 0 ? `$${v}` : '0'} />
+              <YAxis tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => v > 0 ? `$${v}` : '0'} />
               <Tooltip
                 contentStyle={{ background: '#0F1729', border: '1px solid #1B2B4B', borderRadius: 8, fontSize: 12 }}
                 labelStyle={{ color: '#E2E8F0' }}
@@ -233,11 +242,10 @@ function DashboardContent() {
             </AreaChart>
           </ResponsiveContainer>
         )}
-        {/* Net summary */}
         {stats?.flowData && (
           <div className="mt-3 flex items-center gap-6 border-t border-[#1B2B4B] pt-3">
             {(() => {
-              const totalIn  = stats.flowData.reduce((s: number, d: FlowDay) => s + d.inflow, 0)
+              const totalIn  = stats.flowData.reduce((s: number, d: FlowDay) => s + d.inflow,  0)
               const totalOut = stats.flowData.reduce((s: number, d: FlowDay) => s + d.outflow, 0)
               const net      = totalIn - totalOut
               return (
@@ -262,15 +270,18 @@ function DashboardContent() {
           </div>
         )}
       </div>
+
       {/* Row 3: Recent activity + Live rates */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
           <p className="mb-4 text-sm font-medium text-[#E2E8F0]">Recent activity</p>
           {isLoading ? (
-            <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 animate-pulse rounded bg-[#1B2B4B]" />)}</div>
+            <div className="space-y-2">
+              {[1,2,3].map(i => <div key={i} className="h-12 animate-pulse rounded bg-[#1B2B4B]" />)}
+            </div>
           ) : stats?.recent.length ? (
             <div className="space-y-2">
-              {stats.recent.map(tx => (
+              {stats.recent.map((tx: RecentTx) => (
                 <div key={tx.id} className="flex items-center gap-3 rounded-lg bg-[#080D1B] px-3 py-2.5">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#378ADD]/10">
                     <ArrowLeftRight className="h-3.5 w-3.5 text-[#378ADD]" />
@@ -304,6 +315,7 @@ function DashboardContent() {
             <p className="text-xs text-[#64748B]">No transactions yet</p>
           )}
         </div>
+
         <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
           <p className="mb-4 text-sm font-medium text-[#E2E8F0]">Live rates</p>
           <div className="space-y-2.5">
@@ -326,6 +338,7 @@ function DashboardContent() {
     </div>
   )
 }
+
 function DashboardSkeleton() {
   return (
     <div className="space-y-6">
