@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: afrifx-api
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: PORT
+        value: 4000
+      - key: NODE_ENV
+        value: production
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
+      - key: ARC_RPC_URL
+        value: https://rpc.testnet.arc.network
+      - key: FRONTEND_URL
+        sync: false
+      - key: AFRIFX_VAULT_ADDRESS
+        sync: false
+      - key: EXCHANGE_RATE_API_KEY
+        sync: false

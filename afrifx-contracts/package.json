@@ -1,0 +1,22 @@
+{
+  "name": "afrifx-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "deploy": "npx hardhat run scripts/deploy.ts --network arc_testnet",
+    "verify": "npx hardhat run scripts/verify.ts --network arc_testnet"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.0.2",
+    "@types/node": "^20",
+    "hardhat": "^2.22.8",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  }
+}

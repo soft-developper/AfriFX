@@ -1,0 +1,3 @@
+// Prepend this patch route into the existing offers router
+// This will be injected by the script below
+export const ACCEPT_PATCH = true

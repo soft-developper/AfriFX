@@ -1,0 +1,282 @@
+'use client'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAccount } from 'wagmi'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { useP2P, type OrderType } from '@/hooks/useP2P'
+import { useUSDCBalance } from '@/hooks/useUSDCBalance'
+import { useRate } from '@/hooks/useFXRate'
+import { ArrowLeft, Info, CheckCircle, TrendingUp, Sliders } from 'lucide-react'
+import Link from 'next/link'
+
+const CURRENCIES      = ['NGN', 'GHS', 'KES', 'ZAR', 'EGP']
+const CURRENCY_FLAG: Record<string, string> = {
+  NGN: '🇳🇬', GHS: '🇬🇭', KES: '🇰🇪', ZAR: '🇿🇦', EGP: '🇪🇬'
+}
+const TIMER_OPTIONS = [
+  { label: '30 min',  value: 1800 },
+  { label: '1 hour',  value: 3600 },
+  { label: '2 hours', value: 7200 },
+  { label: 'Custom',  value: 0    },
+]
+
+export function CreateOfferClient() {
+  const router               = useRouter()
+  const { address, isConnected } = useAccount()
+  const { formatted: balance }   = useUSDCBalance()
+
+  const [orderType,     setOrderType]     = useState<OrderType>('market')
+  const [localCurrency, setLocalCurrency] = useState('NGN')
+  const [usdcAmount,    setUsdcAmount]    = useState('')
+  const [limitOffset,   setLimitOffset]   = useState(0)
+  const [timerOption,   setTimerOption]   = useState(1800)
+  const [customTimer,   setCustomTimer]   = useState('')
+  const [submitted,     setSubmitted]     = useState(false)
+
+  const { createOffer, isLoading, error } = useP2P()
+  const { rate: fxRate } = useRate(`${localCurrency}/USDC`)
+  const marketRate = fxRate?.rate ?? 0
+
+  const effectiveRate = orderType === 'market'
+    ? marketRate
+    : marketRate * (1 + limitOffset / 100)
+
+  const localAmount = usdcAmount && effectiveRate > 0
+    ? parseFloat(usdcAmount) * effectiveRate
+    : 0
+
+  const timerSeconds = timerOption === 0
+    ? (parseInt(customTimer) || 0) * 60
+    : timerOption
+
+  const rateVsMarket = orderType === 'limit' ? limitOffset : 0
+
+  async function handleCreate() {
+    if (!usdcAmount || localAmount <= 0 || timerSeconds < 300) return
+    try {
+      await createOffer({
+        usdcAmount:        parseFloat(usdcAmount),
+        localCurrency,
+        localAmount,
+        orderType,
+        limitRate:         orderType === 'limit' ? effectiveRate : undefined,
+        makerTimerSeconds: timerSeconds,
+      })
+      setSubmitted(true)
+      setTimeout(() => router.push('/marketplace'), 2500)
+    } catch {}
+  }
+
+  if (!isConnected) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <p className="text-sm text-[#64748B]">Connect your wallet to create an offer.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <div className="mb-6 flex items-center gap-3">
+        <Link href="/marketplace">
+          <button className="rounded-lg border border-[#1B2B4B] p-2 text-[#64748B] hover:text-[#E2E8F0]">
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+        </Link>
+        <div>
+          <h1 className="text-xl font-semibold text-[#E2E8F0]">Create P2P offer</h1>
+          <p className="text-sm text-[#64748B]">Lock USDC in escrow — perpetual until filled or cancelled.</p>
+        </div>
+      </div>
+
+      <div className="w-full max-w-md space-y-4">
+
+        {/* Order type tabs */}
+        <div className="flex rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-1">
+          <button onClick={() => setOrderType('market')}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors
+              ${orderType === 'market' ? 'bg-[#378ADD] text-white' : 'text-[#64748B] hover:text-[#E2E8F0]'}`}>
+            <TrendingUp className="h-4 w-4" /> Market order
+          </button>
+          <button onClick={() => setOrderType('limit')}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors
+              ${orderType === 'limit' ? 'bg-[#378ADD] text-white' : 'text-[#64748B] hover:text-[#E2E8F0]'}`}>
+            <Sliders className="h-4 w-4" /> Limit order
+          </button>
+        </div>
+
+        {/* Description */}
+        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-3 text-xs text-[#64748B]">
+          <div className="flex items-start gap-2">
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#378ADD]" />
+            {orderType === 'market'
+              ? 'Market order uses the live exchange rate. Local amount is calculated automatically.'
+              : 'Limit order lets you set a custom rate within ±5% of the market rate.'}
+          </div>
+        </div>
+
+        {/* USDC + currency */}
+        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <label className="text-xs font-medium uppercase tracking-wider text-[#64748B]">
+              USDC to lock in escrow
+            </label>
+            <span className="text-xs text-[#64748B]">
+              Balance: <span className="text-[#E2E8F0]">{balance}</span>
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <select value={localCurrency} onChange={(e) => setLocalCurrency(e.target.value)}
+              className="rounded-lg border border-[#1B2B4B] bg-[#080D1B] px-3 py-2 text-sm text-[#E2E8F0] outline-none">
+              {CURRENCIES.map(c => (
+                <option key={c} value={c}>{CURRENCY_FLAG[c]} {c}</option>
+              ))}
+            </select>
+            <Input type="number" placeholder="0.00" value={usdcAmount}
+              onChange={(e) => setUsdcAmount(e.target.value)}
+              className="flex-1 font-mono text-lg" />
+          </div>
+        </div>
+
+        {/* Rate display + limit slider */}
+        {marketRate > 0 && (
+          <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
+            <div className="mb-2 flex items-center justify-between text-xs">
+              <span className="text-[#64748B]">Live market rate</span>
+              <span className="font-mono text-[#E2E8F0]">1 USDC = {marketRate.toLocaleString()} {localCurrency}</span>
+            </div>
+            {orderType === 'limit' && (
+              <div className="mt-3">
+                <div className="mb-2 flex items-center justify-between text-xs">
+                  <span className="text-[#64748B]">Your rate</span>
+                  <span className={`font-medium ${limitOffset > 0 ? 'text-emerald-400' : limitOffset < 0 ? 'text-red-400' : 'text-[#E2E8F0]'}`}>
+                    {limitOffset > 0 ? '+' : ''}{limitOffset.toFixed(1)}% · 1 USDC = {effectiveRate.toLocaleString(undefined, { maximumFractionDigits: 2 })} {localCurrency}
+                  </span>
+                </div>
+                <input type="range" min="-5" max="5" step="0.5" value={limitOffset}
+                  onChange={(e) => setLimitOffset(parseFloat(e.target.value))}
+                  className="w-full accent-[#378ADD]" />
+                <div className="mt-1 flex justify-between text-[10px] text-[#64748B]">
+                  <span>-5%</span><span>Market</span><span>+5%</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Auto-calculated receive */}
+        {localAmount > 0 && (
+          <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-[#64748B]">You will receive</p>
+                <p className="mt-1 font-mono text-2xl font-semibold text-[#E2E8F0]">
+                  {localAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  <span className="ml-2 text-base text-[#64748B]">{localCurrency}</span>
+                </p>
+              </div>
+              <Badge variant={orderType === 'market' ? 'arc' : 'warning'}>
+                {orderType === 'market' ? 'Market rate' : `${limitOffset > 0 ? '+' : ''}${limitOffset}%`}
+              </Badge>
+            </div>
+          </div>
+        )}
+
+        {/* Timer */}
+        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <label className="text-xs font-medium uppercase tracking-wider text-[#64748B]">
+              Taker completion window
+            </label>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {TIMER_OPTIONS.map((opt) => (
+              <button key={opt.value} onClick={() => setTimerOption(opt.value)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors
+                  ${timerOption === opt.value
+                    ? 'bg-[#378ADD] text-white'
+                    : 'border border-[#1B2B4B] text-[#64748B] hover:text-[#E2E8F0]'}`}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          {timerOption === 0 && (
+            <div className="mt-3 flex items-center gap-2">
+              <Input type="number" placeholder="Minutes (min 5, max 1440)"
+                value={customTimer} onChange={(e) => setCustomTimer(e.target.value)}
+                className="font-mono" />
+              <span className="text-xs text-[#64748B]">min</span>
+            </div>
+          )}
+          <p className="mt-2 text-xs text-[#64748B]">
+            If taker doesn't send {localCurrency} within this window, the offer automatically cancels and USDC returns to you.
+          </p>
+        </div>
+
+        {/* Summary */}
+        {usdcAmount && localAmount > 0 && timerSeconds > 0 && (
+          <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4 text-xs">
+            <p className="mb-2 font-medium text-[#E2E8F0]">Order summary</p>
+            <div className="space-y-1.5 text-[#64748B]">
+              {[
+                ['Order type', orderType],
+                ['You lock',   `${usdcAmount} USDC`],
+                ['You receive', `${localAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${localCurrency}`],
+                ['Taker window', timerSeconds >= 3600 ? `${timerSeconds/3600}h` : `${timerSeconds/60}min`],
+                ['Duration',    'Perpetual until filled or cancelled'],
+                ['Platform fee', `${(parseFloat(usdcAmount) * 0.003).toFixed(4)} USDC (0.3%)`],
+              ].map(([label, val]) => (
+                <div key={label} className="flex justify-between">
+                  <span>{label}</span>
+                  <span className="text-[#E2E8F0]">{val}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Trade flow reminder */}
+        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-3 text-xs text-[#64748B]">
+          <p className="mb-1 font-medium text-[#E2E8F0]">Trade flow</p>
+          <ol className="space-y-0.5">
+            {[
+              'You lock USDC in vault escrow',
+              `Taker accepts + sends ${localCurrency} to you within the window`,
+              'Taker confirms: "I sent the money"',
+              'You confirm: "I received it"',
+              'Platform releases USDC to taker',
+            ].map((s, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="shrink-0 text-[#378ADD]">{i+1}.</span>
+                <span>{s}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        {submitted ? (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-900/50 bg-emerald-900/20 p-4 text-sm text-emerald-400">
+            <CheckCircle className="h-4 w-4 shrink-0" />
+            Offer created! Redirecting to marketplace…
+          </div>
+        ) : (
+          <Button className="w-full" size="lg" onClick={handleCreate}
+            disabled={
+              isLoading || !usdcAmount || localAmount <= 0 || timerSeconds < 300 ||
+              (timerOption === 0 && (!customTimer || parseInt(customTimer) < 5))
+            }>
+            {isLoading
+              ? 'Locking USDC in escrow…'
+              : `Create ${orderType} order — ${usdcAmount || '0'} USDC`}
+          </Button>
+        )}
+
+        {error && (
+          <div className="rounded-lg bg-red-900/20 px-4 py-3 text-xs text-red-400">{error}</div>
+        )}
+      </div>
+    </div>
+  )
+}

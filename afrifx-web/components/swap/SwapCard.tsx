@@ -1,0 +1,203 @@
+'use client'
+import { useState, useEffect } from 'react'
+import { useAccount } from 'wagmi'
+import { ArrowUpDown, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
+import { CurrencyInput } from './CurrencyInput'
+import { RateDisplay } from './RateDisplay'
+import { Button } from '@/components/ui/button'
+import { useRate } from '@/hooks/useFXRate'
+import { useSwap } from '@/hooks/useSwap'
+import { useArcTransaction } from '@/hooks/useArcTransaction'
+import { SPREAD_BPS } from '@/lib/contracts'
+import type { Currency } from '@/types'
+
+const LOCAL_CURRENCIES: Currency[] = ['NGN', 'GHS', 'KES', 'ZAR', 'EGP']
+
+export function SwapCard() {
+  const { isConnected } = useAccount()
+
+  const [fromCurrency, setFromCurrency] = useState<Currency>('NGN')
+  const [toCurrency,   setToCurrency]   = useState<Currency>('USDC')
+  const [fromAmount,   setFromAmount]   = useState('')   // empty on load
+  const [toAmount,     setToAmount]     = useState('')   // empty on load
+  const [lastTx,       setLastTx]       = useState<{ hash: string; from: string; to: string } | null>(null)
+
+  // Always resolve the LOCAL/USDC pair regardless of direction
+  const localCurrency = toCurrency === 'USDC' ? fromCurrency : toCurrency
+  const pair = `${localCurrency}/USDC`
+
+  const { rate: fxRate, isLoading: rateLoading } = useRate(pair)
+  const rate   = fxRate?.rate ?? 0
+  const spread = rate > 0 && fromAmount
+    ? (parseFloat(fromAmount) / (toCurrency === 'USDC' ? rate : 1)) * (SPREAD_BPS / 10_000)
+    : 0
+  const netFee = 0.001
+
+  const { buildQuote, execute, isLoading: swapping, error, txHash } = useSwap()
+  const { isSuccess, explorerUrl } = useArcTransaction(txHash ?? undefined)
+
+  // Recalculate receive amount whenever inputs change
+  useEffect(() => {
+    const from = parseFloat(fromAmount)
+    if (!fromAmount || isNaN(from) || from <= 0 || rate === 0) {
+      setToAmount('')
+      return
+    }
+
+    let result: number
+    if (toCurrency === 'USDC') {
+      result = from / rate - spread - netFee
+    } else {
+      result = from * rate
+    }
+
+    setToAmount(result > 0 ? result.toFixed(toCurrency === 'USDC' ? 4 : 2) : '')
+  }, [fromAmount, rate, toCurrency, spread])
+
+  // Reset form after successful transaction
+  useEffect(() => {
+    if (isSuccess && txHash) {
+      setLastTx({
+        hash: txHash,
+        from: `${parseFloat(fromAmount).toLocaleString()} ${fromCurrency}`,
+        to:   `${toAmount} ${toCurrency}`,
+      })
+      // Reset fields
+      setFromAmount('')
+      setToAmount('')
+    }
+  }, [isSuccess, txHash])
+
+  function flip() {
+    const prevFrom   = fromCurrency
+    const prevTo     = toCurrency
+    const prevToAmt  = toAmount
+    setFromCurrency(prevTo)
+    setToCurrency(prevFrom)
+    setFromAmount(prevToAmt || '')
+    setToAmount('')
+  }
+
+  function handleFromAmountChange(val: string) {
+    // Only allow positive numbers
+    if (val === '' || /^\d*\.?\d*$/.test(val)) {
+      setFromAmount(val)
+      setLastTx(null) // clear success banner when user starts typing again
+    }
+  }
+
+  async function handleConvert() {
+    if (!isConnected || rate === 0 || !fromAmount) return
+    setLastTx(null)
+    const quote = buildQuote(fromCurrency, toCurrency, parseFloat(fromAmount), rate)
+    await execute(quote)
+  }
+
+  const fromCurrencies = toCurrency === 'USDC' ? LOCAL_CURRENCIES : (['USDC'] as Currency[])
+  const toCurrencies   = fromCurrency === 'USDC' ? LOCAL_CURRENCIES : (['USDC', 'EURC'] as Currency[])
+  const canConvert     = isConnected && rate > 0 && !!fromAmount && parseFloat(fromAmount) > 0 && !swapping
+
+  return (
+    <div className="w-full max-w-md rounded-2xl border border-[#1B2B4B] bg-[#0F1729] p-5 shadow-xl">
+
+      {/* Live rate banner */}
+      {fxRate && rate > 0 && (
+        <div className="mb-4 flex items-center justify-between rounded-lg bg-[#080D1B] px-3 py-2 text-xs">
+          <span className="text-[#64748B]">Live rate</span>
+          <span className="font-mono font-medium text-[#E2E8F0]">
+            1 USDC = {fxRate.rate.toLocaleString()} {localCurrency}
+          </span>
+          <span className={fxRate.change24h >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+            {fxRate.change24h >= 0 ? '+' : ''}{fxRate.change24h.toFixed(2)}%
+          </span>
+        </div>
+      )}
+
+      <CurrencyInput
+        label="You send"
+        amount={fromAmount}
+        currency={fromCurrency}
+        onAmountChange={handleFromAmountChange}
+        onCurrencyChange={(c) => { setFromCurrency(c); setFromAmount(''); setToAmount('') }}
+        currencies={fromCurrencies}
+      />
+
+      <div className="my-1 flex justify-center">
+        <button
+          onClick={flip}
+          className="rounded-full border border-[#1B2B4B] bg-[#0F1729] p-2 text-[#64748B] transition-transform hover:rotate-180 hover:text-[#E2E8F0]"
+          aria-label="Flip currencies"
+        >
+          <ArrowUpDown className="h-4 w-4" />
+        </button>
+      </div>
+
+      <CurrencyInput
+        label="You receive (estimated)"
+        amount={toAmount}
+        currency={toCurrency}
+        onCurrencyChange={(c) => { setToCurrency(c); setToAmount('') }}
+        currencies={toCurrencies}
+        readOnly
+        className="mb-4"
+      />
+
+      <RateDisplay
+        fromCurrency={fromCurrency}
+        toCurrency={toCurrency}
+        rate={rate}
+        spreadFee={spread}
+        networkFee={netFee}
+        isLoading={rateLoading || rate === 0}
+      />
+
+      <Button
+        className="mt-4 w-full"
+        size="lg"
+        onClick={handleConvert}
+        disabled={!canConvert}
+      >
+        {swapping ? (
+          <><Loader2 className="h-4 w-4 animate-spin" /> Settling on Arc…</>
+        ) : !isConnected ? (
+          'Connect wallet to convert'
+        ) : rate === 0 ? (
+          'Fetching live rate…'
+        ) : !fromAmount ? (
+          'Enter an amount'
+        ) : (
+          `Convert ${parseFloat(fromAmount).toLocaleString()} ${fromCurrency} → ${toCurrency}`
+        )}
+      </Button>
+
+      {/* Error state */}
+      {error && (
+        <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-900/50 bg-red-900/20 px-3 py-2.5 text-xs text-red-400">
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          {error}
+        </div>
+      )}
+
+      {/* Success state — shows last tx, clears when user types again */}
+      {lastTx && (
+        <a
+          href={`https://testnet.arcscan.app/tx/${lastTx.hash}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 flex items-start gap-2 rounded-lg border border-emerald-900/50 bg-emerald-900/20 px-3 py-2.5 text-xs text-emerald-400 hover:underline"
+        >
+          <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <div>
+            <p className="font-medium">Conversion successful · settled on Arc</p>
+            <p className="mt-0.5 text-emerald-500">
+              {lastTx.from} → {lastTx.to}
+            </p>
+            <p className="mt-0.5 font-mono text-[10px] text-emerald-600">
+              {lastTx.hash.slice(0, 20)}… · View on ArcScan ↗
+            </p>
+          </div>
+        </a>
+      )}
+    </div>
+  )
+}

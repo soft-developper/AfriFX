@@ -1,0 +1,29 @@
+// All available admin permissions
+export const PERMISSIONS = {
+  VIEW_DASHBOARD:    'view_dashboard',
+  MANAGE_OFFERS:     'manage_offers',     // force release / cancel offers
+  RESOLVE_DISPUTES:  'resolve_disputes',  // settle disputes
+  MANAGE_USERS:      'manage_users',      // edit user profiles, warnings
+  SUSPEND_USERS:     'suspend_users',     // suspend user accounts
+  VIEW_ANALYTICS:    'view_analytics',    // platform analytics
+  MANAGE_TREASURY:   'manage_treasury',   // platform treasury / fees
+  MANAGE_ADMINS:     'manage_admins',     // add/remove/edit sub-admins
+  VIEW_AUDIT_LOG:    'view_audit_log',    // see audit trail
+} as const
+
+export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]
+
+export const ALL_PERMISSIONS = Object.values(PERMISSIONS)
+
+// Human-readable labels + descriptions for the UI
+export const PERMISSION_META: Record<string, { label: string; description: string }> = {
+  view_dashboard:   { label: 'View Dashboard',    description: 'Access the admin overview and stats' },
+  manage_offers:    { label: 'Manage Offers',     description: 'Force release or cancel P2P offers' },
+  resolve_disputes: { label: 'Resolve Disputes',  description: 'Settle disputes — release or refund USDC' },
+  manage_users:     { label: 'Manage Users',      description: 'Edit profiles, issue warnings' },
+  suspend_users:    { label: 'Suspend Users',     description: 'Suspend or ban user accounts' },
+  view_analytics:   { label: 'View Analytics',    description: 'See platform-wide analytics and charts' },
+  manage_treasury:  { label: 'Manage Treasury',   description: 'View and manage platform fees' },
+  manage_admins:    { label: 'Manage Admins',     description: 'Add, edit, suspend sub-admins' },
+  view_audit_log:   { label: 'View Audit Log',    description: 'Review all admin activity' },
+}
