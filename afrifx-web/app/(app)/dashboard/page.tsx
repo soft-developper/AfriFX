@@ -159,7 +159,7 @@ function DashboardContent() {
             <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-8 animate-pulse rounded bg-[#1B2B4B]" />)}</div>
           ) : stats?.pairBreakdown.length ? (
             <div className="space-y-2.5">
-              {stats.pairBreakdown.map(p => (
+              {stats.pairBreakdown.map((p: { pair: string; volume: number; txs: number }) => (
                 <div key={p.pair} className="flex items-center justify-between text-xs">
                   <span className="font-medium text-[#E2E8F0]">{p.pair}</span>
                   <div className="text-right">
