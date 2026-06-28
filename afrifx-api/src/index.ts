@@ -32,6 +32,15 @@ app.use(corsMiddleware)
 app.use(express.json())
 app.use(rateLimitMiddleware)
 
+app.get('/debug-env', (_req, res) => {
+  res.json({
+    turso_url:    process.env.TURSO_DATABASE_URL?.slice(0, 40) + '...' ?? 'NOT SET',
+    cors_origin:  process.env.CORS_ORIGIN ?? 'NOT SET',
+    frontend_url: process.env.FRONTEND_URL ?? 'NOT SET',
+    node_env:     process.env.NODE_ENV ?? 'NOT SET',
+  })
+})
+
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: Date.now() }))
 
 app.use('/rates',          ratesRouter)
