@@ -31,7 +31,8 @@ export default function HistoryPage() {
 
   // Group corridor steps together
   const corridorGroups = new Map<string, Transaction[]>()
-  const standalone: Transaction[] = []
+  const standalone: Transaction[] = [];
+
 
   (filtered as any[]).forEach((tx) => {
     if (tx.corridor_id ?? tx.corridorId) {
