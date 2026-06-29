@@ -158,7 +158,7 @@ export default function AdminSubAdmins() {
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setShowForm(false)}>Cancel</Button>
             <Button className="flex-1" onClick={createAdmin}
-              disabled={!username || !email || !password || !wallet || permissions.length === 0 || busy === 'create'}>
+              disabled={!username || !email || !password || !wallet || selectedPerms.length === 0 || busy === 'create'}>
               {busy === 'create' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create sub-admin'}
             </Button>
           </div>
