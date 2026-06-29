@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAccount, useConnect } from 'wagmi'
 import { useRouter } from 'next/navigation'
 import { useAdminAuth } from '@/hooks/useAdminAuth'
@@ -41,16 +41,24 @@ export default function AdminLoginPage() {
   const [error,      setError]      = useState<string|null>(null)
   const [loggingIn,  setLoggingIn]  = useState(false)
 
+  // Guards to prevent repeated calls
+  const verifyCalledRef  = useRef(false)
+  const redirectCalledRef = useRef(false)
+
+  // Already logged in → redirect once
   useEffect(() => {
-    if (admin) {
+    if (admin && !redirectCalledRef.current) {
+      redirectCalledRef.current = true
       const perms: string[] = (admin as any).permissions ?? []
       const role: string    = (admin as any).role ?? ''
       router.push(getRedirectPath(role, perms))
     }
   }, [admin, router])
 
+  // Auto-verify wallet once when connected
   useEffect(() => {
-    if (isConnected && address && step === 1) {
+    if (isConnected && address && step === 1 && !verifyCalledRef.current && !walletOk && !checking) {
+      verifyCalledRef.current = true
       handleVerifyWallet()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,9 +75,11 @@ export default function AdminLoginPage() {
         setTimeout(() => setStep(2), 800)
       } else {
         setError(result.error ?? 'This wallet is not authorised for admin access')
+        verifyCalledRef.current = false // allow retry
       }
     } catch {
       setError('Failed to verify wallet')
+      verifyCalledRef.current = false // allow retry
     } finally {
       setChecking(false)
     }
@@ -153,8 +163,13 @@ export default function AdminLoginPage() {
                 </div>
               ) : (
                 <div className="rounded-lg bg-[#080D1B] p-3 text-center">
-                  <p className="font-mono text-xs text-[#64748B]">{address?.slice(0,10)}…{address?.slice(-8)}</p>
-                  <Button size="sm" className="mt-2" onClick={handleVerifyWallet}>
+                  <p className="font-mono text-xs text-[#64748B]">
+                    {address?.slice(0,10)}…{address?.slice(-8)}
+                  </p>
+                  <Button size="sm" className="mt-2" onClick={() => {
+                    verifyCalledRef.current = false
+                    handleVerifyWallet()
+                  }}>
                     Verify wallet <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
                 </div>
