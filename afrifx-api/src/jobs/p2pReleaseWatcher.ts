@@ -101,37 +101,6 @@ export function startP2PReleaseWatcher() {
     const now    = Math.floor(Date.now() / 1000)
     const ago24h = now - 86400
     try {
-      // Case A: dispute raised with auto_release_at passed
-      const disputeRows = await db.run(sql`
-        SELECT o.id FROM p2p_offers o
-        JOIN disputes d ON d.offer_id = o.id
-        WHERE o.status          = 'accepted'
-          AND o.taker_confirmed = 1
-          AND o.maker_confirmed = 0
-          AND d.status          = 'open'
-          AND d.dispute_type = 'maker_silent'
-          AND d.auto_release_at IS NOT NULL
-          AND d.auto_release_at < ${now}
-        LIMIT 5
-      `)
-      for (const r of parseRows(disputeRows)) {
-        const offerId = r.id ?? r[0]
-        console.log(`[P2PWatcher] Job3A: auto-releasing after 24h dispute: ${offerId.slice(0,18)}…`)
-        await db.run(sql`
-          UPDATE disputes SET
-            status      = 'resolved',
-            resolution_type = 'release_to_taker',
-            admin_resolved_by = 'system',
-            admin_notes = 'Auto-released after 24h maker silence',
-            admin_resolved_at = ${now}
-          WHERE offer_id = ${offerId} AND status = 'open'
-        `)
-        await db.run(sql`
-          UPDATE p2p_offers SET maker_confirmed = 1, updated_at = ${now}
-          WHERE id = ${offerId}
-        `)
-      }
-
       // Case B: no dispute raised but 24h+ since maker_deadline passed
       const silentRows = await db.run(sql`
         SELECT id FROM p2p_offers

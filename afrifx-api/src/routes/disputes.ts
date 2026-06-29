@@ -57,7 +57,7 @@ router.post('/', async (req, res) => {
 
   const now = Math.floor(Date.now() / 1000)
   // Auto-release 24h from now if dispute is maker_silent
-  const autoReleaseAt = disputeType === 'maker_silent' ? now + 86400 : null
+  const autoReleaseAt = null // No auto-release when dispute raised — admin must resolve
 
   try {
     // Check offer exists and is in accepted state
