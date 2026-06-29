@@ -1,7 +1,7 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+const API       = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 const TOKEN_KEY = 'afrifx_admin_token'
 
 export interface AdminSession {
@@ -15,48 +15,48 @@ export interface AdminSession {
 export function useAdminAuth() {
   const [admin,   setAdmin]   = useState<AdminSession | null>(null)
   const [loading, setLoading] = useState(true)
+  const fetchedRef            = useRef(false)
 
-  // Token stored in memory + sessionStorage (cleared on tab close)
-  const getToken = () => typeof window !== 'undefined' ? sessionStorage.getItem(TOKEN_KEY) : null
+  const getToken = () =>
+    typeof window !== 'undefined' ? sessionStorage.getItem(TOKEN_KEY) : null
 
-  const verifySession = useCallback(async () => {
+  // Verify session ONCE on mount — never again
+  useEffect(() => {
+    if (fetchedRef.current) return
+    fetchedRef.current = true
+
     const token = getToken()
     if (!token) { setLoading(false); return }
-    try {
-      const res = await fetch(`${API}/admin/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setAdmin(data.admin)
-      } else {
+
+    fetch(`${API}/admin/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => {
+        if (res.ok) return res.json()
         sessionStorage.removeItem(TOKEN_KEY)
-      }
-    } catch {
-      sessionStorage.removeItem(TOKEN_KEY)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+        return null
+      })
+      .then(data => {
+        if (data?.admin) setAdmin(data.admin)
+      })
+      .catch(() => { sessionStorage.removeItem(TOKEN_KEY) })
+      .finally(() => setLoading(false))
+  }, []) // Empty deps — runs ONCE only
 
-  useEffect(() => { verifySession() }, [verifySession])
-
-  // Step 1: verify wallet is admin
   async function verifyWallet(wallet: string) {
     const res = await fetch(`${API}/admin/auth/verify-wallet`, {
-      method: 'POST',
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ wallet }),
+      body:    JSON.stringify({ wallet }),
     })
     return res.json()
   }
 
-  // Step 2: login with credentials
   async function login(identifier: string, password: string, wallet?: string) {
     const res = await fetch(`${API}/admin/auth/login`, {
-      method: 'POST',
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier, password, wallet }),
+      body:    JSON.stringify({ identifier, password, wallet }),
     })
     const data = await res.json()
     if (res.ok && data.token) {
@@ -71,11 +71,12 @@ export function useAdminAuth() {
     const token = getToken()
     if (token) {
       await fetch(`${API}/admin/auth/logout`, {
-        method: 'POST',
+        method:  'POST',
         headers: { Authorization: `Bearer ${token}` },
       }).catch(() => {})
     }
     sessionStorage.removeItem(TOKEN_KEY)
+    fetchedRef.current = false
     setAdmin(null)
   }
 
@@ -88,15 +89,14 @@ export function useAdminAuth() {
   return { admin, loading, verifyWallet, login, logout, hasPermission, getToken }
 }
 
-// Authenticated fetch helper
 export function adminFetch(path: string, options: RequestInit = {}) {
   const token = typeof window !== 'undefined' ? sessionStorage.getItem(TOKEN_KEY) : null
   return fetch(`${API}${path}`, {
     ...options,
     headers: {
       ...options.headers,
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      'Content-Type':  'application/json',
+      Authorization:   `Bearer ${token}`,
     },
   })
 }
