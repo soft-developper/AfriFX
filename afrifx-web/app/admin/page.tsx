@@ -72,7 +72,9 @@ export default function AdminLoginPage() {
       if (result.success) {
         const perms: string[] = (result as any).admin?.permissions ?? []
         const role: string    = (result as any).admin?.role ?? ''
-        router.push(getRedirectPath(role, perms))
+        // Use hard navigation — avoids 307 redirect stripping Authorization header
+        window.location.href = getRedirectPath(role, perms)
+        return
       } else {
         setError((result as any).error ?? 'Login failed')
       }

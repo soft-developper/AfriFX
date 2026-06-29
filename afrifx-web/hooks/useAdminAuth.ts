@@ -1,7 +1,11 @@
 'use client'
 import { useState, useEffect } from 'react'
 
-const API       = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+const API_RAW   = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+// Force HTTPS in production to avoid 307 redirects stripping Authorization header
+const API       = typeof window !== 'undefined' && window.location.protocol === 'https:'
+  ? API_RAW.replace('http://', 'https://')
+  : API_RAW
 const TOKEN_KEY = 'afrifx_admin_token'
 
 // Module-level cache — persists across re-renders and component remounts

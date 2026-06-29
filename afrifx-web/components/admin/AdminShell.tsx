@@ -37,12 +37,20 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     if (loading) return
     if (redirected.current) return
 
+    // Double-check sessionStorage directly in case module cache missed it
+    const tokenInStorage = typeof window !== 'undefined'
+      ? sessionStorage.getItem('afrifx_admin_token')
+      : null
+
     // Not logged in → go to login
-    if (!admin) {
+    if (!admin && !tokenInStorage) {
       redirected.current = true
       router.push('/admin')
       return
     }
+
+    // Token exists but admin not loaded yet — wait
+    if (!admin && tokenInStorage) return
 
     // Super admin → no restrictions
     if (admin.role === 'super_admin') return
