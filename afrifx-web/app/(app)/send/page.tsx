@@ -31,6 +31,9 @@ export default function SendPage() {
       args: [to as `0x${string}`, parseUnits(amount, USDC_DECIMALS)],
     })
     setTxHash(hash)
+    // Reset form after successful send
+    setTo('')
+    setAmount('')
   }
 
   return (
