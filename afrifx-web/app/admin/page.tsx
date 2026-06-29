@@ -5,10 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAdminAuth } from '@/hooks/useAdminAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  Shield, Wallet, Lock, Loader2,
-  CheckCircle, AlertCircle, ArrowRight,
-} from 'lucide-react'
+import { Shield, Wallet, Lock, Loader2, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react'
 
 const PERMISSION_PAGES = [
   { perm: 'manage_offers',    path: '/admin/offers'     },
@@ -24,7 +21,7 @@ function getRedirectPath(role: string, permissions: string[]): string {
     return '/admin/dashboard'
   }
   const first = PERMISSION_PAGES.find(p => permissions.includes(p.perm))
-  return first ? first.path : '/admin/no-access'
+  return first ? first.path : '/admin/dashboard'
 }
 
 export default function AdminLoginPage() {
@@ -41,46 +38,30 @@ export default function AdminLoginPage() {
   const [error,      setError]      = useState<string|null>(null)
   const [loggingIn,  setLoggingIn]  = useState(false)
 
-  // NO useEffect — no auto-verify — user must click button
-  // This prevents the infinite verify-wallet loop
-
   async function handleVerifyWallet() {
     if (!address || checking) return
-    setChecking(true)
-    setError(null)
+    setChecking(true); setError(null)
     try {
       const result = await verifyWallet(address)
-      if (result.valid) {
-        setWalletOk(true)
-        setTimeout(() => setStep(2), 600)
-      } else {
-        setError(result.error ?? 'This wallet is not authorised for admin access')
-      }
-    } catch {
-      setError('Failed to verify wallet — check your connection')
-    } finally {
-      setChecking(false)
-    }
+      if (result.valid) { setWalletOk(true); setTimeout(() => setStep(2), 600) }
+      else setError(result.error ?? 'Wallet not authorised for admin access')
+    } catch { setError('Failed to verify — check your connection') }
+    finally  { setChecking(false) }
   }
 
   async function handleLogin() {
     if (!identifier || !password || loggingIn) return
-    setLoggingIn(true)
-    setError(null)
+    setLoggingIn(true); setError(null)
     try {
       const result = await login(identifier, password, address)
       if (result.success) {
         const perms: string[] = (result as any).admin?.permissions ?? []
         const role: string    = (result as any).admin?.role ?? ''
-        // Use hard navigation — avoids 307 redirect stripping Authorization header
-        window.location.href = getRedirectPath(role, perms)
-        return
+        router.push(getRedirectPath(role, perms))
       } else {
         setError((result as any).error ?? 'Login failed')
       }
-    } finally {
-      setLoggingIn(false)
-    }
+    } finally { setLoggingIn(false) }
   }
 
   return (
@@ -94,7 +75,6 @@ export default function AdminLoginPage() {
           <p className="text-sm text-[#64748B]">Secure two-factor access</p>
         </div>
 
-        {/* Step indicator */}
         <div className="mb-6 flex items-center justify-center gap-2">
           <div className={`flex items-center gap-2 ${step >= 1 ? 'text-[#378ADD]' : 'text-[#64748B]'}`}>
             <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold
@@ -114,7 +94,6 @@ export default function AdminLoginPage() {
         </div>
 
         <div className="rounded-2xl border border-[#1B2B4B] bg-[#0F1729] p-6">
-          {/* Step 1: Wallet */}
           {step === 1 && (
             <div className="space-y-4">
               <div className="text-center">
@@ -122,10 +101,9 @@ export default function AdminLoginPage() {
                 <p className="text-sm font-medium text-[#E2E8F0]">Connect admin wallet</p>
                 <p className="text-xs text-[#64748B]">Connect then click Verify</p>
               </div>
-
               {!isConnected ? (
                 <div className="space-y-2">
-                  {connectors.slice(0, 3).map(c => (
+                  {connectors.slice(0,3).map(c => (
                     <Button key={c.id} className="w-full" variant="outline"
                       onClick={() => connect({ connector: c })}>
                       <Wallet className="h-4 w-4" /> Connect {c.name}
@@ -138,22 +116,18 @@ export default function AdminLoginPage() {
                 </div>
               ) : (
                 <div className="rounded-lg bg-[#080D1B] p-4 text-center space-y-3">
-                  <p className="font-mono text-xs text-[#378ADD]">
-                    {address?.slice(0,10)}…{address?.slice(-8)}
-                  </p>
-                  <p className="text-xs text-[#64748B]">Connected — click below to verify</p>
+                  <p className="font-mono text-xs text-[#378ADD]">{address?.slice(0,10)}…{address?.slice(-8)}</p>
+                  <p className="text-xs text-[#64748B]">Connected — click to verify</p>
                   <Button className="w-full" onClick={handleVerifyWallet} disabled={checking}>
                     {checking
                       ? <><Loader2 className="h-4 w-4 animate-spin" /> Verifying…</>
-                      : <>Verify wallet <ArrowRight className="h-3.5 w-3.5" /></>
-                    }
+                      : <>Verify wallet <ArrowRight className="h-3.5 w-3.5" /></>}
                   </Button>
                 </div>
               )}
             </div>
           )}
 
-          {/* Step 2: Credentials */}
           {step === 2 && (
             <div className="space-y-4">
               <div className="text-center">
@@ -173,8 +147,7 @@ export default function AdminLoginPage() {
                 disabled={!identifier || !password || loggingIn}>
                 {loggingIn
                   ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</>
-                  : <><Lock className="h-4 w-4" /> Sign in</>
-                }
+                  : <><Lock className="h-4 w-4" /> Sign in</>}
               </Button>
               <button onClick={() => { setStep(1); setWalletOk(false); setError(null) }}
                 className="w-full text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors">
@@ -189,10 +162,7 @@ export default function AdminLoginPage() {
             </div>
           )}
         </div>
-
-        <p className="mt-4 text-center text-xs text-[#64748B]">
-          🔒 Restricted area — all actions are logged
-        </p>
+        <p className="mt-4 text-center text-xs text-[#64748B]">🔒 Restricted area — all actions are logged</p>
       </div>
     </div>
   )

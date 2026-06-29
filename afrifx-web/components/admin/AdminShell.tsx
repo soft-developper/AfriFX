@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAdminAuth } from '@/hooks/useAdminAuth'
@@ -18,75 +18,42 @@ const NAV = [
   { href: '/admin/audit',      icon: ScrollText,      label: 'Audit log',  perm: 'view_audit_log'   },
 ]
 
-const PERMISSION_PAGES = [
-  { perm: 'manage_offers',    path: '/admin/offers'     },
-  { perm: 'resolve_disputes', path: '/admin/disputes'   },
-  { perm: 'manage_users',     path: '/admin/users'      },
-  { perm: 'view_analytics',   path: '/admin/analytics'  },
-  { perm: 'manage_admins',    path: '/admin/sub-admins' },
-  { perm: 'view_audit_log',   path: '/admin/audit'      },
-]
-
 export function AdminShell({ children }: { children: React.ReactNode }) {
-  const router        = useRouter()
-  const pathname      = usePathname()
-  const redirected    = useRef(false)
+  const router   = useRouter()
+  const pathname = usePathname()
   const { admin, loading, logout, hasPermission } = useAdminAuth()
 
   useEffect(() => {
-    if (loading) return
-    if (redirected.current) return
+    if (!loading && !admin) router.push('/admin')
+  }, [loading, admin, router])
 
-    // Double-check sessionStorage directly in case module cache missed it
-    const tokenInStorage = typeof window !== 'undefined'
-      ? sessionStorage.getItem('afrifx_admin_token')
-      : null
-
-    // Not logged in → go to login
-    if (!admin && !tokenInStorage) {
-      redirected.current = true
-      router.push('/admin')
-      return
-    }
-
-    // Token exists but admin not loaded yet — wait
-    if (!admin && tokenInStorage) return
-
-    // Super admin → no restrictions
-    if (admin?.role === 'super_admin') return
-
-    const perms = admin?.permissions ?? []
-
-    // Sub-admin on dashboard without permission → redirect to first allowed page
-    if (pathname === '/admin/dashboard' && !perms.includes('view_dashboard')) {
-      redirected.current = true
-      const first = PERMISSION_PAGES.find(p => perms.includes(p.perm))
-      router.push(first ? first.path : '/admin/no-access')
-      return
-    }
-
-    // Sub-admin with no permissions at all → no-access
-    if (admin && perms.length === 0) {
-      redirected.current = true
-      router.push('/admin/no-access')
-      return
-    }
-  }, [loading, admin, pathname, router])
-
-  // Reset redirect flag on pathname change
-  useEffect(() => {
-    redirected.current = false
-  }, [pathname])
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#080D1B]">
-        <Loader2 className="h-6 w-6 animate-spin text-[#378ADD]" />
-      </div>
-    )
-  }
+  if (loading) return (
+    <div className="flex min-h-screen items-center justify-center bg-[#080D1B]">
+      <Loader2 className="h-6 w-6 animate-spin text-[#378ADD]" />
+    </div>
+  )
 
   if (!admin) return null
+
+  // Sub-admin landing on dashboard without permission
+  // → redirect to their first permitted page
+  if (
+    typeof window !== 'undefined' &&
+    admin.role !== 'super_admin' &&
+    !admin.permissions.includes('view_dashboard') &&
+    window.location.pathname === '/admin/dashboard'
+  ) {
+    const PAGES = [
+      { perm: 'manage_offers',    path: '/admin/offers'     },
+      { perm: 'resolve_disputes', path: '/admin/disputes'   },
+      { perm: 'manage_users',     path: '/admin/users'      },
+      { perm: 'view_analytics',   path: '/admin/analytics'  },
+      { perm: 'manage_admins',    path: '/admin/sub-admins' },
+      { perm: 'view_audit_log',   path: '/admin/audit'      },
+    ]
+    const first = PAGES.find(p => admin.permissions.includes(p.perm))
+    if (first) { window.location.replace(first.path); return null }
+  }
 
   const visibleNav = NAV.filter(item => hasPermission(item.perm))
 
@@ -102,7 +69,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <Shield className="h-5 w-5 text-[#378ADD]" />
           <span className="font-semibold text-[#E2E8F0]">AfriFX Admin</span>
         </div>
-
         <nav className="flex-1 py-3">
           {visibleNav.map(({ href, icon: Icon, label }) => {
             const active = pathname === href
@@ -117,7 +83,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             )
           })}
         </nav>
-
         <div className="border-t border-[#1B2B4B] p-3 space-y-2">
           <div className="rounded-lg bg-[#080D1B] px-3 py-2">
             <p className="text-xs font-medium text-[#E2E8F0]">{admin.username}</p>
@@ -137,10 +102,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
       </aside>
-
-      <main className="flex-1 overflow-y-auto p-6">
-        {children}
-      </main>
+      <main className="flex-1 overflow-y-auto p-6">{children}</main>
     </div>
   )
 }
