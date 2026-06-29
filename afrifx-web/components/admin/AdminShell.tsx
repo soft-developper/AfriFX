@@ -22,6 +22,7 @@ const NAV = [
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const router   = useRouter()
   const pathname = usePathname()
+  const pathname = usePathname()
   const { admin, loading, logout, hasPermission } = useAdminAuth()
 
   useEffect(() => {

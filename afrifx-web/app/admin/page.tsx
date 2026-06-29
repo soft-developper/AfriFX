@@ -26,7 +26,23 @@ export default function AdminLoginPage() {
 
   // Already logged in → go to dashboard
   useEffect(() => {
-    if (admin) router.push('/admin/dashboard')
+    if (admin) // Redirect sub-admins to their first permitted page
+      const perms: string[] = data.admin?.permissions ?? []
+      const role = data.admin?.role ?? ''
+      if (role === 'super_admin' || perms.includes('view_dashboard')) {
+        router.push('/admin/dashboard')
+      } else {
+        const pages = [
+          { perm: 'manage_offers',    path: '/admin/offers'     },
+          { perm: 'resolve_disputes', path: '/admin/disputes'   },
+          { perm: 'manage_users',     path: '/admin/users'      },
+          { perm: 'view_analytics',   path: '/admin/analytics'  },
+          { perm: 'manage_admins',    path: '/admin/sub-admins' },
+          { perm: 'view_audit_log',   path: '/admin/audit'      },
+        ]
+        const first = pages.find(p => perms.includes(p.perm))
+        router.push(first?.path ?? '/dashboard')
+      }
   }, [admin, router])
 
   // Auto-verify wallet when connected
@@ -61,7 +77,23 @@ export default function AdminLoginPage() {
     setError(null)
     const result = await login(identifier, password, address)
     if (result.success) {
-      router.push('/admin/dashboard')
+      // Redirect sub-admins to their first permitted page
+      const perms: string[] = data.admin?.permissions ?? []
+      const role = data.admin?.role ?? ''
+      if (role === 'super_admin' || perms.includes('view_dashboard')) {
+        router.push('/admin/dashboard')
+      } else {
+        const pages = [
+          { perm: 'manage_offers',    path: '/admin/offers'     },
+          { perm: 'resolve_disputes', path: '/admin/disputes'   },
+          { perm: 'manage_users',     path: '/admin/users'      },
+          { perm: 'view_analytics',   path: '/admin/analytics'  },
+          { perm: 'manage_admins',    path: '/admin/sub-admins' },
+          { perm: 'view_audit_log',   path: '/admin/audit'      },
+        ]
+        const first = pages.find(p => perms.includes(p.perm))
+        router.push(first?.path ?? '/dashboard')
+      }
     } else {
       setError(result.error ?? 'Login failed')
       setLoggingIn(false)
