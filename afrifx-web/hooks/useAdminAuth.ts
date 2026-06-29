@@ -62,7 +62,7 @@ export function useAdminAuth() {
     if (res.ok && data.token) {
       sessionStorage.setItem(TOKEN_KEY, data.token)
       setAdmin(data.admin)
-      return { success: true }
+      return { success: true, admin: data.admin }
     }
     return { success: false, error: data.error ?? 'Login failed' }
   }
