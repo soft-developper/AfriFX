@@ -41,7 +41,12 @@ export default function AdminLoginPage() {
           { perm: 'view_audit_log',   path: '/admin/audit'      },
         ]
         const first = pages.find(p => perms.includes(p.perm))
-        router.push(first?.path ?? '/dashboard')
+        if (first) {
+          router.push(first.path)
+        } else {
+          // No permissions at all — stay in admin but show no-access screen
+          router.push('/admin/no-access')
+        }
       }
   }, [admin, router])
 
@@ -92,7 +97,12 @@ export default function AdminLoginPage() {
           { perm: 'view_audit_log',   path: '/admin/audit'      },
         ]
         const first = pages.find(p => perms.includes(p.perm))
-        router.push(first?.path ?? '/dashboard')
+        if (first) {
+          router.push(first.path)
+        } else {
+          // No permissions at all — stay in admin but show no-access screen
+          router.push('/admin/no-access')
+        }
       }
     } else {
       setError(result.error ?? 'Login failed')
