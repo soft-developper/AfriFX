@@ -459,7 +459,7 @@ export default function OfferDetailPage() {
                       <p className="text-xs text-red-400">⚠️ Maker has not confirmed within the agreed window.</p>
                       {!disputeDone ? (
                         <Button variant="danger" className="w-full"
-                          onClick={handleDispute} disabled={disputing}>
+                          onClick={() => handleDispute('maker_silent', 'taker')} disabled={disputing}>
                           <Flag className="h-4 w-4" />
                           {disputing ? 'Raising dispute…' : 'Raise dispute'}
                         </Button>
