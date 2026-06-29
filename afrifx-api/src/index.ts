@@ -30,16 +30,6 @@ const PORT = Number(process.env.PORT ?? 4000)
 
 app.use(corsMiddleware)
 
-// More lenient rate limit for admin auth (avoids 429 on legitimate use)
-const rateLimit = require('express-rate-limit')
-const adminRateLimit = rateLimit({
-  windowMs: 60 * 1000,     // 1 minute
-  max:      60,            // 60 requests per minute per IP
-  standardHeaders: true,
-  legacyHeaders:   false,
-  skip: (req: import('express').Request) => req.path.includes('/admin/auth/me'),
-})
-app.use('/admin/auth', adminRateLimit)
 app.use(express.json())
 app.use(rateLimitMiddleware)
 
