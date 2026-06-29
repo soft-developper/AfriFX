@@ -10,51 +10,50 @@ import {
   CheckCircle, AlertCircle, ArrowRight,
 } from 'lucide-react'
 
+const PERMISSION_PAGES = [
+  { perm: 'manage_offers',    path: '/admin/offers'     },
+  { perm: 'resolve_disputes', path: '/admin/disputes'   },
+  { perm: 'manage_users',     path: '/admin/users'      },
+  { perm: 'view_analytics',   path: '/admin/analytics'  },
+  { perm: 'manage_admins',    path: '/admin/sub-admins' },
+  { perm: 'view_audit_log',   path: '/admin/audit'      },
+]
+
+function getRedirectPath(role: string, permissions: string[]): string {
+  if (role === 'super_admin' || permissions.includes('view_dashboard')) {
+    return '/admin/dashboard'
+  }
+  const first = PERMISSION_PAGES.find(p => permissions.includes(p.perm))
+  return first ? first.path : '/admin/no-access'
+}
+
 export default function AdminLoginPage() {
-  const router                       = useRouter()
-  const { address, isConnected }     = useAccount()
-  const { connect, connectors }      = useConnect()
+  const router                   = useRouter()
+  const { address, isConnected } = useAccount()
+  const { connect, connectors }  = useConnect()
   const { admin, loading, verifyWallet, login } = useAdminAuth()
 
-  const [step,        setStep]        = useState<1|2>(1)
-  const [walletOk,    setWalletOk]    = useState(false)
-  const [checking,    setChecking]    = useState(false)
-  const [identifier,  setIdentifier]  = useState('')
-  const [password,    setPassword]    = useState('')
-  const [error,       setError]       = useState<string|null>(null)
-  const [loggingIn,   setLoggingIn]   = useState(false)
+  const [step,       setStep]       = useState<1|2>(1)
+  const [walletOk,   setWalletOk]   = useState(false)
+  const [checking,   setChecking]   = useState(false)
+  const [identifier, setIdentifier] = useState('')
+  const [password,   setPassword]   = useState('')
+  const [error,      setError]      = useState<string|null>(null)
+  const [loggingIn,  setLoggingIn]  = useState(false)
 
-  // Already logged in → go to dashboard
   useEffect(() => {
-    if (admin) // Redirect sub-admins to their first permitted page
-      const perms: string[] = data.admin?.permissions ?? []
-      const role = data.admin?.role ?? ''
-      if (role === 'super_admin' || perms.includes('view_dashboard')) {
-        router.push('/admin/dashboard')
-      } else {
-        const pages = [
-          { perm: 'manage_offers',    path: '/admin/offers'     },
-          { perm: 'resolve_disputes', path: '/admin/disputes'   },
-          { perm: 'manage_users',     path: '/admin/users'      },
-          { perm: 'view_analytics',   path: '/admin/analytics'  },
-          { perm: 'manage_admins',    path: '/admin/sub-admins' },
-          { perm: 'view_audit_log',   path: '/admin/audit'      },
-        ]
-        const first = pages.find(p => perms.includes(p.perm))
-        if (first) {
-          router.push(first.path)
-        } else {
-          // No permissions at all — stay in admin but show no-access screen
-          router.push('/admin/no-access')
-        }
-      }
+    if (admin) {
+      const perms: string[] = (admin as any).permissions ?? []
+      const role: string    = (admin as any).role ?? ''
+      router.push(getRedirectPath(role, perms))
+    }
   }, [admin, router])
 
-  // Auto-verify wallet when connected
   useEffect(() => {
     if (isConnected && address && step === 1) {
       handleVerifyWallet()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected, address])
 
   async function handleVerifyWallet() {
@@ -82,30 +81,11 @@ export default function AdminLoginPage() {
     setError(null)
     const result = await login(identifier, password, address)
     if (result.success) {
-      // Redirect sub-admins to their first permitted page
-      const perms: string[] = data.admin?.permissions ?? []
-      const role = data.admin?.role ?? ''
-      if (role === 'super_admin' || perms.includes('view_dashboard')) {
-        router.push('/admin/dashboard')
-      } else {
-        const pages = [
-          { perm: 'manage_offers',    path: '/admin/offers'     },
-          { perm: 'resolve_disputes', path: '/admin/disputes'   },
-          { perm: 'manage_users',     path: '/admin/users'      },
-          { perm: 'view_analytics',   path: '/admin/analytics'  },
-          { perm: 'manage_admins',    path: '/admin/sub-admins' },
-          { perm: 'view_audit_log',   path: '/admin/audit'      },
-        ]
-        const first = pages.find(p => perms.includes(p.perm))
-        if (first) {
-          router.push(first.path)
-        } else {
-          // No permissions at all — stay in admin but show no-access screen
-          router.push('/admin/no-access')
-        }
-      }
+      const perms: string[] = (result as any).admin?.permissions ?? []
+      const role: string    = (result as any).admin?.role ?? ''
+      router.push(getRedirectPath(role, perms))
     } else {
-      setError(result.error ?? 'Login failed')
+      setError((result as any).error ?? 'Login failed')
       setLoggingIn(false)
     }
   }
@@ -121,7 +101,6 @@ export default function AdminLoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#080D1B] p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#378ADD]/10">
             <Shield className="h-7 w-7 text-[#378ADD]" />
@@ -130,7 +109,6 @@ export default function AdminLoginPage() {
           <p className="text-sm text-[#64748B]">Secure two-factor access</p>
         </div>
 
-        {/* Step indicator */}
         <div className="mb-6 flex items-center justify-center gap-2">
           <div className={`flex items-center gap-2 ${step >= 1 ? 'text-[#378ADD]' : 'text-[#64748B]'}`}>
             <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold
@@ -150,17 +128,13 @@ export default function AdminLoginPage() {
         </div>
 
         <div className="rounded-2xl border border-[#1B2B4B] bg-[#0F1729] p-6">
-          {/* Step 1: Wallet */}
           {step === 1 && (
             <div className="space-y-4">
               <div className="text-center">
                 <Wallet className="mx-auto mb-2 h-8 w-8 text-[#378ADD]" />
                 <p className="text-sm font-medium text-[#E2E8F0]">Connect admin wallet</p>
-                <p className="text-xs text-[#64748B]">
-                  Your wallet must be registered for admin access
-                </p>
+                <p className="text-xs text-[#64748B]">Your wallet must be registered for admin access</p>
               </div>
-
               {!isConnected ? (
                 <div className="space-y-2">
                   {connectors.map(c => (
@@ -188,7 +162,6 @@ export default function AdminLoginPage() {
             </div>
           )}
 
-          {/* Step 2: Credentials */}
           {step === 2 && (
             <div className="space-y-4">
               <div className="text-center">
@@ -196,23 +169,14 @@ export default function AdminLoginPage() {
                 <p className="text-sm font-medium text-[#E2E8F0]">Enter your credentials</p>
                 <p className="text-xs text-[#64748B]">Username or email + password</p>
               </div>
-
               <div className="space-y-3">
-                <Input
-                  placeholder="Username or email"
-                  value={identifier}
-                  onChange={e => setIdentifier(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                />
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                />
+                <Input placeholder="Username or email" autoComplete="off"
+                  value={identifier} onChange={e => setIdentifier(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+                <Input type="password" placeholder="Password" autoComplete="new-password"
+                  value={password} onChange={e => setPassword(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleLogin()} />
               </div>
-
               <Button className="w-full" onClick={handleLogin}
                 disabled={!identifier || !password || loggingIn}>
                 {loggingIn
@@ -223,7 +187,6 @@ export default function AdminLoginPage() {
             </div>
           )}
 
-          {/* Error */}
           {error && (
             <div className="mt-4 flex items-start gap-2 rounded-lg bg-red-900/20 px-3 py-2.5 text-xs text-red-400">
               <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />{error}
