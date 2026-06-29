@@ -14,6 +14,7 @@ import chatRouter                 from './routes/chat'
 import walletRouter               from './routes/wallet'
 import treasuryRouter             from './routes/treasury'
 import payrollRouter              from './routes/payroll'
+import disputesRouter              from './routes/disputes'
 import invoicesRouter              from './routes/invoices'
 import paymentsRouter              from './routes/payments'
 import adminAuthRouter            from './routes/adminAuth'
@@ -44,6 +45,7 @@ app.use('/chat',           chatRouter)
 app.use('/wallet',         walletRouter)
 app.use('/treasury',       treasuryRouter)
 app.use('/payroll',        payrollRouter)
+app.use('/disputes',       disputesRouter)
 app.use('/invoices',       invoicesRouter)
 app.use('/payments',       paymentsRouter)
 app.use('/admin/auth',     adminAuthRouter)

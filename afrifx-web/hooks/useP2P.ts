@@ -258,14 +258,22 @@ export function useP2P() {
   }
 
   // ── Taker raises dispute ──────────────────────────────────
-  async function raiseDispute(offerId: string, reason?: string) {
+  async function raiseDispute(
+    offerId: string,
+    reason?: string,
+    disputeType: 'maker_not_received' | 'maker_silent' = 'maker_silent',
+    raisedByRole: 'maker' | 'taker' = 'taker',
+  ) {
     if (!address) throw new Error('Wallet not connected')
     setIsLoading(true); setError(null)
     try {
-      const res = await fetch(`${API}/offers/${offerId}/dispute`, {
+      const res = await fetch(`${API}/disputes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ raisedBy: address, reason }),
+        body: JSON.stringify({
+          offerId, raisedBy: address, reason,
+          disputeType, raisedByRole,
+        }),
       })
       return await res.json()
     } catch (err: any) {

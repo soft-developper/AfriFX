@@ -1,182 +1,172 @@
-import cron from 'node-cron'
-import { db } from '../db/client'
-import { sql } from 'drizzle-orm'
+// ============================================================
+// P2P Release Watcher — 4 jobs:
+// Job1: release when both confirmed (every 15s)
+// Job2: auto-cancel when taker timer expires + taker NOT confirmed (every 60s)
+// Job3: auto-release to taker after 24h when maker goes silent (every 5min)
+// Job4: clean up released/cancelled trade chats (every 5min)
+// ============================================================
+import { db }               from '../db/client'
+import { sql }              from 'drizzle-orm'
 import { releasePlatform, cancelPlatform } from '../services/platformWallet'
+
+function parseRows(r: any): any[] {
+  if (!r) return []
+  if (Array.isArray((r as any).rows)) return (r as any).rows
+  if (Array.isArray(r)) return r
+  return []
+}
+
+async function releaseOffer(offerId: string, label: string) {
+  console.log(`[P2PWatcher] ${label}: releasing ${offerId.slice(0,18)}…`)
+  try {
+    const hash = await releasePlatform(offerId as `0x${string}`)
+    const now  = Math.floor(Date.now() / 1000)
+    await db.run(sql`
+      UPDATE p2p_offers SET
+        status          = 'released',
+        release_tx_hash = ${hash},
+        updated_at      = ${now}
+      WHERE id = ${offerId}
+    `)
+    await db.run(sql`DELETE FROM messages WHERE offer_id = ${offerId}`)
+    console.log(`[P2PWatcher] ${label} released ✅ tx: ${hash}`)
+    return true
+  } catch (err: any) {
+    console.error(`[P2PWatcher] ${label} release failed:`, err.message)
+    return false
+  }
+}
+
+async function cancelOffer(offerId: string, label: string) {
+  console.log(`[P2PWatcher] ${label}: cancelling ${offerId.slice(0,18)}…`)
+  try {
+    const hash = await cancelPlatform(offerId as `0x${string}`)
+    const now  = Math.floor(Date.now() / 1000)
+    await db.run(sql`
+      UPDATE p2p_offers SET
+        status     = 'cancelled',
+        updated_at = ${now}
+      WHERE id = ${offerId}
+    `)
+    console.log(`[P2PWatcher] ${label} cancelled ✅ tx: ${hash}`)
+    return true
+  } catch (err: any) {
+    console.error(`[P2PWatcher] ${label} cancel failed:`, err.message)
+    return false
+  }
+}
 
 export function startP2PReleaseWatcher() {
   if (!process.env.PLATFORM_WALLET_PRIVATE_KEY) {
     console.warn('[P2PWatcher] PLATFORM_WALLET_PRIVATE_KEY not set — auto-release disabled')
     return
   }
-  console.log('[P2PWatcher] ✅ Started — polling every 15s')
 
-  cron.schedule('*/15 * * * * *', async () => {
-    await job1_releaseConfirmed()
-    await job2_cancelTimedOutTakers()
-    await job3_flagTimedOutMakers()
-    await job4_autoSettleDisputes()
-  })
-
-  setTimeout(async () => {
-    await job1_releaseConfirmed()
-    await job2_cancelTimedOutTakers()
-    await job3_flagTimedOutMakers()
-    await job4_autoSettleDisputes()
-  }, 3000)
-}
-
-// ── Job 1: Both confirmed → release USDC + delete chat ───
-async function job1_releaseConfirmed() {
-  const now = Math.floor(Date.now() / 1000)
-  try {
-    const result = await db.run(
-      sql`SELECT id, dispute_raised FROM p2p_offers
-          WHERE status          = 'accepted'
-            AND maker_confirmed = 1
-            AND taker_confirmed = 1`
-    )
-    const rows = parseRows(result)
-    for (const row of rows) {
-      const offerId       = (row.id             ?? row[0]) as `0x${string}`
-      const disputeRaised = Number(row.dispute_raised ?? row[1] ?? 0)
-      try {
-        const lateNote = disputeRaised ? ' (maker confirmed late — dispute on record)' : ''
-        console.log(`[P2PWatcher] Job1: releasing ${offerId.slice(0,14)}…${lateNote}`)
-
-        const hash = await releasePlatform(offerId)
-
-        // Mark offer as released
-        await db.run(
-          sql`UPDATE p2p_offers SET
-                status          = 'released',
-                release_tx_hash = ${hash},
-                updated_at      = ${now}
-              WHERE id = ${offerId}`
-        )
-
-        // ── Delete chat messages — trade is complete ──────
-        const deleted = await db.run(
-          sql`DELETE FROM messages WHERE offer_id = ${offerId}`
-        )
-        console.log(`[P2PWatcher] 🗑  Chat deleted for completed offer ${offerId.slice(0,14)}…`)
-
-        // Resolve late-confirm disputes
-        if (disputeRaised) {
-          await db.run(
-            sql`UPDATE disputes SET
-                  status     = 'resolved_late_confirm',
-                  settled_at = ${now}
-                WHERE offer_id = ${offerId} AND status = 'open'`
-          ).catch(() => {})
-        }
-
-        console.log(`[P2PWatcher] ✅ Released ${offerId.slice(0,14)}… tx: ${hash.slice(0,14)}…`)
-      } catch (err: any) {
-        console.error(`[P2PWatcher] Job1 release failed:`, err.message)
+  // ── Job1: Release when both confirmed (every 15s) ──────────
+  setInterval(async () => {
+    try {
+      const rows = await db.run(sql`
+        SELECT id FROM p2p_offers
+        WHERE status          = 'accepted'
+          AND maker_confirmed = 1
+          AND taker_confirmed = 1
+        LIMIT 5
+      `)
+      for (const r of parseRows(rows)) {
+        await releaseOffer(r.id ?? r[0], 'Job1')
       }
-    }
-  } catch (err: any) { console.error('[P2PWatcher] Job1 error:', err.message) }
-}
+    } catch (err: any) { console.error('[P2PWatcher] Job1 error:', err.message) }
+  }, 15_000)
 
-// ── Job 2: Taker didn't confirm in time → cancel ─────────
-async function job2_cancelTimedOutTakers() {
-  const now = Math.floor(Date.now() / 1000)
-  try {
-    const result = await db.run(
-      sql`SELECT id FROM p2p_offers
-          WHERE status          = 'accepted'
-            AND taker_confirmed = 0
-            AND taker_deadline  IS NOT NULL
-            AND taker_deadline  < ${now}`
-    )
-    const rows = parseRows(result)
-    for (const row of rows) {
-      const offerId = (row.id ?? row[0]) as `0x${string}`
-      try {
-        await cancelPlatform(offerId, 'Taker did not send within agreed window')
-        await db.run(
-          sql`UPDATE p2p_offers SET
-                status         = 'cancelled',
-                taker_address  = NULL,
-                taker_deadline = NULL,
-                updated_at     = ${now}
-              WHERE id = ${offerId}`
-        )
-        // Also delete chat on taker timeout cancel
-        await db.run(sql`DELETE FROM messages WHERE offer_id = ${offerId}`)
-        console.log(`[P2PWatcher] ⏰ Taker timed out — offer ${offerId.slice(0,14)} cancelled + chat deleted`)
-      } catch (err: any) {
-        console.error(`[P2PWatcher] Job2 failed:`, err.message)
+  // ── Job2: Auto-cancel when taker timer expires (every 60s) ─
+  setInterval(async () => {
+    const now = Math.floor(Date.now() / 1000)
+    try {
+      const rows = await db.run(sql`
+        SELECT id FROM p2p_offers
+        WHERE status          = 'accepted'
+          AND taker_confirmed = 0
+          AND taker_deadline  IS NOT NULL
+          AND taker_deadline  < ${now}
+        LIMIT 5
+      `)
+      for (const r of parseRows(rows)) {
+        await cancelOffer(r.id ?? r[0], 'Job2')
       }
-    }
-  } catch (err: any) { console.error('[P2PWatcher] Job2 error:', err.message) }
-}
+    } catch (err: any) { console.error('[P2PWatcher] Job2 error:', err.message) }
+  }, 60_000)
 
-// ── Job 3: Maker didn't confirm in time → flag dispute ───
-async function job3_flagTimedOutMakers() {
-  const now = Math.floor(Date.now() / 1000)
-  try {
-    const result = await db.run(
-      sql`SELECT id FROM p2p_offers
-          WHERE status          = 'accepted'
-            AND taker_confirmed = 1
-            AND maker_confirmed = 0
-            AND dispute_raised  = 0
-            AND maker_deadline  IS NOT NULL
-            AND maker_deadline  < ${now}`
-    )
-    const rows = parseRows(result)
-    for (const row of rows) {
-      const offerId = (row.id ?? row[0]) as `0x${string}`
-      await db.run(
-        sql`UPDATE p2p_offers SET dispute_raised = 1, updated_at = ${now} WHERE id = ${offerId}`
-      ).catch(() => {})
-      console.log(`[P2PWatcher] ⚠️  Maker timed out — dispute flagged ${offerId.slice(0,14)}`)
-    }
-  } catch (err: any) { console.error('[P2PWatcher] Job3 error:', err.message) }
-}
-
-// ── Job 4: Dispute 24h → auto-release to taker + delete chat
-async function job4_autoSettleDisputes() {
-  const now = Math.floor(Date.now() / 1000)
-  try {
-    const result = await db.run(
-      sql`SELECT d.id as dispute_id, d.offer_id
-          FROM disputes d
-          JOIN p2p_offers o ON o.id = d.offer_id
-          WHERE d.status         = 'open'
-            AND d.auto_settle_at < ${now}
-            AND o.status         = 'accepted'
-            AND o.maker_confirmed = 0`
-    )
-    const rows = parseRows(result)
-    for (const row of rows) {
-      const offerId   = (row.offer_id   ?? row[1]) as `0x${string}`
-      const disputeId =  row.dispute_id ?? row[0]
-      try {
-        const hash = await releasePlatform(offerId)
-        await db.run(
-          sql`UPDATE p2p_offers SET
-                status = 'released', release_tx_hash = ${hash}, updated_at = ${now}
-              WHERE id = ${offerId}`
-        )
-        await db.run(
-          sql`UPDATE disputes SET status = 'auto_settled', settled_at = ${now}
-              WHERE id = ${disputeId}`
-        )
-        // Delete chat after auto-settlement
-        await db.run(sql`DELETE FROM messages WHERE offer_id = ${offerId}`)
-        console.log(`[P2PWatcher] ⚖️  Auto-settled + chat deleted → ${offerId.slice(0,14)}`)
-      } catch (err: any) {
-        console.error(`[P2PWatcher] Job4 failed:`, err.message)
+  // ── Job3: Auto-release after 24h maker silence (every 5min) ─
+  setInterval(async () => {
+    const now    = Math.floor(Date.now() / 1000)
+    const ago24h = now - 86400
+    try {
+      // Case A: dispute raised with auto_release_at passed
+      const disputeRows = await db.run(sql`
+        SELECT o.id FROM p2p_offers o
+        JOIN disputes d ON d.offer_id = o.id
+        WHERE o.status          = 'accepted'
+          AND o.taker_confirmed = 1
+          AND o.maker_confirmed = 0
+          AND d.status          = 'open'
+          AND d.dispute_type = 'maker_silent'
+          AND d.auto_release_at IS NOT NULL
+          AND d.auto_release_at < ${now}
+        LIMIT 5
+      `)
+      for (const r of parseRows(disputeRows)) {
+        const offerId = r.id ?? r[0]
+        console.log(`[P2PWatcher] Job3A: auto-releasing after 24h dispute: ${offerId.slice(0,18)}…`)
+        await db.run(sql`
+          UPDATE disputes SET
+            status      = 'resolved',
+            resolution_type = 'release_to_taker',
+            admin_resolved_by = 'system',
+            admin_notes = 'Auto-released after 24h maker silence',
+            admin_resolved_at = ${now}
+          WHERE offer_id = ${offerId} AND status = 'open'
+        `)
+        await db.run(sql`
+          UPDATE p2p_offers SET maker_confirmed = 1, updated_at = ${now}
+          WHERE id = ${offerId}
+        `)
       }
-    }
-  } catch (err: any) { console.error('[P2PWatcher] Job4 error:', err.message) }
-}
 
-function parseRows(result: any): any[] {
-  if (!result) return []
-  if (Array.isArray((result as any).rows)) return (result as any).rows
-  if (Array.isArray(result)) return result
-  return []
+      // Case B: no dispute raised but 24h+ since maker_deadline passed
+      const silentRows = await db.run(sql`
+        SELECT id FROM p2p_offers
+        WHERE status          = 'accepted'
+          AND taker_confirmed = 1
+          AND maker_confirmed = 0
+          AND dispute_raised  = 0
+          AND maker_deadline  IS NOT NULL
+          AND maker_deadline  < ${ago24h}
+        LIMIT 5
+      `)
+      for (const r of parseRows(silentRows)) {
+        const offerId = r.id ?? r[0]
+        console.log(`[P2PWatcher] Job3B: 24h no action, auto-releasing: ${offerId.slice(0,18)}…`)
+        await db.run(sql`
+          UPDATE p2p_offers SET maker_confirmed = 1, updated_at = ${now}
+          WHERE id = ${offerId}
+        `)
+      }
+    } catch (err: any) { console.error('[P2PWatcher] Job3 error:', err.message) }
+  }, 5 * 60_000)
+
+  // ── Job4: Clean up released/cancelled chats (every 5min) ───
+  setInterval(async () => {
+    try {
+      const rows = await db.run(sql`
+        SELECT id FROM p2p_offers
+        WHERE status IN ('released', 'cancelled')
+        LIMIT 20
+      `)
+      for (const r of parseRows(rows)) {
+        await db.run(sql`DELETE FROM messages WHERE offer_id = ${r.id ?? r[0]}`)
+      }
+    } catch (err: any) { console.error('[P2PWatcher] Job4 error:', err.message) }
+  }, 5 * 60_000)
+
+  console.log('[P2PWatcher] started — Job1:15s | Job2:60s | Job3:5min | Job4:5min')
 }

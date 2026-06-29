@@ -176,18 +176,25 @@ export default function OfferDetailPage() {
 
   const isSyncing = justAccepted && !offer.taker_address
 
-  async function handleDispute() {
+  async function handleDispute(
+    disputeType: 'maker_not_received' | 'maker_silent' = 'maker_silent',
+    raisedByRole: 'maker' | 'taker' = 'taker',
+  ) {
     if (!address || !offer) return
     setDisputing(true)
     try {
-      await raiseDispute(offer.id, 'Maker did not confirm receipt within agreed window')
+      await raiseDispute(
+        offer.id,
+        disputeType === 'maker_silent'
+          ? 'Maker did not confirm receipt — possible non-response'
+          : 'Taker claims to have sent payment but maker did not receive it',
+        disputeType,
+        raisedByRole,
+      )
       setDisputeDone(true)
       await load()
-    } catch {
-      // error handled by useP2P
-    } finally {
-      setDisputing(false)
-    }
+    } catch (_e) {}
+    finally { setDisputing(false) }
   }
 
   const localAmountFormatted = Number(offer.local_amount).toLocaleString()
