@@ -469,6 +469,34 @@ export default function OfferDetailPage() {
                     </div>
                   )}
 
+                  {/* MAKER dispute: deadline elapsed, no dispute yet */}
+                  {isMaker && offer.taker_confirmed && !offer.maker_confirmed &&
+                   !offer.dispute_raised && offer.maker_deadline &&
+                   offer.maker_deadline < nowTs && (
+                    <div className="space-y-2">
+                      <div className="rounded-lg border border-red-900/40 bg-red-900/10 p-3 text-xs">
+                        <p className="font-medium text-red-400">⚠️ Taker claims to have sent payment</p>
+                        <p className="mt-1 text-red-600">
+                          If you did not receive{' '}
+                          <strong className="text-red-400">{localAmountFormatted} {offer.local_currency}</strong>,
+                          raise a dispute for admin review.
+                        </p>
+                      </div>
+                      {!disputeDone ? (
+                        <Button variant="danger" className="w-full"
+                          onClick={() => handleDispute('maker_not_received', 'maker')}
+                          disabled={disputing}>
+                          <Flag className="h-4 w-4" />
+                          {disputing ? 'Raising dispute…' : "I didn't receive payment — raise dispute"}
+                        </Button>
+                      ) : (
+                        <div className="rounded-lg bg-amber-900/20 p-3 text-xs text-amber-400">
+                          ✓ Dispute raised — admin will review.
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Both confirmed — waiting for release */}
                   {offer.maker_confirmed && offer.taker_confirmed && (
                     <div className="flex items-center gap-2 rounded-lg border border-emerald-900/30 bg-emerald-900/10 px-3 py-2.5 text-xs text-emerald-400">
