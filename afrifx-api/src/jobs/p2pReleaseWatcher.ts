@@ -40,7 +40,7 @@ async function releaseOffer(offerId: string, label: string) {
 async function cancelOffer(offerId: string, label: string) {
   console.log(`[P2PWatcher] ${label}: cancelling ${offerId.slice(0,18)}…`)
   try {
-    const hash = await cancelPlatform(offerId as `0x${string}`)
+    const hash = await cancelPlatform(offerId as `0x${string}`, 'Taker timer expired — auto cancelled')
     const now  = Math.floor(Date.now() / 1000)
     await db.run(sql`
       UPDATE p2p_offers SET
