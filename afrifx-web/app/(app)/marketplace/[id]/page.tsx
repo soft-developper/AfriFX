@@ -404,7 +404,7 @@ export default function OfferDetailPage() {
                     </div>
                   )}
 
-                  {isMaker && offer.taker_confirmed && !offer.maker_confirmed && (
+                  {isMaker && offer.taker_confirmed && !offer.maker_confirmed && !offer.dispute_raised && (
                     <div className="rounded-lg border border-[#378ADD]/30 bg-[#378ADD]/10 p-3 text-xs">
                       <p className="font-medium text-[#E2E8F0]">Check your account</p>
                       <p className="mt-1 text-[#64748B]">
@@ -429,7 +429,7 @@ export default function OfferDetailPage() {
                     </Button>
                   )}
 
-                  {isMaker && (
+                  {isMaker && !offer.dispute_raised && (
                     <Button className="w-full"
                       onClick={async () => { await makerConfirm(offerId); await load() }}
                       disabled={!offer.taker_confirmed || !!offer.maker_confirmed || actionLoading}
