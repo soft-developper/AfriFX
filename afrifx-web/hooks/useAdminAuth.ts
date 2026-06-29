@@ -1,8 +1,13 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 
 const API       = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 const TOKEN_KEY = 'afrifx_admin_token'
+
+// Module-level cache — persists across re-renders and component remounts
+// Resets only when the page is fully refreshed
+let sessionCache: { admin: any; loading: boolean } | null = null
+let fetchPromise: Promise<void> | null = null
 
 export interface AdminSession {
   id:          string
@@ -13,22 +18,40 @@ export interface AdminSession {
 }
 
 export function useAdminAuth() {
-  const [admin,   setAdmin]   = useState<AdminSession | null>(null)
-  const [loading, setLoading] = useState(true)
-  const fetchedRef            = useRef(false)
+  const [admin,   setAdmin]   = useState<AdminSession | null>(sessionCache?.admin ?? null)
+  const [loading, setLoading] = useState(sessionCache ? false : true)
 
   const getToken = () =>
     typeof window !== 'undefined' ? sessionStorage.getItem(TOKEN_KEY) : null
 
-  // Verify session ONCE on mount — never again
   useEffect(() => {
-    if (fetchedRef.current) return
-    fetchedRef.current = true
+    // Already fetched — use cache
+    if (sessionCache !== null) {
+      setAdmin(sessionCache.admin)
+      setLoading(false)
+      return
+    }
+
+    // Fetch in progress — wait for it
+    if (fetchPromise !== null) {
+      fetchPromise.then(() => {
+        if (sessionCache) {
+          setAdmin(sessionCache.admin)
+          setLoading(false)
+        }
+      })
+      return
+    }
 
     const token = getToken()
-    if (!token) { setLoading(false); return }
+    if (!token) {
+      sessionCache = { admin: null, loading: false }
+      setLoading(false)
+      return
+    }
 
-    fetch(`${API}/admin/auth/me`, {
+    // Start fetch — store promise so concurrent mounts share it
+    fetchPromise = fetch(`${API}/admin/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => {
@@ -37,11 +60,20 @@ export function useAdminAuth() {
         return null
       })
       .then(data => {
-        if (data?.admin) setAdmin(data.admin)
+        const admin = data?.admin ?? null
+        sessionCache = { admin, loading: false }
+        setAdmin(admin)
       })
-      .catch(() => { sessionStorage.removeItem(TOKEN_KEY) })
-      .finally(() => setLoading(false))
-  }, []) // Empty deps — runs ONCE only
+      .catch(() => {
+        sessionStorage.removeItem(TOKEN_KEY)
+        sessionCache = { admin: null, loading: false }
+        setAdmin(null)
+      })
+      .finally(() => {
+        setLoading(false)
+        fetchPromise = null
+      })
+  }, []) // Runs once per mount — but module cache prevents duplicate fetches
 
   async function verifyWallet(wallet: string) {
     const res = await fetch(`${API}/admin/auth/verify-wallet`, {
@@ -61,6 +93,7 @@ export function useAdminAuth() {
     const data = await res.json()
     if (res.ok && data.token) {
       sessionStorage.setItem(TOKEN_KEY, data.token)
+      sessionCache = { admin: data.admin, loading: false }
       setAdmin(data.admin)
       return { success: true, admin: data.admin }
     }
@@ -76,7 +109,8 @@ export function useAdminAuth() {
       }).catch(() => {})
     }
     sessionStorage.removeItem(TOKEN_KEY)
-    fetchedRef.current = false
+    sessionCache  = null  // Clear cache on logout
+    fetchPromise  = null
     setAdmin(null)
   }
 
