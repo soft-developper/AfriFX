@@ -196,3 +196,129 @@ router.patch('/:id/resolve', async (req, res) => {
 })
 
 export default router
+
+// ── Dispute Assignment ─────────────────────────────────────
+
+// POST /disputes/:id/accept — admin accepts to handle dispute
+router.post('/:id/accept', async (req, res) => {
+  const { adminId, adminName } = req.body
+  if (!adminId || !adminName) {
+    return res.status(400).json({ error: 'adminId and adminName required' })
+  }
+  const now = Math.floor(Date.now() / 1000)
+  try {
+    // Check not already assigned
+    const existing = await db.run(sql`
+      SELECT id FROM dispute_assignments WHERE dispute_id = ${req.params.id} LIMIT 1
+    `)
+    if (parseRows(existing).length) {
+      return res.status(400).json({ error: 'Dispute already accepted by another admin' })
+    }
+
+    const { randomUUID } = await import('crypto')
+    const id = randomUUID()
+    await db.run(sql`
+      INSERT INTO dispute_assignments (id, dispute_id, admin_id, admin_name, accepted_at)
+      VALUES (${id}, ${req.params.id}, ${adminId}, ${adminName}, ${now})
+    `)
+
+    // Update dispute status to 'in_review'
+    await db.run(sql`
+      UPDATE disputes SET status = 'in_review', updated_at = ${now}
+      WHERE id = ${req.params.id}
+    `)
+
+    res.json({ success: true, adminName })
+  } catch (err: any) { res.status(500).json({ error: err.message }) }
+})
+
+// GET /disputes/:id/assignment — get assigned admin for a dispute
+router.get('/:id/assignment', async (req, res) => {
+  try {
+    const rows = await db.run(sql`
+      SELECT * FROM dispute_assignments WHERE dispute_id = ${req.params.id} LIMIT 1
+    `)
+    const r = parseRows(rows)
+    res.json(r.length ? r[0] : null)
+  } catch (err: any) { res.status(500).json({ error: err.message }) }
+})
+
+// ── Dispute Messages ───────────────────────────────────────
+
+// GET /disputes/:id/messages?viewerType=admin|maker|taker
+router.get('/:id/messages', async (req, res) => {
+  const viewerType = req.query.viewerType as string ?? 'user'
+  const isAdmin    = viewerType === 'admin'
+  try {
+    // Admins see all messages; users only see non-admin-only messages
+    const rows = await db.run(
+      isAdmin
+        ? sql`SELECT * FROM dispute_messages WHERE dispute_id = ${req.params.id} ORDER BY created_at ASC`
+        : sql`SELECT * FROM dispute_messages WHERE dispute_id = ${req.params.id} AND admin_only = 0 ORDER BY created_at ASC`
+    )
+    res.json(parseRows(rows))
+  } catch (err: any) { res.status(500).json({ error: err.message }) }
+})
+
+// POST /disputes/:id/messages — send a message
+router.post('/:id/messages', async (req, res) => {
+  const { senderId, senderType, senderName, content, adminOnly = 0 } = req.body
+  if (!senderId || !senderType || !content) {
+    return res.status(400).json({ error: 'senderId, senderType, content required' })
+  }
+  const now = Math.floor(Date.now() / 1000)
+  try {
+    const { randomUUID } = await import('crypto')
+    const id = randomUUID()
+    await db.run(sql`
+      INSERT INTO dispute_messages
+        (id, dispute_id, sender_id, sender_type, sender_name,
+         content, admin_only, created_at)
+      VALUES
+        (${id}, ${req.params.id}, ${senderId}, ${senderType},
+         ${senderName ?? null}, ${content}, ${adminOnly ? 1 : 0}, ${now})
+    `)
+    res.status(201).json({ id })
+  } catch (err: any) { res.status(500).json({ error: err.message }) }
+})
+
+// POST /disputes/:id/messages/document — upload bank statement
+router.post('/:id/messages/document', async (req, res) => {
+  const { senderId, senderType, senderName, docUrl, docName } = req.body
+  if (!senderId || !docUrl) {
+    return res.status(400).json({ error: 'senderId and docUrl required' })
+  }
+  const now = Math.floor(Date.now() / 1000)
+  try {
+    const { randomUUID } = await import('crypto')
+    const id = randomUUID()
+    await db.run(sql`
+      INSERT INTO dispute_messages
+        (id, dispute_id, sender_id, sender_type, sender_name,
+         content, is_document, doc_url, doc_name, admin_only, created_at)
+      VALUES
+        (${id}, ${req.params.id}, ${senderId}, ${senderType},
+         ${senderName ?? null},
+         'Bank statement submitted',
+         1, ${docUrl}, ${docName ?? 'document'}, 1, ${now})
+    `)
+    res.status(201).json({ id })
+  } catch (err: any) { res.status(500).json({ error: err.message }) }
+})
+
+// GET /disputes/admin/all — already exists but update to include assignment
+// GET /disputes/:id/archive — get full archived dispute for super admin audit
+router.get('/:id/archive', async (req, res) => {
+  try {
+    const [disputeRows, msgRows, assignRows] = await Promise.all([
+      db.run(sql`SELECT d.*, o.usdc_amount, o.local_currency, o.local_amount, o.maker_address, o.taker_address FROM disputes d JOIN p2p_offers o ON o.id = d.offer_id WHERE d.id = ${req.params.id} LIMIT 1`),
+      db.run(sql`SELECT * FROM dispute_messages WHERE dispute_id = ${req.params.id} ORDER BY created_at ASC`),
+      db.run(sql`SELECT * FROM dispute_assignments WHERE dispute_id = ${req.params.id} LIMIT 1`),
+    ])
+    res.json({
+      dispute:    parseRows(disputeRows)[0] ?? null,
+      messages:   parseRows(msgRows),
+      assignment: parseRows(assignRows)[0] ?? null,
+    })
+  } catch (err: any) { res.status(500).json({ error: err.message }) }
+})

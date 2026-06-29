@@ -15,6 +15,7 @@ import {
   Loader2, AlertCircle, ArrowRight, RefreshCw, Flag,
 } from 'lucide-react'
 import type { P2POffer } from '@/types'
+import { DisputeStatus } from '@/components/dispute/DisputeStatus'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 const CURRENCY_FLAG: Record<string, string> = {
@@ -26,6 +27,7 @@ interface OfferExtended extends P2POffer {
   taker_deadline?:      number | null
   maker_deadline?:      number | null
   dispute_raised?:      number
+  dispute_id?:          string | null
   maker_timer_seconds?: number
   order_type?:          string
 }
