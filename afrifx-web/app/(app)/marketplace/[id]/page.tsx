@@ -362,7 +362,7 @@ export default function OfferDetailPage() {
                     <Flag className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
                     <div>
                       <p className="font-medium text-amber-400">Dispute raised</p>
-                      <p className="mt-0.5 text-amber-600">USDC locked. Auto-releases in 24h if unresolved.</p>
+                      <p className="mt-0.5 text-amber-600">USDC locked. Admin will review and resolve the dispute.</p>
                     </div>
                   </div>
                 </div>
@@ -464,7 +464,7 @@ export default function OfferDetailPage() {
                           {disputing ? 'Raising dispute…' : 'Raise dispute'}
                         </Button>
                       ) : (
-                        <p className="text-xs text-emerald-400">✓ Dispute raised — USDC auto-releases in 24h.</p>
+                        <p className="text-xs text-emerald-400">✓ Dispute raised — admin will review and contact both parties.</p>
                       )}
                     </div>
                   )}
