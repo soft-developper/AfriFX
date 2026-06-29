@@ -53,9 +53,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     if (!admin && tokenInStorage) return
 
     // Super admin → no restrictions
-    if (admin.role === 'super_admin') return
+    if (admin?.role === 'super_admin') return
 
-    const perms = admin.permissions ?? []
+    const perms = admin?.permissions ?? []
 
     // Sub-admin on dashboard without permission → redirect to first allowed page
     if (pathname === '/admin/dashboard' && !perms.includes('view_dashboard')) {
@@ -66,7 +66,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     }
 
     // Sub-admin with no permissions at all → no-access
-    if (perms.length === 0) {
+    if (admin && perms.length === 0) {
       redirected.current = true
       router.push('/admin/no-access')
       return
