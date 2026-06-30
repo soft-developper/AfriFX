@@ -77,7 +77,8 @@ export default function OfferDetailPage() {
   const [loading,     setLoading]     = useState(true)
   const [notFound,    setNotFound]    = useState(false)
   const [disputing,   setDisputing]   = useState(false)
-  const [disputeDone, setDisputeDone] = useState(false)
+  const [disputeDone,    setDisputeDone]    = useState(false)
+  const [disputeRecord,  setDisputeRecord]  = useState<{ id: string } | null>(null)
 
   const {
     takerConfirm, makerConfirm, raiseDispute, cancelOwnOffer,
@@ -107,6 +108,15 @@ export default function OfferDetailPage() {
   }, [params.id, justAccepted])
 
   useEffect(() => { load() }, [load])
+
+  // Fetch dispute record when dispute is raised
+  useEffect(() => {
+    if (!offer?.dispute_raised || disputeRecord) return
+    fetch(`${API}/disputes/offer/${offer.id}`)
+      .then(r => r.json())
+      .then(data => { if (data?.id) setDisputeRecord(data) })
+      .catch(() => {})
+  }, [offer?.dispute_raised, offer?.id])
 
   useEffect(() => {
     const isStillSyncing = justAccepted && !offer?.taker_address
@@ -359,15 +369,20 @@ export default function OfferDetailPage() {
               )}
 
               {!!offer.dispute_raised && offerStatus === 'accepted' && (
-                <div className="rounded-lg border border-amber-900/50 bg-amber-900/20 p-3 text-xs">
-                  <div className="flex items-start gap-2">
-                    <Flag className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
-                    <div>
-                      <p className="font-medium text-amber-400">Dispute raised</p>
-                      <p className="mt-0.5 text-amber-600">USDC locked. Admin will review and resolve the dispute.</p>
-                    </div>
+                disputeRecord?.id ? (
+                  <DisputeStatus
+                    disputeId={disputeRecord.id}
+                    offerId={offer.id}
+                    userAddress={address ?? ''}
+                    userRole={isMaker ? 'maker' : 'taker'}
+                    username={undefined}
+                  />
+                ) : (
+                  <div className="rounded-lg border border-amber-900/40 bg-amber-900/10 p-3 text-xs">
+                    <p className="font-medium text-amber-400">⏳ Dispute raised — awaiting admin review</p>
+                    <p className="mt-1 text-amber-600">An admin will accept and handle your dispute shortly.</p>
                   </div>
-                </div>
+                )
               )}
 
               {offerStatus === 'open' && isMaker && (
