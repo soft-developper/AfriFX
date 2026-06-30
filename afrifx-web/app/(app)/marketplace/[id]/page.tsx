@@ -431,7 +431,7 @@ export default function OfferDetailPage() {
                     </div>
                   )}
 
-                  {isMaker && offer.taker_confirmed && !offer.maker_confirmed && !offer.dispute_raised && (
+                  {isMaker && !!offer.taker_confirmed && !offer.maker_confirmed && !offer.dispute_raised && (
                     <div className="rounded-lg border border-[#378ADD]/30 bg-[#378ADD]/10 p-3 text-xs">
                       <p className="font-medium text-[#E2E8F0]">Check your account</p>
                       <p className="mt-1 text-[#64748B]">
@@ -472,14 +472,14 @@ export default function OfferDetailPage() {
                     </Button>
                   )}
 
-                  {isTaker && offer.taker_confirmed && !offer.maker_confirmed && !offer.dispute_raised && (
+                  {isTaker && !!offer.taker_confirmed && !offer.maker_confirmed && !offer.dispute_raised && (
                     <div className="flex items-center gap-2 rounded-lg bg-[#080D1B] px-3 py-2 text-xs text-[#64748B]">
                       <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
                       Waiting for {makerName} to confirm receipt…
                     </div>
                   )}
 
-                  {isTaker && offer.taker_confirmed && !offer.maker_confirmed &&
+                  {isTaker && !!offer.taker_confirmed && !offer.maker_confirmed &&
                    !offer.dispute_raised && offer.maker_deadline &&
                    offer.maker_deadline < nowTs && (
                     <div className="space-y-2">
@@ -497,7 +497,7 @@ export default function OfferDetailPage() {
                   )}
 
                   {/* MAKER dispute: deadline elapsed, no dispute yet */}
-                  {isMaker && offer.taker_confirmed && !offer.maker_confirmed &&
+                  {isMaker && !!offer.taker_confirmed && !offer.maker_confirmed &&
                    !offer.dispute_raised && offer.maker_deadline &&
                    offer.maker_deadline < nowTs && (
                     <div className="space-y-2">
@@ -525,7 +525,7 @@ export default function OfferDetailPage() {
                   )}
 
                   {/* Both confirmed — waiting for release */}
-                  {offer.maker_confirmed && offer.taker_confirmed && (
+                  {!!offer.maker_confirmed && !!offer.taker_confirmed && (
                     <div className="flex items-center gap-2 rounded-lg border border-emerald-900/30 bg-emerald-900/10 px-3 py-2.5 text-xs text-emerald-400">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       Both confirmed — releasing USDC within 15 seconds…
@@ -536,12 +536,12 @@ export default function OfferDetailPage() {
             </div>
           </ClientOnly>
 
-          {error && (
+          {!!error {!!error {error && ({error && ( ({error && ( (
             <div className="mt-3 flex items-start gap-2 rounded-lg bg-red-900/20 px-3 py-2.5 text-xs text-red-400">
               <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />{error}
             </div>
           )}
-          {txHash && (
+          {!!txHash {!!txHash {!!txHash {txHash && ({txHash && ( ({txHash && ( ({txHash && ( (
             <a href={`https://testnet.arcscan.app/tx/${txHash}`}
               target="_blank" rel="noopener noreferrer"
               className="mt-3 flex items-center gap-1.5 text-xs text-[#378ADD] hover:underline">
