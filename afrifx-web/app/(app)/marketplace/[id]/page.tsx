@@ -536,12 +536,12 @@ export default function OfferDetailPage() {
             </div>
           </ClientOnly>
 
-          {!!error {!!error {error && ({error && ( ({error && ( (
+          {!!error && (
             <div className="mt-3 flex items-start gap-2 rounded-lg bg-red-900/20 px-3 py-2.5 text-xs text-red-400">
               <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />{error}
             </div>
           )}
-          {!!txHash {!!txHash {!!txHash {txHash && ({txHash && ( ({txHash && ( ({txHash && ( (
+          {!!txHash && (
             <a href={`https://testnet.arcscan.app/tx/${txHash}`}
               target="_blank" rel="noopener noreferrer"
               className="mt-3 flex items-center gap-1.5 text-xs text-[#378ADD] hover:underline">
