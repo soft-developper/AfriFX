@@ -86,6 +86,10 @@ export default function OfferDetailPage() {
     isLoading: actionLoading, error, txHash,
   } = useP2P()
 
+  // Profile hooks — MUST be before any conditional returns (React rules of hooks)
+  const { data: makerProfile } = useProfileByAddress(offer?.maker_address ?? null)
+  const { data: takerProfile } = useProfileByAddress(offer?.taker_address ?? null)
+
   const load = useCallback(async () => {
     try {
       const res  = await fetch(`${API}/offers/${params.id}`)
@@ -170,15 +174,10 @@ export default function OfferDetailPage() {
   const statusBadge = (statusBadgeMap[offerStatus] ?? 'default') as
     'warning' | 'arc' | 'success' | 'danger' | 'default'
 
-  const { data: makerProfile } = useProfileByAddress(offer?.maker_address)
-  const { data: takerProfile } = useProfileByAddress(offer?.taker_address)
-
   const makerName = makerProfile?.display_name ?? makerProfile?.username ??
     (offer?.maker_address ? offer.maker_address.slice(0,8) + '…' : 'Seller')
   const takerName = takerProfile?.display_name ?? takerProfile?.username ??
     (offer?.taker_address ? offer.taker_address.slice(0,8) + '…' : 'Buyer')
-  const myName    = isMaker ? makerName : takerName
-  const otherName = isMaker ? takerName : makerName
 
   const steps = [
     { n:1, done: offerStatus !== 'open',     label: `${takerName} accepted offer`,               desc: 'USDC locked in vault' },
