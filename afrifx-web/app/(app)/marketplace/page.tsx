@@ -298,7 +298,7 @@ export default function MarketplacePage() {
                           : acceptState.phase === 'done'       ? 'Redirecting…'
                           : 'Processing…'}
                           </>
-                        ) : 'Accept offer'}
+                        ) : 'Buy USDC'}
                       </Button>
                     </ClientOnly>
                   )}

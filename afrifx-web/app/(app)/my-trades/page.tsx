@@ -70,7 +70,7 @@ export default function MyTradesPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-[#E2E8F0]">My trades</h1>
-          <p className="text-sm text-[#64748B]">All your P2P offers — as maker and taker.</p>
+          <p className="text-sm text-[#64748B]">All your P2P trades — as buyer or seller.</p>
         </div>
         <Link href="/marketplace/create">
           <Button size="sm"><Plus className="h-4 w-4" /> New offer</Button>
@@ -109,9 +109,9 @@ export default function MyTradesPage() {
         {filtered.map((offer) => {
           const isMaker  = address?.toLowerCase() === offer.maker_address?.toLowerCase()
           const isTaker  = address?.toLowerCase() === offer.taker_address?.toLowerCase()
-          const myRole   = isMaker ? 'Maker' : 'Taker'
+          const myRole   = isMaker ? 'Seller' : 'Buyer'
           const otherAddr = isMaker ? offer.taker_address : offer.maker_address
-          const otherRole = isMaker ? 'Taker' : 'Maker'
+          const otherRole = isMaker ? 'Buyer' : 'Seller'
 
           return (
             <div key={offer.id}
@@ -145,7 +145,7 @@ export default function MyTradesPage() {
                     <ClientOnly fallback={<span className="text-xs text-[#64748B]">Loading…</span>}>
                       {otherAddr
                         ? <UserDisplay address={otherAddr} size="xs" fallback="Waiting…" />
-                        : <span className="text-xs text-[#64748B]">Waiting for taker…</span>
+                        : <span className="text-xs text-[#64748B]">Waiting for buyer…</span>
                       }
                     </ClientOnly>
                     <span className="text-xs text-[#64748B]">·</span>

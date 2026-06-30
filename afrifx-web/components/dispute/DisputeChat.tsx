@@ -108,8 +108,8 @@ export function DisputeChat({
   function getSenderLabel(msg: Message) {
     if (msg.sender_id === senderId) return 'You'
     if (msg.sender_type === 'admin') return `⚖️ Admin${msg.sender_name ? ` (${msg.sender_name})` : ''}`
-    if (msg.sender_type === 'maker') return `Maker${msg.sender_name ? ` (${msg.sender_name})` : ''}`
-    return `Taker${msg.sender_name ? ` (${msg.sender_name})` : ''}`
+    if (msg.sender_type === 'maker') return msg.sender_name ?? `Seller${msg.sender_name ? ` (${msg.sender_name})` : ''}`
+    return msg.sender_name ?? 'Buyer'
   }
 
   return (

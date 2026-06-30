@@ -15,6 +15,7 @@ import {
   Loader2, AlertCircle, ArrowRight, RefreshCw, Flag,
 } from 'lucide-react'
 import type { P2POffer } from '@/types'
+import { useProfileByAddress } from '@/hooks/useProfile'
 import { DisputeStatus } from '@/components/dispute/DisputeStatus'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
@@ -170,10 +171,10 @@ export default function OfferDetailPage() {
     'warning' | 'arc' | 'success' | 'danger' | 'default'
 
   const steps = [
-    { n:1, done: offerStatus !== 'open',     label: 'Taker accepted offer',               desc: 'USDC locked in vault' },
-    { n:2, done: offerStatus !== 'open',     label: `Taker sends ${Number(offer.local_amount).toLocaleString()} ${offer.local_currency} to maker`, desc: 'Off-chain payment' },
-    { n:3, done: !!offer.taker_confirmed,     label: 'Taker confirmed: "I sent the money"', desc: 'Taker window' },
-    { n:4, done: !!offer.maker_confirmed,     label: 'Maker confirmed: "I received it"',    desc: 'Maker window' },
+    { n:1, done: offerStatus !== 'open',     label: `${takerName} accepted offer`,               desc: 'USDC locked in vault' },
+    { n:2, done: offerStatus !== 'open',     label: `${takerName} sends ${Number(offer.local_amount).toLocaleString()} ${offer.local_currency} to ${makerName}`, desc: 'Off-chain payment' },
+    { n:3, done: !!offer.taker_confirmed,     label: `${takerName} confirmed: "I sent the money"`, desc: 'Taker window' },
+    { n:4, done: !!offer.maker_confirmed,     label: `${makerName} confirmed: "I received it"`,    desc: 'Maker window' },
     { n:5, done: offerStatus === 'released',  label: 'Platform releases USDC to taker',     desc: 'Auto within 15s' },
   ]
 
@@ -210,6 +211,17 @@ export default function OfferDetailPage() {
   }
 
   const localAmountFormatted = Number(offer.local_amount).toLocaleString()
+  const { data: makerProfile } = useProfileByAddress(offer?.maker_address)
+  const { data: takerProfile } = useProfileByAddress(offer?.taker_address)
+
+  // Display names — fall back to shortened address
+  const makerName = makerProfile?.display_name ?? makerProfile?.username ??
+    (offer?.maker_address ? offer.maker_address.slice(0,8) + '…' : 'Seller')
+  const takerName = takerProfile?.display_name ?? takerProfile?.username ??
+    (offer?.taker_address ? offer.taker_address.slice(0,8) + '…' : 'Buyer')
+  const myName    = isMaker ? makerName : takerName
+  const otherName = isMaker ? takerName : makerName
+
   const nowTs = Math.floor(Date.now() / 1000)
 
   return (
@@ -229,7 +241,7 @@ export default function OfferDetailPage() {
               {offer.order_type ?? 'market'}
             </Badge>
             {!!offer.dispute_raised && <Badge variant="danger">Disputed</Badge>}
-            {isTaker && <Badge variant="success">You are the taker</Badge>}
+            {isTaker && <Badge variant="success">You are the buyer</Badge>}
           </div>
           <p className="font-mono text-xs text-[#64748B]">{offer.id.slice(0,26)}…</p>
         </div>
@@ -387,7 +399,7 @@ export default function OfferDetailPage() {
 
               {offerStatus === 'open' && isMaker && (
                 <div className="rounded-lg bg-[#080D1B] p-3 text-center text-xs text-[#64748B]">
-                  Waiting for a seller to accept your offer…
+                  Waiting for a buyer to accept your offer…
                 </div>
               )}
 
@@ -405,7 +417,7 @@ export default function OfferDetailPage() {
                 <>
                   {isTaker && !offer.taker_confirmed && (
                     <div className="rounded-lg border border-[#378ADD]/30 bg-[#378ADD]/10 p-3 text-xs">
-                      <p className="font-medium text-[#E2E8F0]">Your turn — send {offer.local_currency} to maker</p>
+                      <p className="font-medium text-[#E2E8F0]">Your turn — send {offer.local_currency} to {makerName}</p>
                       <p className="mt-1 text-[#64748B]">
                         Send <strong className="text-[#E2E8F0]">
                           {localAmountFormatted} {offer.local_currency}
@@ -417,7 +429,7 @@ export default function OfferDetailPage() {
                   {isMaker && !offer.taker_confirmed && (
                     <div className="flex items-center gap-2 rounded-lg bg-[#080D1B] p-3 text-xs text-[#64748B]">
                       <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                      Waiting for taker to send and confirm {localAmountFormatted} {offer.local_currency}…
+                      Waiting for {takerName} to send and confirm {localAmountFormatted} {offer.local_currency}…
                     </div>
                   )}
 
@@ -425,7 +437,7 @@ export default function OfferDetailPage() {
                     <div className="rounded-lg border border-[#378ADD]/30 bg-[#378ADD]/10 p-3 text-xs">
                       <p className="font-medium text-[#E2E8F0]">Check your account</p>
                       <p className="mt-1 text-[#64748B]">
-                        Taker says they sent <strong className="text-[#E2E8F0]">
+                        {takerName} says they sent <strong className="text-[#E2E8F0]">
                           {localAmountFormatted} {offer.local_currency}
                         </strong>. Confirm receipt to release USDC.
                       </p>
@@ -456,7 +468,7 @@ export default function OfferDetailPage() {
                         : offer.maker_confirmed
                         ? <><CheckCircle className="h-4 w-4 text-emerald-400" /> Receipt confirmed</>
                         : !offer.taker_confirmed
-                        ? 'Waiting for taker to send first…'
+                        ? `Waiting for ${takerName} to send first…`
                         : `✓ I received ${localAmountFormatted} ${offer.local_currency}`
                       }
                     </Button>
@@ -473,7 +485,7 @@ export default function OfferDetailPage() {
                    !offer.dispute_raised && offer.maker_deadline &&
                    offer.maker_deadline < nowTs && (
                     <div className="space-y-2">
-                      <p className="text-xs text-red-400">⚠️ Maker has not confirmed within the agreed window.</p>
+                      <p className="text-xs text-red-400">⚠️ {makerName} has not confirmed within the agreed window.</p>
                       {!disputeDone ? (
                         <Button variant="danger" className="w-full"
                           onClick={() => handleDispute('maker_silent', 'taker')} disabled={disputing}>
@@ -492,7 +504,7 @@ export default function OfferDetailPage() {
                    offer.maker_deadline < nowTs && (
                     <div className="space-y-2">
                       <div className="rounded-lg border border-red-900/40 bg-red-900/10 p-3 text-xs">
-                        <p className="font-medium text-red-400">⚠️ Taker claims to have sent payment</p>
+                        <p className="font-medium text-red-400">⚠️ {takerName} claims to have sent payment</p>
                         <p className="mt-1 text-red-600">
                           If you did not receive{' '}
                           <strong className="text-red-400">{localAmountFormatted} {offer.local_currency}</strong>,
