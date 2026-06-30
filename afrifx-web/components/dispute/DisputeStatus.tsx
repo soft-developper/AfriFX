@@ -22,21 +22,29 @@ export function DisputeStatus({ disputeId, offerId, userAddress, userRole, usern
   const [assignment, setAssignment] = useState<Assignment | null>(null)
   const [loading,    setLoading]    = useState(true)
 
-  useEffect(() => {
-    fetch(`${API}/disputes/${disputeId}/assignment`)
-      .then(r => r.json())
-      .then(data => setAssignment(data))
-      .catch(() => {})
-      .finally(() => setLoading(false))
+  async function fetchAssignment() {
+    try {
+      const res  = await fetch(`${API}/disputes/${disputeId}/assignment`)
+      const data = await res.json()
+      setAssignment(data ?? null)
+    } catch {}
+    finally { setLoading(false) }
+  }
 
-    const interval = setInterval(() => {
-      fetch(`${API}/disputes/${disputeId}/assignment`)
-        .then(r => r.json())
-        .then(data => setAssignment(data))
-        .catch(() => {})
-    }, 10_000)
+  useEffect(() => {
+    if (!disputeId) { setLoading(false); return }
+    fetchAssignment()
+    // Poll every 15s to detect when admin accepts
+    const interval = setInterval(fetchAssignment, 15_000)
     return () => clearInterval(interval)
   }, [disputeId])
+
+  if (!disputeId) return (
+    <div className="rounded-lg border border-amber-900/40 bg-amber-900/10 p-3 text-xs">
+      <p className="font-medium text-amber-400">⏳ Dispute raised — awaiting admin review</p>
+      <p className="mt-1 text-amber-600">An admin will accept and handle your dispute shortly.</p>
+    </div>
+  )
 
   if (loading) return (
     <div className="flex items-center gap-2 rounded-lg bg-[#080D1B] p-3 text-xs text-[#64748B]">
@@ -52,8 +60,8 @@ export function DisputeStatus({ disputeId, offerId, userAddress, userRole, usern
         ${assignment
           ? 'border-emerald-900/40 bg-emerald-900/10'
           : 'border-amber-900/40 bg-amber-900/10'}`}>
-        <div className="flex items-center gap-2">
-          <Scale className={`h-4 w-4 shrink-0 ${assignment ? 'text-emerald-400' : 'text-amber-400'}`} />
+        <div className="flex items-start gap-2">
+          <Scale className={`h-4 w-4 mt-0.5 shrink-0 ${assignment ? 'text-emerald-400' : 'text-amber-400'}`} />
           <div>
             {assignment ? (
               <>
@@ -61,8 +69,8 @@ export function DisputeStatus({ disputeId, offerId, userAddress, userRole, usern
                   Admin {assignment.admin_name} has accepted your dispute
                 </p>
                 <p className="mt-0.5 text-emerald-600">
-                  They will contact you shortly to review the evidence.
-                  Please upload your bank statement below.
+                  They will review the evidence and contact you below.
+                  Upload your bank statement when requested.
                 </p>
               </>
             ) : (
@@ -78,7 +86,7 @@ export function DisputeStatus({ disputeId, offerId, userAddress, userRole, usern
       </div>
 
       {/* Chat — only visible after admin accepts */}
-      {assignment && (
+      {assignment && disputeId && (
         <DisputeChat
           disputeId={disputeId}
           senderId={userAddress}

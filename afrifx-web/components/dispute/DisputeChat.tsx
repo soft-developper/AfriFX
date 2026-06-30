@@ -43,7 +43,6 @@ export function DisputeChat({
       const res  = await fetch(`${API}/disputes/${disputeId}/messages?viewerType=${viewerType}`)
       const data = await res.json()
       setMessages(Array.isArray(data) ? data : [])
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
     } catch {}
   }
 

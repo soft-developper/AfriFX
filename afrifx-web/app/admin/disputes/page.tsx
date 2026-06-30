@@ -56,6 +56,7 @@ export default function AdminDisputesPage() {
       })
       const data = await res.json()
       if (data.success) {
+        setFilter('in_review') // switch to in_review tab
         await load()
         setExpanded(disputeId) // auto-expand to show chat
       } else {
@@ -273,9 +274,42 @@ export default function AdminDisputesPage() {
                 {/* Chat — expanded section */}
                 {isExpanded && admin && (isInReview || isOpen) && isMyCase && (
                   <div className="border-t border-[#1B2B4B] p-4">
-                    <p className="mb-3 text-xs font-medium text-[#64748B]">
-                      ⚖️ Communication with both parties · Bank statements are admin-only
+                    <p className="mb-2 text-xs font-medium text-[#64748B]">
+                      ⚖️ Messages go to both parties · Request statements privately below
                     </p>
+                    {/* Request statement buttons */}
+                    <div className="mb-3 flex gap-2">
+                      <button
+                        onClick={async () => {
+                          await adminFetch(`/disputes/${id}/messages`, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                              senderId: admin?.id, senderType: 'admin',
+                              senderName: admin?.username,
+                              content: '📋 Please upload your bank account statement for the disputed period so we can review your case.',
+                              adminOnly: 0,
+                            }),
+                          })
+                        }}
+                        className="rounded-lg border border-[#378ADD]/40 bg-[#378ADD]/10 px-3 py-1.5 text-xs text-[#378ADD] hover:bg-[#378ADD]/20 transition-colors">
+                        📋 Request statement from maker
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await adminFetch(`/disputes/${id}/messages`, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                              senderId: admin?.id, senderType: 'admin',
+                              senderName: admin?.username,
+                              content: '📋 Please upload your bank transfer receipt or proof of payment so we can review your case.',
+                              adminOnly: 0,
+                            }),
+                          })
+                        }}
+                        className="rounded-lg border border-[#378ADD]/40 bg-[#378ADD]/10 px-3 py-1.5 text-xs text-[#378ADD] hover:bg-[#378ADD]/20 transition-colors">
+                        📋 Request statement from taker
+                      </button>
+                    </div>
                     <DisputeChat
                       disputeId={id}
                       senderId={admin.id}
