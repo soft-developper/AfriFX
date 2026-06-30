@@ -177,23 +177,22 @@ export function DisputeChat({
           </Button>
         </div>
 
-        {/* Document upload */}
-        <div className="flex items-center gap-2">
-          <input ref={fileRef} type="file" className="hidden"
-            accept=".pdf,.jpg,.jpeg,.png"
-            onChange={e => e.target.files?.[0] && uploadDocument(e.target.files[0])} />
-          <button onClick={() => fileRef.current?.click()}
-            className="flex items-center gap-1.5 rounded-lg border border-[#1B2B4B] px-3 py-1.5 text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors">
-            {uploading
-              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              : <Upload className="h-3.5 w-3.5" />
-            }
-            Upload bank statement
-            {viewerType !== 'admin' && (
-              <span className="ml-1 text-amber-400">(admin only)</span>
-            )}
-          </button>
-        </div>
+        {/* Document upload — only for users (maker/taker), not admin */}
+        {viewerType !== 'admin' && (
+          <div className="flex items-center gap-2">
+            <input ref={fileRef} type="file" className="hidden"
+              accept=".pdf"
+              onChange={e => e.target.files?.[0] && uploadDocument(e.target.files[0])} />
+            <button onClick={() => fileRef.current?.click()}
+              className="flex items-center gap-1.5 rounded-lg border border-[#1B2B4B] px-3 py-1.5 text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors">
+              {uploading
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : <Upload className="h-3.5 w-3.5" />
+              }
+              Upload bank statement (PDF only — admin will review)
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
