@@ -446,12 +446,12 @@ export default function OfferDetailPage() {
                     <Button className="w-full"
                       onClick={async () => { await takerConfirm(offerId, timerSecs); await load() }}
                       disabled={!!offer.taker_confirmed || actionLoading}
-                      variant={offer.taker_confirmed ? 'outline' : 'default'}>
+                      variant={!!offer.taker_confirmed ? 'outline' : 'default'}>
                       {actionLoading
                         ? <><Loader2 className="h-4 w-4 animate-spin" /> Confirming…</>
-                        : offer.taker_confirmed
+                        : !!offer.taker_confirmed
                         ? <><CheckCircle className="h-4 w-4 text-emerald-400" /> Sent confirmed</>
-                        : `✓ I sent ${localAmountFormatted} ${offer.local_currency} to maker`
+                        : `✓ I sent ${localAmountFormatted} ${offer.local_currency} to ${makerName}`
                       }
                     </Button>
                   )}
@@ -460,10 +460,10 @@ export default function OfferDetailPage() {
                     <Button className="w-full"
                       onClick={async () => { await makerConfirm(offerId); await load() }}
                       disabled={!offer.taker_confirmed || !!offer.maker_confirmed || actionLoading}
-                      variant={offer.maker_confirmed ? 'outline' : 'default'}>
+                      variant={!!offer.maker_confirmed ? 'outline' : 'default'}>
                       {actionLoading
                         ? <><Loader2 className="h-4 w-4 animate-spin" /> Confirming…</>
-                        : offer.maker_confirmed
+                        : !!offer.maker_confirmed
                         ? <><CheckCircle className="h-4 w-4 text-emerald-400" /> Receipt confirmed</>
                         : !offer.taker_confirmed
                         ? `Waiting for ${takerName} to send first…`
@@ -475,7 +475,7 @@ export default function OfferDetailPage() {
                   {isTaker && offer.taker_confirmed && !offer.maker_confirmed && !offer.dispute_raised && (
                     <div className="flex items-center gap-2 rounded-lg bg-[#080D1B] px-3 py-2 text-xs text-[#64748B]">
                       <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-                      Waiting for maker to confirm receipt…
+                      Waiting for {makerName} to confirm receipt…
                     </div>
                   )}
 
