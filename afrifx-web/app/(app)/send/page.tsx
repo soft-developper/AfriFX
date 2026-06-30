@@ -14,7 +14,7 @@ export default function SendPage() {
   const { isConnected }        = useAccount()
   const [to,     setTo]        = useState('')
   const [amount, setAmount]    = useState('')
-  const { formatted: balance, value: balanceRaw } = useUSDCBalance()
+  const { formatted: balance, rawBalance } = useUSDCBalance()
   const { writeContractAsync, isPending } = useWriteContract()
   const [txHash, setTxHash]    = useState<`0x${string}` | undefined>()
   const { isSuccess }          = useWaitForTransactionReceipt({ hash: txHash })
