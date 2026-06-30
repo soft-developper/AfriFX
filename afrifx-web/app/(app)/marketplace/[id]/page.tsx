@@ -170,6 +170,16 @@ export default function OfferDetailPage() {
   const statusBadge = (statusBadgeMap[offerStatus] ?? 'default') as
     'warning' | 'arc' | 'success' | 'danger' | 'default'
 
+  const { data: makerProfile } = useProfileByAddress(offer?.maker_address)
+  const { data: takerProfile } = useProfileByAddress(offer?.taker_address)
+
+  const makerName = makerProfile?.display_name ?? makerProfile?.username ??
+    (offer?.maker_address ? offer.maker_address.slice(0,8) + '…' : 'Seller')
+  const takerName = takerProfile?.display_name ?? takerProfile?.username ??
+    (offer?.taker_address ? offer.taker_address.slice(0,8) + '…' : 'Buyer')
+  const myName    = isMaker ? makerName : takerName
+  const otherName = isMaker ? takerName : makerName
+
   const steps = [
     { n:1, done: offerStatus !== 'open',     label: `${takerName} accepted offer`,               desc: 'USDC locked in vault' },
     { n:2, done: offerStatus !== 'open',     label: `${takerName} sends ${Number(offer.local_amount).toLocaleString()} ${offer.local_currency} to ${makerName}`, desc: 'Off-chain payment' },
@@ -211,17 +221,6 @@ export default function OfferDetailPage() {
   }
 
   const localAmountFormatted = Number(offer.local_amount).toLocaleString()
-  const { data: makerProfile } = useProfileByAddress(offer?.maker_address)
-  const { data: takerProfile } = useProfileByAddress(offer?.taker_address)
-
-  // Display names — fall back to shortened address
-  const makerName = makerProfile?.display_name ?? makerProfile?.username ??
-    (offer?.maker_address ? offer.maker_address.slice(0,8) + '…' : 'Seller')
-  const takerName = takerProfile?.display_name ?? takerProfile?.username ??
-    (offer?.taker_address ? offer.taker_address.slice(0,8) + '…' : 'Buyer')
-  const myName    = isMaker ? makerName : takerName
-  const otherName = isMaker ? takerName : makerName
-
   const nowTs = Math.floor(Date.now() / 1000)
 
   return (
