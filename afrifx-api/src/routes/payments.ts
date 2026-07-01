@@ -118,7 +118,7 @@ router.patch('/:id/settle', async (req, res) => {
         SELECT p.*, i.creator_address, i.memo_ref as reference,
                i.local_currency, i.local_amount, i.id as invoice_id
         FROM payments p
-        LEFT JOIN invoices i ON i.id = p.invoice_id
+        LEFT JOIN invoices i ON i.memo_ref = p.invoice_ref
         WHERE p.id = ${req.params.id} LIMIT 1
       `)
       const _pr = parseRows(pRows)
