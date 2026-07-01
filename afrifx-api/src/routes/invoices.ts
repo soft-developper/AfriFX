@@ -115,7 +115,7 @@ router.patch('/:id/status', async (req, res) => {
 // PATCH /invoices/ref/:ref/pay — mark paid or failed by memo ref
 // Called by frontend after on-chain confirmation with receipt.status
 router.patch('/ref/:ref/pay', async (req, res) => {
-  const { txHash, payerAddress, status: txStatus } = req.body
+  const { txHash, payerAddress, status: txStatus, usdcAmount } = req.body
   const now = Math.floor(Date.now() / 1000)
 
   // Only mark as 'paid' if tx actually succeeded on-chain
@@ -129,6 +129,7 @@ router.patch('/ref/:ref/pay', async (req, res) => {
             status          = ${invoiceStatus},
             payment_tx_hash = COALESCE(${txHash ?? null}, payment_tx_hash),
             payer_address   = COALESCE(${payerAddress?.toLowerCase() ?? null}, payer_address),
+            usdc_amount     = COALESCE(${usdcAmount ?? null}, usdc_amount),
             paid_at         = COALESCE(${paidAt}, paid_at),
             updated_at      = ${now}
           WHERE memo_ref = ${req.params.ref}`
@@ -136,21 +137,24 @@ router.patch('/ref/:ref/pay', async (req, res) => {
     // Email notification on successful payment
     if (invoiceStatus === 'paid') {
       try {
-        const _invRows = await db.run(sql`SELECT id, creator_address, memo_ref, local_currency, local_amount, usdc_amount FROM invoices WHERE memo_ref = ${req.params.ref} LIMIT 1`)
+        const _invRows = await db.run(sql`SELECT id, creator_address, memo_ref, currency, amount, usdc_amount FROM invoices WHERE memo_ref = ${req.params.ref} LIMIT 1`)
         const _inv = parseRows(_invRows)[0]
+        console.log('[Notify] invoice data:', JSON.stringify(_inv))
         if (_inv) {
           notifyInvoicePaid({
             creatorWallet: _inv.creator_address ?? '',
             payerAddress:  payerAddress ?? '',
             invoiceRef:    _inv.memo_ref ?? req.params.ref,
             usdcAmount:    Number(_inv.usdc_amount ?? 0),
-            localAmount:   _inv.local_amount ? Number(_inv.local_amount) : undefined,
-            localCcy:      _inv.local_currency ?? undefined,
+            localAmount:   _inv.amount ? Number(_inv.amount) : undefined,
+            localCcy:      _inv.currency ?? undefined,
             invoiceId:     _inv.id ?? '',
             txHash:        txHash ?? '',
           }).catch((e: any) => console.error('[Notify] invoice_paid:', e.message))
         }
-      } catch {}
+      } catch (err: any) { console.error('[Notify] invoice hook error:', err.message) }
+    } else {
+      console.log('[Notify] invoiceStatus not paid:', invoiceStatus)
     }
     res.json({ success: true, invoiceStatus })
   } catch (err: any) { res.status(500).json({ error: err.message }) }

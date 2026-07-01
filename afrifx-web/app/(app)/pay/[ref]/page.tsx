@@ -154,7 +154,7 @@ function PayContent() {
       await fetch(`${API}/invoices/ref/${invoice.memo_ref}/pay`, {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ txHash: hash, payerAddress: address }),
+        body:    JSON.stringify({ txHash: hash, payerAddress: address, usdcAmount }),
       })
 
       // Record payment in USDC (actual on-chain amount)
