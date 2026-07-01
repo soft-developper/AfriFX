@@ -105,16 +105,20 @@ router.patch('/:id', async (req, res) => {
             updated_at      = ${now}
           WHERE id = ${req.params.id}`
     )
+    // Fetch offer data for email notification
+    const _offerRows = await db.run(sql`SELECT * FROM p2p_offers WHERE id = ${req.params.id} LIMIT 1`)
+    const _offerData = Array.isArray((_offerRows as any).rows) ? (_offerRows as any).rows[0] : (_offerRows as any)[0]
     // Fire email + in-app notification (non-blocking)
-    notifyTradeAccepted({
-      makerWallet: offer.maker_address ?? offer[1],
-      takerWallet: req.body.takerAddress?.toLowerCase() ?? '',
-      usdcAmount:  Number(offer.usdc_amount ?? offer[3] ?? 0),
-      localAmount: Number(offer.local_amount ?? offer[5] ?? 0),
-      localCcy:    offer.local_currency ?? offer[4] ?? '',
-      offerId:     offerId,
-    }).catch(err => console.error('[Notify] trade_accepted failed:', err.message))
-
+    if (_offerData) {
+      notifyTradeAccepted({
+        makerWallet: _offerData.maker_address ?? _offerData[1] ?? '',
+        takerWallet: (req.body.takerAddress ?? '').toLowerCase(),
+        usdcAmount:  Number(_offerData.usdc_amount  ?? _offerData[3]  ?? 0),
+        localAmount: Number(_offerData.local_amount ?? _offerData[5]  ?? 0),
+        localCcy:    _offerData.local_currency ?? _offerData[4] ?? '',
+        offerId:     req.params.id,
+      }).catch((err: any) => console.error('[Notify] trade_accepted:', err.message))
+    }
     res.json({ success: true })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
