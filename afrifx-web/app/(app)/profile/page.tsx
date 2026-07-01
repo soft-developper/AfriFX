@@ -356,6 +356,9 @@ function ProfileContent() {
               Share this link so traders can verify your reputation before trading with you.
             </p>
           </div>
+
+          {/* Email notification preferences */}
+          <EmailPreferences />
         </div>
       </div>
     </div>
