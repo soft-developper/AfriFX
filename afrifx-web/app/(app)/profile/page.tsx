@@ -1,4 +1,5 @@
 'use client'
+import { EmailPreferences } from '@/components/notifications/EmailPreferences'
 import { useState } from 'react'
 import { useAccount } from 'wagmi'
 import { useProfile } from '@/hooks/useProfile'

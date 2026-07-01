@@ -20,6 +20,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "node-cron": "^3.0.3",
+    "resend": "^6.16.0",
     "viem": "^2.17.7"
   },
   "devDependencies": {

@@ -1,4 +1,5 @@
 import { Router }     from 'express'
+import { notifyDisputeRaised } from '../services/email/notifications'
 import { db }         from '../db/client'
 import { sql }        from 'drizzle-orm'
 import { randomUUID } from 'crypto'
@@ -118,6 +119,19 @@ router.post('/', async (req, res) => {
       UPDATE p2p_offers SET dispute_raised = 1, updated_at = ${now}
       WHERE id = ${offerId}
     `)
+
+    // Determine other party
+    const otherPartyWallet = raisedByLower === makerAddress ? takerAddress : makerAddress
+
+    // Fire notification (non-blocking)
+    notifyDisputeRaised({
+      raisedByWallet:   raisedByLower,
+      otherPartyWallet: otherPartyWallet ?? '',
+      raisedByRole:     raisedByRole as 'maker' | 'taker',
+      disputeType:      disputeType as 'maker_silent' | 'maker_not_received',
+      offerId,
+      disputeId:        id,
+    }).catch(err => console.error('[Notify] dispute_raised failed:', err.message))
 
     res.status(201).json({ id, autoReleaseAt })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
