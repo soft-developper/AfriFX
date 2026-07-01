@@ -1,3 +1,4 @@
+import { notifyInvoicePaid } from '../services/email/notifications'
 import { Router }     from 'express'
 import { db }         from '../db/client'
 import { sql }        from 'drizzle-orm'
@@ -132,6 +133,25 @@ router.patch('/ref/:ref/pay', async (req, res) => {
             updated_at      = ${now}
           WHERE memo_ref = ${req.params.ref}`
     )
+    // Email notification on successful payment
+    if (invoiceStatus === 'paid') {
+      try {
+        const _invRows = await db.run(sql`SELECT id, creator_address, memo_ref, local_currency, local_amount, usdc_amount FROM invoices WHERE memo_ref = ${req.params.ref} LIMIT 1`)
+        const _inv = parseRows(_invRows)[0]
+        if (_inv) {
+          notifyInvoicePaid({
+            creatorWallet: _inv.creator_address ?? '',
+            payerAddress:  payerAddress ?? '',
+            invoiceRef:    _inv.memo_ref ?? req.params.ref,
+            usdcAmount:    Number(_inv.usdc_amount ?? 0),
+            localAmount:   _inv.local_amount ? Number(_inv.local_amount) : undefined,
+            localCcy:      _inv.local_currency ?? undefined,
+            invoiceId:     _inv.id ?? '',
+            txHash:        txHash ?? '',
+          }).catch((e: any) => console.error('[Notify] invoice_paid:', e.message))
+        }
+      } catch {}
+    }
     res.json({ success: true, invoiceStatus })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
