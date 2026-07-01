@@ -6,6 +6,7 @@ import { useAccount }     from 'wagmi'
 import { useProfile }     from '@/hooks/useProfile'
 import { ProfileAvatar }  from '@/components/profile/ProfileAvatar'
 import { ClientOnly }     from '@/components/ui/client-only'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
 
 // Custom ConnectButton that shows our profile avatar when connected
 function NavProfile() {
@@ -111,7 +112,10 @@ export function TopNav() {
       <ClientOnly fallback={
         <div className="h-8 w-28 animate-pulse rounded-xl bg-[#1B2B4B]" />
       }>
-        <NavProfile />
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <NavProfile />
+        </div>
       </ClientOnly>
     </header>
   )
