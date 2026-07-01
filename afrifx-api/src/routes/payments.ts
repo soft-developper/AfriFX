@@ -111,6 +111,32 @@ router.patch('/:id/settle', async (req, res) => {
             settled_at  = ${now}
           WHERE id = ${req.params.id}`
     )
+
+    // Fetch payment + invoice for email notification
+    try {
+      const pRows = await db.run(sql`
+        SELECT p.*, i.creator_address, i.memo_ref as reference,
+               i.local_currency, i.local_amount, i.id as invoice_id
+        FROM payments p
+        LEFT JOIN invoices i ON i.id = p.invoice_id
+        WHERE p.id = ${req.params.id} LIMIT 1
+      `)
+      const _pr = parseRows(pRows)
+      const _p  = _pr[0]
+      if (_p && (_p.creator_address || _p[0])) {
+        notifyInvoicePaid({
+          creatorWallet: _p.creator_address ?? '',
+          payerAddress:  _p.payer_address   ?? _p.sender_address ?? '',
+          invoiceRef:    _p.reference        ?? _p.memo_ref ?? '',
+          usdcAmount:    Number(_p.usdc_amount ?? _p.amount ?? 0),
+          localAmount:   _p.local_amount ? Number(_p.local_amount) : undefined,
+          localCcy:      _p.local_currency ?? undefined,
+          invoiceId:     _p.invoice_id ?? _p.id ?? '',
+          txHash:        arcTxHash ?? '',
+        }).catch((err: any) => console.error('[Notify] invoice_paid:', err.message))
+      }
+    } catch {}
+
     res.json({ success: true })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })

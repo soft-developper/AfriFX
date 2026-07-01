@@ -8,6 +8,7 @@
 import { db }               from '../db/client'
 import { sql }              from 'drizzle-orm'
 import { releasePlatform, cancelPlatform } from '../services/platformWallet'
+import { notifyTradeCompleted } from '../services/email/notifications'
 
 function parseRows(r: any): any[] {
   if (!r) return []
@@ -30,6 +31,25 @@ async function releaseOffer(offerId: string, label: string) {
     `)
     await db.run(sql`DELETE FROM messages WHERE offer_id = ${offerId}`)
     console.log(`[P2PWatcher] ${label} released ✅ tx: ${hash}`)
+
+    // Fetch offer details for email notification
+    try {
+      const offerRows = await db.run(sql`SELECT * FROM p2p_offers WHERE id = ${offerId} LIMIT 1`)
+      const r = parseRows(offerRows)
+      const o = r[0]
+      if (o) {
+        notifyTradeCompleted({
+          makerWallet: o.maker_address ?? o[1] ?? '',
+          takerWallet: o.taker_address ?? o[2] ?? '',
+          usdcAmount:  Number(o.usdc_amount  ?? o[3]  ?? 0),
+          localAmount: Number(o.local_amount  ?? o[5]  ?? 0),
+          localCcy:    o.local_currency ?? o[4] ?? '',
+          offerId,
+          txHash:      hash,
+        }).catch((err: any) => console.error('[Notify] trade_completed failed:', err.message))
+      }
+    } catch {}
+
     return true
   } catch (err: any) {
     console.error(`[P2PWatcher] ${label} release failed:`, err.message)
