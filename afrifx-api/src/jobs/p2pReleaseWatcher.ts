@@ -8,7 +8,7 @@
 import { db }               from '../db/client'
 import { sql }              from 'drizzle-orm'
 import { releasePlatform, cancelPlatform } from '../services/platformWallet'
-import { notifyTradeCompleted } from '../services/email/notifications'
+import { notifyTradeCompleted, notifyTradeAutoCancelled } from '../services/email/notifications'
 
 function parseRows(r: any): any[] {
   if (!r) return []
@@ -69,6 +69,24 @@ async function cancelOffer(offerId: string, label: string) {
       WHERE id = ${offerId}
     `)
     console.log(`[P2PWatcher] ${label} cancelled ✅ tx: ${hash}`)
+
+    // Notify both parties by email
+    try {
+      const oRows = await db.run(sql`
+        SELECT maker_address, taker_address, usdc_amount
+        FROM p2p_offers WHERE id = ${offerId} LIMIT 1
+      `)
+      const o = parseRows(oRows)[0]
+      if (o) {
+        notifyTradeAutoCancelled({
+          makerWallet: o.maker_address ?? o[0] ?? '',
+          takerWallet: o.taker_address ?? o[1] ?? null,
+          usdcAmount:  Number(o.usdc_amount ?? o[2] ?? 0),
+          offerId,
+        }).catch((err: any) => console.error('[Notify] auto_cancelled:', err.message))
+      }
+    } catch {}
+
     return true
   } catch (err: any) {
     console.error(`[P2PWatcher] ${label} cancel failed:`, err.message)
