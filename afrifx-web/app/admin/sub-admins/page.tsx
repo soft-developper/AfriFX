@@ -1,16 +1,17 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { AdminShell } from '@/components/admin/AdminShell'
-import { adminFetch } from '@/hooks/useAdminAuth'
+import { adminFetch, useAdminAuth } from '@/hooks/useAdminAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
   Loader2, Plus, Shield, Trash2, Pause, Play,
-  Key, X, Check,
+  Key, Check, Mail, CheckCircle, AlertCircle,
 } from 'lucide-react'
 
 export default function AdminSubAdmins() {
+  const { admin, invite } = useAdminAuth()
   const [admins,  setAdmins]  = useState<any[]>([])
   const [permMeta, setPermMeta] = useState<any>({})
   const [allPerms, setAllPerms] = useState<string[]>([])
@@ -18,12 +19,11 @@ export default function AdminSubAdmins() {
   const [showForm, setShowForm] = useState(false)
   const [busy, setBusy] = useState<string|null>(null)
 
-  // Form state
-  const [username, setUsername] = useState('')
-  const [email,    setEmail]    = useState('')
-  const [password, setPassword] = useState('')
-  const [wallet,   setWallet]   = useState('')
+  // Invite form state
+  const [inviteEmail, setInviteEmail] = useState('')
   const [selectedPerms, setSelectedPerms] = useState<string[]>([])
+  const [inviteError,   setInviteError]   = useState<string|null>(null)
+  const [inviteSuccess, setInviteSuccess] = useState<string|null>(null)
 
   // Editing
   const [editingId, setEditingId] = useState<string|null>(null)
@@ -44,19 +44,18 @@ export default function AdminSubAdmins() {
   }
   useEffect(() => { load() }, [])
 
-  async function createAdmin() {
-    if (!username || !email || !password) return
+  async function sendInvite() {
+    if (!inviteEmail || selectedPerms.length === 0) return
+    setInviteError(null); setInviteSuccess(null)
     setBusy('create')
     try {
-      const res = await adminFetch('/admin/manage/admins', {
-        method: 'POST',
-        body: JSON.stringify({ username, email, password, walletAddress: wallet, permissions: selectedPerms }),
-      })
-      if (res.ok) {
-        setShowForm(false)
-        setUsername(''); setEmail(''); setPassword(''); setWallet(''); setSelectedPerms([])
-        await load()
-      } else alert((await res.json()).error)
+      const result = await invite(inviteEmail, selectedPerms)
+      if (result.success) {
+        setInviteSuccess(result.message ?? `Invitation sent to ${inviteEmail}`)
+        setInviteEmail(''); setSelectedPerms([])
+      } else {
+        setInviteError((result as any).error ?? 'Could not send invitation')
+      }
     } finally { setBusy(null) }
   }
 
@@ -119,20 +118,30 @@ export default function AdminSubAdmins() {
     <AdminShell>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-semibold text-[#E2E8F0]">Sub-admin management</h1>
-        <Button size="sm" onClick={() => setShowForm(!showForm)}>
-          <Plus className="h-4 w-4" /> Add sub-admin
-        </Button>
+        {admin?.role === 'super_admin' && (
+          <Button size="sm" onClick={() => { setShowForm(!showForm); setInviteError(null); setInviteSuccess(null) }}>
+            <Plus className="h-4 w-4" /> Invite sub-admin
+          </Button>
+        )}
       </div>
 
-      {/* Create form */}
+      {admin?.role !== 'super_admin' && (
+        <div className="mb-6 flex items-center gap-2 rounded-lg bg-[#0F1729] border border-[#1B2B4B] px-4 py-3 text-xs text-[#64748B]">
+          Only the super admin can invite new sub-admins.
+        </div>
+      )}
+
+      {/* Invite form */}
       {showForm && (
         <div className="mb-6 rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
-          <p className="mb-4 text-sm font-medium text-[#E2E8F0]">New sub-admin</p>
-          <div className="mb-4 grid grid-cols-2 gap-3">
-            <Input placeholder="Username" autoComplete="off" value={username} onChange={e => setUsername(e.target.value)} />
-            <Input placeholder="Email" type="email" autoComplete="off" value={email} onChange={e => setEmail(e.target.value)} />
-            <Input placeholder="Password (min 8 chars)" type="password" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} />
-            <Input placeholder="Wallet address (required)" autoComplete="off" value={wallet} onChange={e => setWallet(e.target.value)} className="font-mono text-xs" />
+          <p className="mb-1 text-sm font-medium text-[#E2E8F0]">Invite a sub-admin</p>
+          <p className="mb-4 text-xs text-[#64748B]">
+            They'll get an email with a link to set their own password and, optionally, 2FA.
+          </p>
+          <div className="relative mb-4">
+            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+            <Input className="pl-9" placeholder="Email address" type="email" autoComplete="off"
+              value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
           </div>
 
           <p className="mb-2 text-xs font-medium text-[#E2E8F0]">Permissions</p>
@@ -157,11 +166,22 @@ export default function AdminSubAdmins() {
 
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setShowForm(false)}>Cancel</Button>
-            <Button className="flex-1" onClick={createAdmin}
-              disabled={!username || !email || !password || !wallet || selectedPerms.length === 0 || busy === 'create'}>
-              {busy === 'create' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create sub-admin'}
+            <Button className="flex-1" onClick={sendInvite}
+              disabled={!inviteEmail || selectedPerms.length === 0 || busy === 'create'}>
+              {busy === 'create' ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Mail className="h-4 w-4" /> Send invite</>}
             </Button>
           </div>
+
+          {inviteSuccess && (
+            <div className="mt-3 flex items-start gap-2 rounded-lg bg-emerald-900/20 px-3 py-2.5 text-xs text-emerald-400">
+              <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />{inviteSuccess}
+            </div>
+          )}
+          {inviteError && (
+            <div className="mt-3 flex items-start gap-2 rounded-lg bg-red-900/20 px-3 py-2.5 text-xs text-red-400">
+              <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />{inviteError}
+            </div>
+          )}
         </div>
       )}
 
