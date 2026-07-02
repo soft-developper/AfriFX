@@ -17,7 +17,7 @@ export function MediaUploadButton({ offerId, onUpload, disabled }: Props) {
   const [uploading, setUploading] = useState(false)
   const [errMsg,    setErrMsg]    = useState<string | null>(null)
 
-  async function hdleFile(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !address) return
 

@@ -12,12 +12,15 @@ const config: Config = {
         // Semantic tokens — driven by CSS variables (see globals.css).
         // Support opacity modifiers via the <alpha-value> placeholder.
         app: {
-          bg:      'rgb(var(--app-bg) / <alpha-value>)',
-          surface: 'rgb(var(--app-surface) / <alpha-value>)',
-          border:  'rgb(var(--app-border) / <alpha-value>)',
-          accent:  'rgb(var(--app-accent) / <alpha-value>)',
-          text:    'rgb(var(--app-text) / <alpha-value>)',
-          muted:   'rgb(var(--app-muted) / <alpha-value>)',
+          bg:            'rgb(var(--app-bg) / <alpha-value>)',
+          surface:       'rgb(var(--app-surface) / <alpha-value>)',
+          border:        'rgb(var(--app-border) / <alpha-value>)',
+          accent:        'rgb(var(--app-accent) / <alpha-value>)',
+          'accent-hover':'rgb(var(--app-accent-hover) / <alpha-value>)',
+          'accent-text': 'rgb(var(--app-accent-text) / <alpha-value>)',
+          'on-accent':   'rgb(var(--app-on-accent) / <alpha-value>)',
+          text:          'rgb(var(--app-text) / <alpha-value>)',
+          muted:         'rgb(var(--app-muted) / <alpha-value>)',
         },
         arc: {
           bg:      '#080D1B',

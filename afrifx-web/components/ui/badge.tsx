@@ -11,7 +11,7 @@ export function Badge({ className, variant = 'default', ...props }: BadgeProps) 
     success: 'bg-emerald-900/40 text-emerald-400',
     warning: 'bg-amber-900/40 text-amber-400',
     danger:  'bg-red-900/40 text-red-400',
-    arc:     'bg-app-accent/20 text-app-accent',
+    arc:     'bg-app-accent/20 text-app-accent-text',
   }
   return (
     <span

@@ -89,7 +89,7 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
       if (pendingMedia) {
         await sendMessage(
           input.trim() || pendingMedia.name,
-     pendingMedia.url,
+          pendingMedia.url,
           pendingMedia.type,
           'media',
         )
@@ -109,7 +109,7 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
     finally { setSending(false) }
   }
 
-  function haleKeyDown(e: React.KeyboardEvent) {
+  function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
     sendTyping()
   }
@@ -122,7 +122,7 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
   // ── Not involved: show a locked placeholder ───────────────
   if (!isInvolved) {
     return (
-      <div className="flex h-[520px] flex-col items-center justify-center gap-3 roundeorder border-app-border bg-app-bg">
+      <div className="flex h-[520px] flex-col items-center justify-center gap-3 rounded-2xl border border-app-border bg-app-bg">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-app-border">
           <Lock className="h-5 w-5 text-app-muted" />
         </div>

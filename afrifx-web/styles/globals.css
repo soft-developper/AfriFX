@@ -4,17 +4,30 @@
 
 /*
   Semantic color tokens as "R G B" channel triples so Tailwind can apply
-  opacity modifiers, e.g. bg-app-accent/10. These defaults define the warm,
-  African-inspired palette. A future light mode simply overrides these
-  variables (no component changes needed).
+  opacity modifiers, e.g. bg-app-accent/10.
+
+  :root defines the DARK theme (warm espresso + gold). html.light overrides
+  them with the LIGHT theme (warm ivory + deeper bronze). Every component
+  reads these variables, so switching themes is purely a variable swap.
+
+  Extra accent tokens keep text readable in BOTH themes:
+    --app-accent        gold fill (buttons, bars, active states)
+    --app-accent-hover  hover state for accent fills
+    --app-accent-text   the accent used as READING text (links/labels);
+                        deeper in light mode so it stays legible on ivory
+    --app-on-accent     text/icons that sit ON a gold fill (dark in dark
+                        mode, white in light mode) — replaces raw text-white
 */
 :root {
-  --app-bg:      18 16 11;     /* #12100B — warm espresso */
-  --app-surface: 28 24 16;     /* #1C1810 — warm dark brown */
-  --app-border:  51 41 27;     /* #33291B — clay border */
-  --app-accent:  217 164 65;   /* #D9A441 — rich gold */
-  --app-text:    242 233 216;  /* #F2E9D8 — parchment */
-  --app-muted:   156 138 110;  /* #9C8A6E — warm taupe */
+  --app-bg:           18 16 11;    /* #12100B */
+  --app-surface:      28 24 16;    /* #1C1810 */
+  --app-border:       51 41 27;    /* #33291B */
+  --app-accent:       217 164 65;  /* #D9A441 */
+  --app-accent-hover: 196 143 46;  /* #C48F2E */
+  --app-accent-text:  217 164 65;  /* #D9A441 — bright gold reads well on dark */
+  --app-on-accent:    18 16 11;    /* #12100B — dark text on gold fill */
+  --app-text:         242 233 216; /* #F2E9D8 */
+  --app-muted:        156 138 110; /* #9C8A6E */
 
   /* Legacy aliases (kept for any direct var() consumers) */
   --bg:      #12100B;
@@ -27,7 +40,33 @@
   --text:    #F2E9D8;
 }
 
+html.light {
+  --app-bg:           247 241 230; /* #F7F1E6 — warm ivory */
+  --app-surface:      255 253 248; /* #FFFDF8 — near-white warm surface */
+  --app-border:       228 217 196; /* #E4D9C4 — soft sand */
+  --app-accent:       138 94 19;   /* #8A5E13 — deep bronze, readable as fill+text on ivory */
+  --app-accent-hover: 110 74 15;   /* #6E4A0F */
+  --app-accent-text:  138 94 19;   /* #8A5E13 — passes AA (5.06:1) for link/label text */
+  --app-on-accent:    255 255 255; /* #FFFFFF — white text on bronze fill */
+  --app-text:         43 36 22;    /* #2B2416 — warm near-black */
+  --app-muted:        107 95 73;   /* #6B5F49 — warm gray-brown, passes AA (5.56:1) */
+
+  --bg:      #F7F1E6;
+  --card:    #FFFDF8;
+  --border:  #E4D9C4;
+  --accent:  #8A5E13;
+  --success: #2E7D53;
+  --danger:  #C0492E;
+  --muted:   #6B5F49;
+  --text:    #2B2416;
+}
+
 * { box-sizing: border-box; }
+
+/* Smooth the dark <-> light transition (kept subtle; excludes transforms) */
+body, [class*="bg-app-"], [class*="border-app-"], [class*="text-app-"] {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
 
 body {
   background: var(--bg);

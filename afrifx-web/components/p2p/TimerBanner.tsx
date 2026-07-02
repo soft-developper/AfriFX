@@ -18,7 +18,7 @@ export function TimerBanner({ deadline, totalSeconds, phase, isMine }: TimerBann
   const scheme = isExpired
     ? { bg: 'bg-red-950/60',    border: 'border-red-500/50',   bar: 'bg-red-500',    text: 'text-red-300',    icon: 'text-red-400',    time: 'text-red-300'    }
     : isDanger
-    ? { bg: 'bg-red-950/40',    bord'border-red-500/40',   bar: 'bg-red-500',    text: 'text-red-300',    icon: 'text-red-400',    time: 'text-red-200'    }
+    ? { bg: 'bg-red-950/40',    border: 'border-red-500/40',   bar: 'bg-red-500',    text: 'text-red-300',    icon: 'text-red-400',    time: 'text-red-200'    }
     : isWarning
     ? { bg: 'bg-amber-950/40',  border: 'border-amber-500/40', bar: 'bg-amber-400',  text: 'text-amber-300',  icon: 'text-amber-400',  time: 'text-amber-200'  }
     : { bg: 'bg-app-surface',     border: 'border-app-border',    bar: 'bg-app-accent',  text: 'text-app-muted',  icon: 'text-app-accent-text',  time: 'text-app-text'  }
@@ -64,7 +64,7 @@ export function TimerBanner({ deadline, totalSeconds, phase, isMine }: TimerBann
       </div>
 
       {/* Bottom label */}
-  <div className="mt-2 flex justify-between text-[10px] text-app-muted">
+      <div className="mt-2 flex justify-between text-[10px] text-app-muted">
         <span>Start</span>
         <span className={`font-medium ${pctElapsed > 90 ? 'text-red-400' : pctElapsed > 70 ? 'text-amber-400' : 'text-app-muted'}`}>
           {Math.round(pctElapsed)}% elapsed

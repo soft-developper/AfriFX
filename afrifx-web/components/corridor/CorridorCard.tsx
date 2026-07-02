@@ -25,7 +25,7 @@ export function CorridorCard() {
   const [quote,     setQuote]     = useState<ReturnType<typeof buildCorridorQuote> | null>(null)
 
   // Fetch both rates
-  { rate: fromRate } = useRate(`${from}/USDC`)
+  const { rate: fromRate } = useRate(`${from}/USDC`)
   const { rate: toRate   } = useRate(`${to}/USDC`)
 
   const fromRateVal = fromRate?.rate ?? 0
@@ -59,7 +59,7 @@ export function CorridorCard() {
   function handleFromChange(c: Currency) {
     if (c === to) setTo(from) // auto-swap if same selected
     setFrom(c)
-   setAmount('')
+    setAmount('')
     setQuote(null)
     reset()
   }
@@ -244,7 +244,7 @@ export function CorridorCard() {
       {error && (
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-900/50 bg-red-900/20 px-3 py-2.5 text-xs text-red-400">
           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-     <div>
+          <div>
             <p>{error}</p>
             <button onClick={reset} className="mt-1 underline hover:no-underline">Try again</button>
           </div>
@@ -257,7 +257,7 @@ export function CorridorCard() {
           <div className="flex items-start gap-2">
             <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
             <div className="flex-1 text-xs">
-        <p className="font-medium text-emerald-400">
+              <p className="font-medium text-emerald-400">
                 Corridor complete · {CURRENCY_FLAG[from]} {from} → {CURRENCY_FLAG[to]} {to}
               </p>
               <p className="mt-0.5 text-emerald-500">

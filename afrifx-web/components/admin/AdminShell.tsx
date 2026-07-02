@@ -31,7 +31,7 @@ function ThemeToggleRow() {
 }
 
 const NAV = [
-  { href: '/admshboard',  icon: LayoutDashboard, label: 'Overview',   perm: 'view_dashboard'   },
+  { href: '/admin/dashboard',  icon: LayoutDashboard, label: 'Overview',   perm: 'view_dashboard'   },
   { href: '/admin/offers',     icon: Store,           label: 'Offers',     perm: 'manage_offers'    },
   { href: '/admin/disputes',   icon: AlertTriangle,   label: 'Disputes',   perm: 'resolve_disputes' },
   { href: '/admin/users',      icon: Users,           label: 'Users',      perm: 'manage_users'     },
