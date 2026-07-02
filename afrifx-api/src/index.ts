@@ -18,6 +18,7 @@ import notificationsRouter         from './routes/notifications'
 import disputesRouter              from './routes/disputes'
 import invoicesRouter              from './routes/invoices'
 import paymentsRouter              from './routes/payments'
+import { cleanExpiredSessions } from './services/auth/adminAuth'
 import adminAuthRouter            from './routes/adminAuth'
 import adminManageRouter          from './routes/adminManage'
 import { startRatePoller }        from './jobs/ratePoller'
@@ -65,6 +66,9 @@ app.listen(PORT, async () => {
   startP2PReleaseWatcher()
 startInvoiceReminders()
 startAdminAuditSummary()
+
+  // Clean expired admin sessions every hour
+  setInterval(() => cleanExpiredSessions().catch(() => {}), 3600_000)
   startTreasuryChecker()
   startTxSettler()
 })
