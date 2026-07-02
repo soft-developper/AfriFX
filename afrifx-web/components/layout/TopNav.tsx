@@ -7,6 +7,7 @@ import { useProfile }     from '@/hooks/useProfile'
 import { ProfileAvatar }  from '@/components/profile/ProfileAvatar'
 import { ClientOnly }     from '@/components/ui/client-only'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
+import { ThemeToggle }     from '@/components/layout/ThemeToggle'
 
 // Custom ConnectButton that shows our profile avatar when connected
 function NavProfile() {
@@ -31,7 +32,7 @@ function NavProfile() {
         if (!account) {
           return (
             <button onClick={openConnectModal}
-              className="rounded-xl bg-app-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90">
+              className="rounded-xl bg-app-accent px-4 py-2 text-sm font-medium text-app-on-accent transition-opacity hover:opacity-90">
               Connect wallet
             </button>
           )
@@ -63,7 +64,7 @@ function NavProfile() {
                     <p className="text-xs font-medium text-app-text leading-none">
                       {profile.display_name}
                     </p>
-                    <p className="text-[10px] text-app-accent leading-none mt-0.5">
+                    <p className="text-[10px] text-app-accent-text leading-none mt-0.5">
                       @{profile.username}
                     </p>
                   </div>
@@ -72,7 +73,7 @@ function NavProfile() {
                 <>
                   {/* No profile yet — show shortened address */}
                   <div className="h-5 w-5 rounded-full bg-app-accent/30 flex items-center justify-center">
-                    <span className="text-[8px] font-bold text-app-accent">
+                    <span className="text-[8px] font-bold text-app-accent-text">
                       {account.address.slice(2,4).toUpperCase()}
                     </span>
                   </div>
@@ -101,10 +102,10 @@ export function TopNav() {
       <Link href="/convert"
         className="flex items-center gap-2 text-app-text font-semibold">
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-app-accent/20">
-          <ArrowLeftRight className="h-4 w-4 text-app-accent" />
+          <ArrowLeftRight className="h-4 w-4 text-app-accent-text" />
         </div>
         <span className="text-sm md:text-base">AfriFX</span>
-        <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-app-accent/10 px-2 py-0.5 text-[10px] font-medium text-app-accent">
+        <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-app-accent/10 px-2 py-0.5 text-[10px] font-medium text-app-accent-text">
           <Zap className="h-2.5 w-2.5" /> Arc Testnet
         </span>
       </Link>
@@ -113,6 +114,7 @@ export function TopNav() {
         <div className="h-8 w-28 animate-pulse rounded-xl bg-app-border" />
       }>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <NotificationBell />
           <NavProfile />
         </div>

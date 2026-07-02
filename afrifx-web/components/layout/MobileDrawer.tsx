@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useIsAdmin } from '@/hooks/useIsAdmin'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 
 const nav = [
   { label: 'Exchange', items: [
@@ -121,6 +122,17 @@ export function MobileDrawer({ open, onClose }: Props) {
               </Link>
             </div>
           )}
+
+          {/* Appearance */}
+          <div className="mt-2 border-t border-app-border pt-3">
+            <p className="mb-2 px-4 text-[10px] font-semibold uppercase tracking-widest text-app-muted">
+              Appearance
+            </p>
+            <div className="flex items-center justify-between px-4">
+              <span className="text-sm text-app-text">Theme</span>
+              <ThemeToggle />
+            </div>
+          </div>
         </div>
       </div>
     </>

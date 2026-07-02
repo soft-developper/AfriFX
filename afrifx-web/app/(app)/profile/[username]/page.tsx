@@ -29,7 +29,7 @@ export default function PublicProfilePage() {
     ? 'Elite' : totalTrades >= 5 ? 'Trusted' : totalTrades >= 1 ? 'Active' : 'New'
   const repColor = {
     Elite: 'text-amber-400', Trusted: 'text-emerald-400',
-    Active: 'text-app-accent', New: 'text-app-muted',
+    Active: 'text-app-accent-text', New: 'text-app-muted',
   }[reputation]
 
   return (
@@ -59,7 +59,7 @@ export default function PublicProfilePage() {
                   <Badge variant="arc"><ShieldCheck className="h-3 w-3" /> Verified</Badge>
                 )}
               </div>
-              <p className="text-sm text-app-accent">@{profile.username}</p>
+              <p className="text-sm text-app-accent-text">@{profile.username}</p>
               {profile.bio && <p className="mt-1 text-xs text-app-muted">{profile.bio}</p>}
             </div>
           </div>

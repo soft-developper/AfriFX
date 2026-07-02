@@ -40,7 +40,7 @@ function ChangePasswordCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Lock className="h-4 w-4 text-app-accent" /> Change password</CardTitle>
+        <CardTitle className="flex items-center gap-2"><Lock className="h-4 w-4 text-app-accent-text" /> Change password</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <Input type="password" placeholder="Current password" autoComplete="current-password"
@@ -126,7 +126,7 @@ function TwoFactorCard({ autoStart }: { autoStart: boolean }) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <KeyRound className="h-4 w-4 text-app-accent" /> Two-factor authentication
+          <KeyRound className="h-4 w-4 text-app-accent-text" /> Two-factor authentication
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -208,7 +208,7 @@ function SettingsBody() {
         <h1 className="text-lg font-semibold text-app-text">Account settings</h1>
         {admin && (
           <p className="text-sm text-app-muted">
-            Signed in as <span className="text-app-accent">{admin.username}</span> · {admin.email}
+            Signed in as <span className="text-app-accent-text">{admin.username}</span> · {admin.email}
           </p>
         )}
       </div>
@@ -222,7 +222,7 @@ export default function AdminSettingsPage() {
   return (
     <AdminShell>
       <Suspense fallback={
-        <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-app-accent" /></div>
+        <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-app-accent-text" /></div>
       }>
         <SettingsBody />
       </Suspense>

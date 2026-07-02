@@ -96,7 +96,7 @@ export function WalletContent() {
               <p className="mt-1 text-xs text-app-muted">USD equivalent on Arc Testnet</p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-app-accent/10">
-              <Wallet className="h-6 w-6 text-app-accent" />
+              <Wallet className="h-6 w-6 text-app-accent-text" />
             </div>
           </div>
 
@@ -118,7 +118,7 @@ export function WalletContent() {
             </button>
             <a href={`https://testnet.arcscan.app/address/${address}`}
               target="_blank" rel="noopener noreferrer"
-              className="shrink-0 text-app-muted hover:text-app-accent">
+              className="shrink-0 text-app-muted hover:text-app-accent-text">
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </div>
@@ -287,9 +287,9 @@ export function WalletContent() {
           <div className="space-y-3">
             {[
               { label: 'Completed trades', value: String(data?.p2p.completed ?? 0), icon: TrendingUp, color: 'text-emerald-400' },
-              { label: 'P2P volume traded', value: `$${formatAmount(data?.p2p.totalVolume ?? 0)}`, icon: ArrowLeftRight, color: 'text-app-accent' },
+              { label: 'P2P volume traded', value: `$${formatAmount(data?.p2p.totalVolume ?? 0)}`, icon: ArrowLeftRight, color: 'text-app-accent-text' },
               { label: 'Open offers',       value: String(data?.escrow.openOffers ?? 0),   icon: Store,       color: 'text-amber-400' },
-              { label: 'Active trades',     value: String(data?.escrow.activeOffers ?? 0), icon: ShieldCheck, color: 'text-app-accent' },
+              { label: 'Active trades',     value: String(data?.escrow.activeOffers ?? 0), icon: ShieldCheck, color: 'text-app-accent-text' },
             ].map(({ label, value, icon: Icon, color }) => (
               <div key={label} className="flex items-center justify-between rounded-lg bg-app-bg px-4 py-2.5">
                 <div className="flex items-center gap-2 text-xs text-app-muted">
@@ -322,7 +322,7 @@ export function WalletContent() {
                 <div key={tx.id}
                   className="flex items-center gap-3 rounded-lg bg-app-bg px-3 py-2.5">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-app-accent/10">
-                    <ArrowLeftRight className="h-3.5 w-3.5 text-app-accent" />
+                    <ArrowLeftRight className="h-3.5 w-3.5 text-app-accent-text" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-app-text">
@@ -347,7 +347,7 @@ export function WalletContent() {
                   {tx.arcTxHash && (
                     <a href={`https://testnet.arcscan.app/tx/${tx.arcTxHash}`}
                       target="_blank" rel="noopener noreferrer" className="shrink-0">
-                      <ExternalLink className="h-3 w-3 text-app-muted hover:text-app-accent" />
+                      <ExternalLink className="h-3 w-3 text-app-muted hover:text-app-accent-text" />
                     </a>
                   )}
                 </div>

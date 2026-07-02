@@ -81,7 +81,7 @@ export default function SendPage() {
               Amount (USDC)
             </label>
             <button onClick={setMax}
-              className="text-xs text-app-accent hover:underline">
+              className="text-xs text-app-accent-text hover:underline">
               Max
             </button>
           </div>

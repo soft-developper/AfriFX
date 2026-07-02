@@ -250,7 +250,7 @@ export default function OfferDetailPage() {
       </div>
 
       {isSyncing && (
-        <div className="mb-4 flex items-center gap-2 rounded-xl border border-app-accent/30 bg-app-accent/10 px-4 py-3 text-sm text-app-accent">
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-app-accent/30 bg-app-accent/10 px-4 py-3 text-sm text-app-accent-text">
           <Loader2 className="h-4 w-4 animate-spin shrink-0" />
           Trade accepted! Setting up your trade interface…
         </div>
@@ -318,7 +318,7 @@ export default function OfferDetailPage() {
               <span className="text-app-muted">Create tx</span>
               <a href={`https://testnet.arcscan.app/tx/${offer.arc_tx_hash}`}
                 target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1 font-mono text-app-accent hover:underline">
+                className="flex items-center gap-1 font-mono text-app-accent-text hover:underline">
                 {offer.arc_tx_hash.slice(0,14)}… <ExternalLink className="h-3 w-3" />
               </a>
             </div>
@@ -402,7 +402,7 @@ export default function OfferDetailPage() {
               )}
 
               {isSyncing && (
-                <div className="flex items-center gap-2 rounded-lg border border-app-accent/30 bg-app-accent/10 px-3 py-3 text-xs text-app-accent">
+                <div className="flex items-center gap-2 rounded-lg border border-app-accent/30 bg-app-accent/10 px-3 py-3 text-xs text-app-accent-text">
                   <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                   <div>
                     <p className="font-medium">Offer accepted on Arc!</p>
@@ -544,7 +544,7 @@ export default function OfferDetailPage() {
           {!!txHash && (
             <a href={`https://testnet.arcscan.app/tx/${txHash}`}
               target="_blank" rel="noopener noreferrer"
-              className="mt-3 flex items-center gap-1.5 text-xs text-app-accent hover:underline">
+              className="mt-3 flex items-center gap-1.5 text-xs text-app-accent-text hover:underline">
               <ExternalLink className="h-3 w-3" /> View on ArcScan
             </a>
           )}

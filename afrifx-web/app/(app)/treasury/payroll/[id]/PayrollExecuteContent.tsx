@@ -192,7 +192,7 @@ export function PayrollExecuteContent() {
                   {r.status === 'sent'    ? <CheckCircle className="h-4 w-4 text-emerald-400" />
                   : r.status === 'failed' ? <XCircle     className="h-4 w-4 text-red-400" />
                   : executing && i === currentIdx
-                  ? <Loader2 className="h-4 w-4 animate-spin text-app-accent" />
+                  ? <Loader2 className="h-4 w-4 animate-spin text-app-accent-text" />
                   : <Clock   className="h-4 w-4 text-app-muted" />}
                 </div>
 
@@ -215,7 +215,7 @@ export function PayrollExecuteContent() {
                   {r.tx_hash && (
                     <a href={`https://testnet.arcscan.app/tx/${r.tx_hash}`}
                       target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[10px] text-app-accent hover:underline">
+                      className="inline-flex items-center gap-1 text-[10px] text-app-accent-text hover:underline">
                       View tx <ExternalLink className="h-2.5 w-2.5" />
                     </a>
                   )}

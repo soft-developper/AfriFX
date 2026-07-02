@@ -43,7 +43,7 @@ export function MessageBubble({ msg, isMe, senderName }: Props) {
   }
 
   // Quick action message
-  if (msg.msg_type === 'quick-action' && msg.quick_action) {
+  if (msg.msg_type === 'quick-action' && .quick_action) {
     const qa = QUICK_ACTION_LABELS[msg.quick_action]
     return (
       <div className={`flex ${isMe ? 'justify-end' : 'justify-start'} py-0.5`}>
@@ -68,7 +68,7 @@ export function MessageBubble({ msg, isMe, senderName }: Props) {
 
         <div className={`rounded-2xl px-3 py-2 ${
           isMe
-            ? 'rounded-tr-sm bg-app-accent text-white'
+            ? 'rounded-tr-s-app-accent text-app-on-accent'
             : 'rounded-tl-sm bg-app-border text-app-text'
         }`}>
 
@@ -89,7 +89,7 @@ export function MessageBubble({ msg, isMe, senderName }: Props) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`flex items-center gap-2 rounded-lg p-2 text-xs
-                    ${isMe ? 'bg-white/10 text-white' : 'bg-app-surface text-app-text'}`}
+                    ${isMe ? 'bg-app-on-accent/10 text-app-on-accent' : 'bg-app-surface text-app-text'}`}
                 >
                   <FileText className="h-4 w-4 shrink-0" />
                   <span className="flex-1 truncate">{msg.content ?? 'Document'}</span>
@@ -106,7 +106,7 @@ export function MessageBubble({ msg, isMe, senderName }: Props) {
 
           {/* Timestamp + read receipt */}
           {time && (
-            <p className={`mt-0.5 text-right text-[10px] ${isMe ? 'text-white/60' : 'text-app-muted'}`}>
+            <p className={`mt-.5 text-right text-[10px] ${isMe ? 'text-app-on-accent/60' : 'text-app-muted'}`}>
               {time}
               {isMe && (
                 <span className="ml-1">

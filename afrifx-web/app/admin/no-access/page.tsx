@@ -45,7 +45,7 @@ export default function NoAccessPage() {
           No permissions assigned
         </h1>
         {username && (
-          <p className="mb-1 text-sm text-app-accent">@{username}</p>
+          <p className="mb-1 text-sm text-app-accent-text">@{username}</p>
         )}
         <p className="mb-6 text-sm text-app-muted">
           Your admin account has been created but no permissions have been

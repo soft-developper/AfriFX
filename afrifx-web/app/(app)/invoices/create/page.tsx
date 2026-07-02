@@ -150,7 +150,7 @@ function CreateInvoiceContent() {
               </div>
               <div className="flex justify-between">
                 <span className="text-app-muted">Reference</span>
-                <span className="font-mono text-app-accent">INV-YYYYMMDD-XXXX</span>
+                <span className="font-mono text-app-accent-text">INV-YYYYMMDD-XXXX</span>
               </div>
             </div>
 
@@ -174,7 +174,7 @@ function CreateInvoiceContent() {
                 'Settlement visible on ArcScan',
               ].map((s, i) => (
                 <li key={i} className="flex gap-2">
-                  <span className="shrink-0 text-app-accent">{i+1}.</span>
+                  <span className="shrink-0 text-app-accent-text">{i+1}.</span>
                   <span>{s}</span>
                 </li>
               ))}

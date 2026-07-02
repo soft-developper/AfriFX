@@ -177,7 +177,7 @@ function SettlementsContent() {
 
       {isLoading ? (
         <div className="flex h-40 items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-app-accent" />
+          <Loader2 className="h-6 w-6 animate-spin text-app-accent-text" />
         </div>
       ) : tabData[activeTab].length === 0 ? (
         <div className="rounded-xl border border-app-border bg-app-surface p-8 text-center text-sm text-app-muted">
@@ -217,7 +217,7 @@ function SettlementsContent() {
                 return (
                   <tr key={item.id} className="border-b border-app-border/50 last:border-0 hover:bg-app-bg/50 transition-colors">
                     <td className="px-4 py-3">
-                      <span className="font-mono text-xs text-app-accent">{ref}</span>
+                      <span className="font-mono text-xs text-app-accent-text">{ref}</span>
                     </td>
                     <td className="px-4 py-3">
                       <span className="font-mono text-xs text-app-text">
@@ -249,7 +249,7 @@ function SettlementsContent() {
                       {hash && (
                         <a href={`https://testnet.arcscan.app/tx/${hash}`}
                           target="_blank" rel="noopener noreferrer"
-                          className="text-app-muted hover:text-app-accent transition-colors">
+                          className="text-app-muted hover:text-app-accent-text transition-colors">
                           <ExternalLink className="h-3.5 w-3.5" />
                         </a>
                       )}

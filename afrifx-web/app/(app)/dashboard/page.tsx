@@ -63,7 +63,7 @@ function DashboardContent() {
       value: `${balance}`,
       sub:   'on Arc Testnet',
       icon:  Wallet,
-      color: 'text-app-accent',
+      color: 'text-app-accent-text',
     },
     {
       label: 'Volume (30d)',
@@ -77,7 +77,7 @@ function DashboardContent() {
       value: stats ? `$${formatAmount(stats.allTime.totalVolume)}` : '—',
       sub:   `${stats?.allTime.txCount ?? 0} total transactions`,
       icon:  TrendingUp,
-      color: 'text-app-accent',
+      color: 'text-app-accent-text',
     },
     {
       label: 'Completed trades',
@@ -105,7 +105,7 @@ function DashboardContent() {
             <h1 className="text-xl font-semibold text-app-text">
               {profile ? profile.display_name : 'Dashboard'}
             </h1>
-            <p className="text-xs text-app-accent">
+            <p className="text-xs text-app-accent-text">
               {profile ? `@${profile.username}` : address?.slice(0,10).concat('…') ?? '—'}
             </p>
           </div>
@@ -258,7 +258,7 @@ function DashboardContent() {
                   </div>
                   <div className="text-xs">
                     <p className="text-app-muted">Total outflow</p>
-                    <p className="font-mono font-medium text-app-accent">${formatAmount(totalOut)}</p>
+                    <p className="font-mono font-medium text-app-accent-text">${formatAmount(totalOut)}</p>
                   </div>
                   <div className="text-xs">
                     <p className="text-app-muted">Net position</p>
@@ -286,7 +286,7 @@ function DashboardContent() {
               {stats.recent.map((tx: RecentTx) => (
                 <div key={tx.id} className="flex items-center gap-3 rounded-lg bg-app-bg px-3 py-2.5">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-app-accent/10">
-                    <ArrowLeftRight className="h-3.5 w-3.5 text-app-accent" />
+                    <ArrowLeftRight className="h-3.5 w-3.5 text-app-accent-text" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-app-text">
@@ -307,7 +307,7 @@ function DashboardContent() {
                   {tx.arcTxHash && (
                     <a href={`https://testnet.arcscan.app/tx/${tx.arcTxHash}`}
                       target="_blank" rel="noopener noreferrer" className="shrink-0">
-                      <ExternalLink className="h-3 w-3 text-app-muted hover:text-app-accent" />
+                      <ExternalLink className="h-3 w-3 text-app-muted hover:text-app-accent-text" />
                     </a>
                   )}
                 </div>

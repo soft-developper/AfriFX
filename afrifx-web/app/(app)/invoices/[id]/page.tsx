@@ -26,7 +26,7 @@ function InvoiceDetail() {
 
   if (!invoice) return (
     <div className="flex h-64 items-center justify-center">
-      <Loader2 className="h-6 w-6 animate-spin text-app-accent" />
+      <Loader2 className="h-6 w-6 animate-spin text-app-accent-text" />
     </div>
   )
 
@@ -59,7 +59,7 @@ function InvoiceDetail() {
               {invoice.status}
             </Badge>
           </div>
-          <p className="font-mono text-xs text-app-accent">{invoice.memo_ref}</p>
+          <p className="font-mono text-xs text-app-accent-text">{invoice.memo_ref}</p>
         </div>
       </div>
 
@@ -107,7 +107,7 @@ function InvoiceDetail() {
               {invoice.payment_tx_hash && (
                 <a href={`https://testnet.arcscan.app/tx/${invoice.payment_tx_hash}`}
                   target="_blank" rel="noopener noreferrer"
-                  className="mt-3 inline-flex items-center gap-1.5 text-xs text-app-accent hover:underline">
+                  className="mt-3 inline-flex items-center gap-1.5 text-xs text-app-accent-text hover:underline">
                   <ExternalLink className="h-3.5 w-3.5" /> View on ArcScan
                 </a>
               )}
@@ -116,7 +116,7 @@ function InvoiceDetail() {
             <div className="rounded-xl border border-app-border bg-app-surface p-5">
               <p className="mb-3 text-sm font-medium text-app-text">Payment link</p>
               <div className="mb-3 flex items-center gap-2 rounded-lg bg-app-bg px-3 py-2.5">
-                <p className="flex-1 truncate font-mono text-xs text-app-accent">{payLink}</p>
+                <p className="flex-1 truncate font-mono text-xs text-app-accent-text">{payLink}</p>
                 <button onClick={copy} className="shrink-0 text-app-muted hover:text-app-text">
                   {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>

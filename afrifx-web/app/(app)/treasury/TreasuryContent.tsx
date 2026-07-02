@@ -181,7 +181,7 @@ export function TreasuryContent() {
                     {(['percent','fixed'] as const).map(t => (
                       <button key={t} onClick={() => setActionType(t)}
                         className={`px-3 py-1.5 text-xs transition-colors rounded-lg
-                          ${actionType === t ? 'bg-app-accent text-white' : 'text-app-muted'}`}>
+                          ${actionType === t ? 'bg-app-accent text-app-on-accent' : 'text-app-muted'}`}>
                         {t === 'percent' ? '%' : 'Fixed'}
                       </button>
                     ))}

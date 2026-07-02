@@ -89,7 +89,7 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
       if (pendingMedia) {
         await sendMessage(
           input.trim() || pendingMedia.name,
-          pendingMedia.url,
+     pendingMedia.url,
           pendingMedia.type,
           'media',
         )
@@ -109,7 +109,7 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
     finally { setSending(false) }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
+  function haleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
     sendTyping()
   }
@@ -122,7 +122,7 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
   // ── Not involved: show a locked placeholder ───────────────
   if (!isInvolved) {
     return (
-      <div className="flex h-[520px] flex-col items-center justify-center gap-3 rounded-2xl border border-app-border bg-app-bg">
+      <div className="flex h-[520px] flex-col items-center justify-center gap-3 roundeorder border-app-border bg-app-bg">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-app-border">
           <Lock className="h-5 w-5 text-app-muted" />
         </div>
@@ -158,7 +158,7 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
               {otherProfile?.username ? `@${otherProfile.username}` : otherName}
             </p>
             <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium
-              ${isMaker ? 'bg-app-accent/20 text-app-accent' : 'bg-emerald-900/40 text-emerald-400'}`}>
+              ${isMaker ? 'bg-app-accent/20 text-app-accent-text' : 'bg-emerald-900/40 text-emerald-400'}`}>
               {isMaker ? 'Taker' : 'Maker'}
             </span>
           </div>
@@ -260,7 +260,7 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
                 title="Quick actions"
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm transition-colors
                   ${showActions
-                    ? 'border-app-accent bg-app-accent/10 text-app-accent'
+                    ? 'border-app-accent bg-app-accent/10 text-app-accent-text'
                     : 'border-app-border bg-app-surface text-app-muted hover:text-app-text'}`}
               >
                 ⚡
@@ -288,7 +288,7 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
               <button
                 onClick={handleSend}
                 disabled={(!input.trim() && !pendingMedia) || sending}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-app-accent text-white transition-all hover:bg-[#2a6fc4] disabled:opacity-40 active:scale-95"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-app-accent text-app-on-accent transition-all hover:bg-app-accent-hover disabled:opacity-40 active:scale-95"
               >
                 <Send className="h-4 w-4" />
               </button>

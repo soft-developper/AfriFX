@@ -30,7 +30,7 @@ export default function AdminAnalytics() {
       <h1 className="mb-6 text-xl font-semibold text-app-text">Platform analytics</h1>
 
       {loading ? (
-        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-app-accent" /></div>
+        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-app-accent-text" /></div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {/* Volume by corridor */}

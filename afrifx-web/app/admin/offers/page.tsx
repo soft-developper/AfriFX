@@ -82,14 +82,14 @@ export default function AdminOffers() {
         {['all','open','accepted','released','cancelled'].map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={`rounded-full px-3 py-1 text-xs capitalize transition-colors
-              ${filter === f ? 'bg-app-accent text-white' : 'border border-app-border text-app-muted'}`}>
+              ${filter === f ? 'bg-app-accent text-app-on-accent' : 'border border-app-border text-app-muted'}`}>
             {f}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-app-accent" /></div>
+        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-app-accent-text" /></div>
       ) : (
         <div className="space-y-2">
           {offers.map(o => (

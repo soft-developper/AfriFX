@@ -85,7 +85,7 @@ function InvoicesContent() {
       {/* Summary cards */}
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          { label: 'Total invoiced', value: `$${formatAmount(created.reduce((s,i)=>s+toUSD(i.amount,i.currency),0))}`, color: 'text-app-accent' },
+          { label: 'Total invoiced', value: `$${formatAmount(created.reduce((s,i)=>s+toUSD(i.amount,i.currency),0))}`, color: 'text-app-accent-text' },
           { label: 'Paid',           value: String(created.filter(i=>i.status==='paid').length),      color: 'text-emerald-400' },
           { label: 'Pending',        value: String(created.filter(i=>i.status==='sent').length),      color: 'text-amber-400' },
           { label: 'To pay',         value: String(received.filter(i=>i.status==='sent').length),     color: 'text-red-400' },
@@ -128,7 +128,7 @@ function InvoicesContent() {
               <div key={inv.id} className="rounded-xl border border-app-border bg-app-surface p-4">
                 <div className="flex items-center gap-4">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-app-bg">
-                    <FileText className="h-4 w-4 text-app-accent" />
+                    <FileText className="h-4 w-4 text-app-accent-text" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -168,7 +168,7 @@ function InvoicesContent() {
                     {inv.payment_tx_hash && (
                       <a href={`https://testnet.arcscan.app/tx/${inv.payment_tx_hash}`}
                         target="_blank" rel="noopener noreferrer"
-                        className="text-app-muted hover:text-app-accent">
+                        className="text-app-muted hover:text-app-accent-text">
                         <ExternalLink className="h-4 w-4" />
                       </a>
                     )}

@@ -68,7 +68,7 @@ function PayContent() {
 
   if (isLoading) return (
     <div className="flex h-64 items-center justify-center">
-      <Loader2 className="h-6 w-6 animate-spin text-app-accent" />
+      <Loader2 className="h-6 w-6 animate-spin text-app-accent-text" />
     </div>
   )
 
@@ -190,11 +190,11 @@ function PayContent() {
         {/* Header */}
         <div className="mb-5 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-app-bg">
-            <FileText className="h-6 w-6 text-app-accent" />
+            <FileText className="h-6 w-6 text-app-accent-text" />
           </div>
           <div>
             <p className="text-sm font-medium text-app-text">Payment request</p>
-            <p className="font-mono text-xs text-app-accent">{invoice.memo_ref}</p>
+            <p className="font-mono text-xs text-app-accent-text">{invoice.memo_ref}</p>
           </div>
           <Badge className="ml-auto" variant={
             alreadyPaid ? 'success' : isCancelled ? 'danger' : 'arc'
@@ -209,18 +209,18 @@ function PayContent() {
           <p className="mt-1 font-mono text-4xl font-bold text-app-text">
             {formatAmount(invoice.amount)}
           </p>
-          <p className="text-sm text-app-accent">{invoice.currency}</p>
+          <p className="text-sm text-app-accent-text">{invoice.currency}</p>
 
           {/* USDC conversion — shown when invoice is in local currency */}
           {isLocalCcy && (
             <div className="mt-3 flex items-center justify-center gap-2">
               <span className="text-xs text-app-muted">You will pay</span>
               <div className="flex items-center gap-1.5 rounded-full border border-app-accent/30 bg-app-accent/10 px-3 py-1">
-                <ArrowRight className="h-3 w-3 text-app-accent" />
+                <ArrowRight className="h-3 w-3 text-app-accent-text" />
                 {!ratesLoaded ? (
                   <span className="text-xs text-app-muted animate-pulse">Loading rate…</span>
                 ) : usdcAmount > 0 ? (
-                  <span className="font-mono text-sm font-semibold text-app-accent">
+                  <span className="font-mono text-sm font-semibold text-app-accent-text">
                     {formatAmount(usdcAmount, 6)} USDC
                   </span>
                 ) : (
@@ -268,7 +268,7 @@ function PayContent() {
             {txHash && (
               <a href={`https://testnet.arcscan.app/tx/${txHash}`}
                 target="_blank" rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1 text-xs text-app-accent hover:underline">
+                className="mt-2 inline-flex items-center gap-1 text-xs text-app-accent-text hover:underline">
                 <ExternalLink className="h-3.5 w-3.5" /> View on ArcScan
               </a>
             )}
@@ -314,7 +314,7 @@ function PayContent() {
         ) : status === 'submitting' ? (
           <div className="rounded-xl bg-app-bg p-4">
             <div className="flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin shrink-0 text-app-accent" />
+              <Loader2 className="h-5 w-5 animate-spin shrink-0 text-app-accent-text" />
               <div>
                 <p className="text-sm font-medium text-app-text">Waiting for signature…</p>
                 <p className="text-xs text-app-muted">Approve in your wallet</p>
@@ -325,7 +325,7 @@ function PayContent() {
         ) : status === 'confirming' ? (
           <div className="rounded-xl bg-app-bg p-4">
             <div className="flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin shrink-0 text-app-accent" />
+              <Loader2 className="h-5 w-5 animate-spin shrink-0 text-app-accent-text" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-app-text">Confirming on Arc…</p>
                 <p className="text-xs text-app-muted">Waiting for on-chain confirmation</p>
@@ -334,7 +334,7 @@ function PayContent() {
             {txHash && (
               <a href={`https://testnet.arcscan.app/tx/${txHash}`}
                 target="_blank" rel="noopener noreferrer"
-                className="mt-2 flex items-center gap-1 text-xs text-app-accent hover:underline">
+                className="mt-2 flex items-center gap-1 text-xs text-app-accent-text hover:underline">
                 <ExternalLink className="h-3.5 w-3.5" /> Track on ArcScan
               </a>
             )}

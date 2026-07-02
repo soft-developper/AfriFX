@@ -8,14 +8,14 @@ const ACTION_COLOR: Record<string, string> = {
   login:              'text-app-muted',
   logout:             'text-app-muted',
   create_sub_admin:   'text-emerald-400',
-  update_sub_admin:   'text-app-accent',
+  update_sub_admin:   'text-app-accent-text',
   delete_sub_admin:   'text-red-400',
   force_release_offer:'text-amber-400',
   force_cancel_offer: 'text-red-400',
   resolve_dispute:    'text-emerald-400',
   suspend_user:       'text-red-400',
   unsuspend_user:     'text-emerald-400',
-  update_credentials: 'text-app-accent',
+  update_credentials: 'text-app-accent-text',
 }
 
 export default function AdminAudit() {
@@ -38,7 +38,7 @@ export default function AdminAudit() {
       <h1 className="mb-6 text-xl font-semibold text-app-text">Audit log</h1>
 
       {loading ? (
-        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-app-accent" /></div>
+        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-app-accent-text" /></div>
       ) : logs.length === 0 ? (
         <div className="rounded-xl border border-app-border bg-app-surface p-10 text-center">
           <ScrollText className="mx-auto mb-2 h-8 w-8 text-app-border" />

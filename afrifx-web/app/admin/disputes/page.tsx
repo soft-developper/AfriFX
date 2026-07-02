@@ -128,7 +128,7 @@ export default function AdminDisputesPage() {
 
       {loading ? (
         <div className="flex h-40 items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-app-accent" />
+          <Loader2 className="h-6 w-6 animate-spin text-app-accent-text" />
         </div>
       ) : disputes.length === 0 ? (
         <div className="rounded-xl border border-app-border bg-app-surface p-10 text-center">
@@ -171,7 +171,7 @@ export default function AdminDisputesPage() {
                     <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full
                       ${isOpen ? 'bg-amber-900/20' : isInReview ? 'bg-app-accent/10' : 'bg-emerald-900/20'}`}>
                       {isOpen ? <AlertTriangle className="h-5 w-5 text-amber-400" />
-                       : isInReview ? <Scale className="h-5 w-5 text-app-accent" />
+                       : isInReview ? <Scale className="h-5 w-5 text-app-accent-text" />
                        : <CheckCircle className="h-5 w-5 text-emerald-400" />}
                     </div>
 
@@ -192,7 +192,7 @@ export default function AdminDisputesPage() {
                       </div>
                       <p className="text-xs text-app-muted">
                         {new Date(createdAt * 1000).toLocaleString()} ·
-                        <span className="font-mono text-app-accent ml-1">{offerId?.slice(0,16)}…</span>
+                        <span className="font-mono text-app-accent-text ml-1">{offerId?.slice(0,16)}…</span>
                       </p>
                     </div>
 
@@ -278,7 +278,7 @@ export default function AdminDisputesPage() {
                     )}
 
                     <a href={`https://testnet.arcscan.app`} target="_blank" rel="noopener noreferrer"
-                      className="ml-auto text-app-muted hover:text-app-accent">
+                      className="ml-auto text-app-muted hover:text-app-accent-text">
                       <ExternalLink className="h-4 w-4" />
                     </a>
                   </div>
@@ -304,7 +304,7 @@ export default function AdminDisputesPage() {
                             }),
                           })
                         }}
-                        className="rounded-lg border border-app-accent/40 bg-app-accent/10 px-3 py-1.5 text-xs text-app-accent hover:bg-app-accent/20 transition-colors">
+                        className="rounded-lg border border-app-accent/40 bg-app-accent/10 px-3 py-1.5 text-xs text-app-accent-text hover:bg-app-accent/20 transition-colors">
                         📋 Request statement from maker
                       </button>
                       <button
@@ -319,7 +319,7 @@ export default function AdminDisputesPage() {
                             }),
                           })
                         }}
-                        className="rounded-lg border border-app-accent/40 bg-app-accent/10 px-3 py-1.5 text-xs text-app-accent hover:bg-app-accent/20 transition-colors">
+                        className="rounded-lg border border-app-accent/40 bg-app-accent/10 px-3 py-1.5 text-xs text-app-accent-text hover:bg-app-accent/20 transition-colors">
                         📋 Request statement from taker
                       </button>
                     </div>

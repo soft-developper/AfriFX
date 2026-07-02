@@ -36,7 +36,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-app-accent/10">
-            <Shield className="h-7 w-7 text-app-accent" />
+            <Shield className="h-7 w-7 text-app-accent-text" />
           </div>
           <h1 className="text-2xl font-bold text-app-text">Reset password</h1>
           <p className="text-sm text-app-muted">Choose a new password for your admin account</p>

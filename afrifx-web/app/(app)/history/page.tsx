@@ -87,7 +87,7 @@ export default function HistoryPage() {
                     {toCcy}
                   </span>
                 )}
-                <span className="ml-auto font-mono text-[10px] text-app-accent">{cid}</span>
+                <span className="ml-auto font-mono text-[10px] text-app-accent-text">{cid}</span>
               </div>
               {steps
                 .sort((a: any, b: any) =>
@@ -126,7 +126,7 @@ function TxRow({ tx, isCorridorStep = false }: { tx: any; isCorridorStep?: boole
     <div className={`flex items-center gap-3 px-4 py-3.5
       ${isCorridorStep ? 'border-b border-app-border last:border-0' : ''}`}>
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-app-accent/10">
-        <ArrowLeftRight className="h-4 w-4 text-app-accent" />
+        <ArrowLeftRight className="h-4 w-4 text-app-accent-text" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-app-text">
@@ -137,7 +137,7 @@ function TxRow({ tx, isCorridorStep = false }: { tx: any; isCorridorStep?: boole
         </p>
         <div className="flex items-center gap-2 text-[10px] text-app-muted">
           <span>{new Date(createdAt * 1000).toLocaleString()}</span>
-          {ref && <span className="font-mono text-app-accent">{ref}</span>}
+          {ref && <span className="font-mono text-app-accent-text">{ref}</span>}
         </div>
       </div>
       <div className="shrink-0 text-right">
@@ -158,7 +158,7 @@ function TxRow({ tx, isCorridorStep = false }: { tx: any; isCorridorStep?: boole
         {hash && (
           <a href={`https://testnet.arcscan.app/tx/${hash}`}
             target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="h-3 w-3 text-app-muted hover:text-app-accent" />
+            <ExternalLink className="h-3 w-3 text-app-muted hover:text-app-accent-text" />
           </a>
         )}
       </div>

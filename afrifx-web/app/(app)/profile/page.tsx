@@ -104,7 +104,7 @@ function ProfileContent() {
 
   const repColor = {
     Elite:    'text-amber-400',
-    Verified: 'text-app-accent',
+    Verified: 'text-app-accent-text',
     Trusted:  'text-emerald-400',
     Active:   'text-emerald-400',
     New:      'text-app-muted',
@@ -158,7 +158,7 @@ function ProfileContent() {
                   </h2>
                   {isVerified && <Badge variant="arc">✓ Verified</Badge>}
                 </div>
-                <p className="text-sm text-app-accent">@{profile.username}</p>
+                <p className="text-sm text-app-accent-text">@{profile.username}</p>
               </div>
             )}
           </div>
@@ -188,7 +188,7 @@ function ProfileContent() {
             </button>
             <a href={`https://testnet.arcscan.app/address/${address}`}
               target="_blank" rel="noopener noreferrer"
-              className="shrink-0 text-app-muted hover:text-app-accent">
+              className="shrink-0 text-app-muted hover:text-app-accent-text">
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </div>
@@ -269,7 +269,7 @@ function ProfileContent() {
                 </div>
               </div>
               {isVerified && (
-                <div className="flex items-center gap-2 rounded-full bg-app-accent/10 px-3 py-1.5 text-xs text-app-accent">
+                <div className="flex items-center gap-2 rounded-full bg-app-accent/10 px-3 py-1.5 text-xs text-app-accent-text">
                   <ShieldCheck className="h-3.5 w-3.5" />
                   Verified
                 </div>
@@ -310,14 +310,14 @@ function ProfileContent() {
                 label: 'Maker trades',
                 value: String(makerTrades),
                 icon:  TrendingUp,
-                color: 'text-app-accent',
+                color: 'text-app-accent-text',
                 sub:   'Offers you created',
               },
               {
                 label: 'Taker trades',
                 value: String(takerTrades),
                 icon:  TrendingUp,
-                color: 'text-app-accent',
+                color: 'text-app-accent-text',
                 sub:   'Offers you accepted',
               },
               {
@@ -341,7 +341,7 @@ function ProfileContent() {
           <div className="rounded-xl border border-app-border bg-app-surface p-5">
             <p className="mb-2 text-sm font-medium text-app-text">Public profile link</p>
             <div className="flex items-center gap-2 rounded-lg bg-app-bg px-3 py-2">
-              <p className="flex-1 truncate font-mono text-xs text-app-accent">
+              <p className="flex-1 truncate font-mono text-xs text-app-accent-text">
                 {typeof window !== 'undefined' ? window.location.origin : ''}/profile/{profile.username}
               </p>
               <button

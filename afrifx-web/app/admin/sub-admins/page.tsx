@@ -177,7 +177,7 @@ export default function AdminSubAdmins() {
                     : 'border-app-border bg-app-bg'}`}>
                 <div className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded
                   ${selectedPerms.includes(perm) ? 'bg-app-accent' : 'border border-app-border'}`}>
-                  {selectedPerms.includes(perm) && <Check className="h-3 w-3 text-white" />}
+                  {selectedPerms.includes(perm) && <Check className="h-3 w-3 text-app-on-accent" />}
                 </div>
                 <div>
                   <p className="text-xs font-medium text-app-text">{permMeta[perm]?.label ?? perm}</p>
@@ -210,7 +210,7 @@ export default function AdminSubAdmins() {
 
       {/* Admins list */}
       {loading ? (
-        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-app-accent" /></div>
+        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-app-accent-text" /></div>
       ) : (
         <div className="space-y-3">
           {admins.map(a => (
@@ -219,7 +219,7 @@ export default function AdminSubAdmins() {
                 <div className="flex items-center gap-3">
                   <div className={`flex h-10 w-10 items-center justify-center rounded-full
                     ${a.role === 'super_admin' ? 'bg-amber-500/20' : 'bg-app-accent/10'}`}>
-                    <Shield className={`h-5 w-5 ${a.role === 'super_admin' ? 'text-amber-400' : 'text-app-accent'}`} />
+                    <Shield className={`h-5 w-5 ${a.role === 'super_admin' ? 'text-amber-400' : 'text-app-accent-text'}`} />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
@@ -242,7 +242,7 @@ export default function AdminSubAdmins() {
                   <div className="flex gap-1">
                     <button onClick={() => resetCredentials(a)} disabled={busy === a.id}
                       title="Reset password"
-                      className="rounded p-1.5 text-app-muted hover:text-app-accent">
+                      className="rounded p-1.5 text-app-muted hover:text-app-accent-text">
                       <Key className="h-3.5 w-3.5" />
                     </button>
                     <button onClick={() => toggleStatus(a)} disabled={busy === a.id}
@@ -271,7 +271,7 @@ export default function AdminSubAdmins() {
                               ${editPerms.includes(perm) ? 'border-app-accent bg-app-accent/10 text-app-text' : 'border-app-border text-app-muted'}`}>
                             <div className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded
                               ${editPerms.includes(perm) ? 'bg-app-accent' : 'border border-app-border'}`}>
-                              {editPerms.includes(perm) && <Check className="h-2.5 w-2.5 text-white" />}
+                              {editPerms.includes(perm) && <Check className="h-2.5 w-2.5 text-app-on-accent" />}
                             </div>
                             {permMeta[perm]?.label ?? perm}
                           </button>
@@ -296,7 +296,7 @@ export default function AdminSubAdmins() {
                         ))}
                       </div>
                       <button onClick={() => { setEditingId(a.id); setEditPerms(a.permissions ?? []) }}
-                        className="shrink-0 text-xs text-app-accent hover:underline">
+                        className="shrink-0 text-xs text-app-accent-text hover:underline">
                         Edit permissions
                       </button>
                     </div>

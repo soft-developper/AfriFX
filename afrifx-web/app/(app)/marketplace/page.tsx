@@ -139,7 +139,7 @@ export default function MarketplacePage() {
           <div className="flex items-center gap-3">
             {acceptState.phase === 'done'
               ? <CheckCircle className="h-5 w-5 shrink-0 text-emerald-400" />
-              : <Loader2 className="h-5 w-5 shrink-0 animate-spin text-app-accent" />
+              : <Loader2 className="h-5 w-5 shrink-0 animate-spin text-app-accent-text" />
             }
             <div>
               <p className="text-sm font-medium text-app-text">
@@ -173,7 +173,7 @@ export default function MarketplacePage() {
                 <div key={key} className="flex items-center gap-2">
                   <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-colors
                     ${isDone    ? 'bg-emerald-500 text-white'
-                    : isActive  ? 'bg-app-accent text-white'
+                    : isActive  ? 'bg-app-accent text-app-on-accent'
                     :             'bg-app-border text-app-muted'}`}>
                     {isDone ? '✓' : idx + 1}
                   </div>
@@ -197,7 +197,7 @@ export default function MarketplacePage() {
         ].map(({ icon: Icon, label }) => (
           <div key={label}
             className="flex items-center gap-1.5 rounded-lg border border-app-border bg-app-surface px-3 py-1.5 text-xs text-app-muted">
-            <Icon className="h-3.5 w-3.5 text-app-accent" />{label}
+            <Icon className="h-3.5 w-3.5 text-app-accent-text" />{label}
           </div>
         ))}
       </div>
@@ -208,7 +208,7 @@ export default function MarketplacePage() {
           <button key={c} onClick={() => setCurrency(c)}
             className={`rounded-full px-3 py-1 text-xs transition-colors
               ${currency === c
-                ? 'bg-app-accent text-white'
+                ? 'bg-app-accent text-app-on-accent'
                 : 'border border-app-border text-app-muted hover:text-app-text'}`}>
             {c === 'all' ? 'All' : `${CURRENCY_FLAG[c]} ${c}`}
           </button>

@@ -330,7 +330,7 @@ Jane Smith,0xabcd...1234,50`}</pre>
                 'Track status live as payments confirm on Arc',
               ].map((s, i) => (
                 <li key={i} className="flex gap-2">
-                  <span className="shrink-0 text-app-accent">{i+1}.</span>
+                  <span className="shrink-0 text-app-accent-text">{i+1}.</span>
                   <span>{s}</span>
                 </li>
               ))}

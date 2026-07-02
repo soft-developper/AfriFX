@@ -71,7 +71,7 @@ export function EmailPreferences() {
   return (
     <div className="rounded-xl border border-app-border bg-app-surface p-5 space-y-4">
       <div className="flex items-center gap-2">
-        <Mail className="h-4 w-4 text-app-accent" />
+        <Mail className="h-4 w-4 text-app-accent-text" />
         <h2 className="text-sm font-medium text-app-text">Email notifications</h2>
       </div>
 
@@ -106,7 +106,7 @@ export function EmailPreferences() {
 
       {/* Granular toggles */}
       <button onClick={() => setShowAll(!showAll)}
-        className="flex items-center gap-1 text-xs text-app-accent hover:underline">
+        className="flex items-center gap-1 text-xs text-app-accent-text hover:underline">
         {showAll ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
         {showAll ? 'Hide' : 'Show'} individual event toggles
       </button>

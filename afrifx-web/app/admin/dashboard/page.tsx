@@ -30,16 +30,16 @@ export default function AdminDashboard() {
 
       {loading ? (
         <div className="flex h-64 items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-app-accent" />
+          <Loader2 className="h-6 w-6 animate-spin text-app-accent-text" />
         </div>
       ) : (
         <>
           {/* Stat cards */}
           <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
             {[
-              { label: 'Total volume',  value: `$${(data?.totalVolume ?? 0).toLocaleString()}`, icon: TrendingUp, color: 'text-app-accent' },
+              { label: 'Total volume',  value: `$${(data?.totalVolume ?? 0).toLocaleString()}`, icon: TrendingUp, color: 'text-app-accent-text' },
               { label: 'Fees collected',value: `$${(data?.totalFees ?? 0).toLocaleString()}`,   icon: DollarSign, color: 'text-emerald-400' },
-              { label: 'Total users',   value: String(data?.totalUsers ?? 0),                   icon: Users,      color: 'text-app-accent' },
+              { label: 'Total users',   value: String(data?.totalUsers ?? 0),                   icon: Users,      color: 'text-app-accent-text' },
               { label: 'New this week', value: `+${data?.newUsersWeek ?? 0}`,                    icon: UserPlus,   color: 'text-emerald-400' },
             ].map(({ label, value, icon: Icon, color }) => (
               <div key={label} className="rounded-xl border border-app-border bg-app-surface p-4">
@@ -56,7 +56,7 @@ export default function AdminDashboard() {
           <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
             {[
               { label: 'Open offers',    value: data?.p2p.open      ?? 0, color: 'text-amber-400'   },
-              { label: 'Active trades',  value: data?.p2p.accepted  ?? 0, color: 'text-app-accent'   },
+              { label: 'Active trades',  value: data?.p2p.accepted  ?? 0, color: 'text-app-accent-text'   },
               { label: 'Completed',      value: data?.p2p.released  ?? 0, color: 'text-emerald-400' },
               { label: 'Cancelled',      value: data?.p2p.cancelled ?? 0, color: 'text-app-muted'   },
               { label: 'Open disputes',  value: data?.openDisputes  ?? 0, color: 'text-red-400'     },

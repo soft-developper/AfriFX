@@ -20,7 +20,7 @@ export function NotificationBell() {
   const [open,         setOpen]   = useState(false)
   const [notifs,       setNotifs] = useState<Notification[]>([])
   const [unreadCount,  setCount]  = useState(0)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<MLDivElement>(null)
 
   async function loadUnreadCount() {
     if (!address) return
@@ -113,19 +113,18 @@ export function NotificationBell() {
       {open && (
         <div className="absolute right-0 mt-2 w-80 rounded-xl border border-app-border bg-app-surface shadow-2xl z-50">
           <div className="flex items-center justify-between border-b border-app-border px-4 py-3">
-            <p className="text-sm font-medium text-app-text">Notifications</p>
+            <p className="text-nt-medium text-app-text">Notifications</p>
             <div className="flex items-center gap-2">
               {unreadCount > 0 && (
                 <button onClick={markAllRead}
-                  className="text-xs text-app-accent hover:underline">
+                  className="text-xs text-app-accent-text hover:underline">
                   Mark all read
                 </button>
               )}
               <button onClick={() => setOpen(false)}
                 className="text-app-muted hover:text-app-text">
                 <X className="h-4 w-4" />
-              </button>
-            </div>
+              </button>            </div>
           </div>
           <div className="max-h-96 overflow-y-auto">
             {notifs.length === 0 ? (
@@ -137,14 +136,14 @@ export function NotificationBell() {
                 return (
                   <Link key={n.id} href={link}
                     onClick={() => { markRead(n.id); setOpen(false) }}
-                    className={`flex items-start gap-3 border-b border-app-border px-4 py-3 last:border-0
+                  className={`flex items-start gap-3 border-b border-app-border px-4 py-3 last:border-0
                       ${isUnread ? 'bg-app-accent/5' : ''} hover:bg-app-bg transition-colors`}>
                     <span className="text-lg">{getIcon(n.type)}</span>
                     <div className="flex-1 min-w-0">
                       <p className={`text-xs ${isUnread ? 'font-medium text-app-text' : 'text-app-muted'}`}>
                         {n.subject}
                       </p>
-                      <p className="mt-0.5 text-[10px] text-app-muted">
+                   <p className="mt-0.5 text-[10px] text-app-muted">
                         {new Date(n.created_at * 1000).toLocaleString()}
                       </p>
                     </div>

@@ -3,14 +3,35 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAdminAuth } from '@/hooks/useAdminAuth'
+import { useTheme } from '@/hooks/useTheme'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import {
   LayoutDashboard, Store, AlertTriangle, Users,
   Shield, ScrollText, BarChart3, LogOut, Loader2, Settings,
-  Menu, X,
+  Menu, X, Sun, Moon,
 } from 'lucide-react'
 
+// Full-width labeled theme toggle for the admin sidebar footer
+function ThemeToggleRow() {
+  const { theme, source, toggle } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  if (!mounted) {
+    return <div className="h-9 rounded-lg border border-app-border" />
+  }
+  const isDark = theme === 'dark'
+  return (
+    <button onClick={toggle}
+      className="flex w-full items-center gap-2 rounded-lg border border-app-border px-3 py-2 text-xs text-app-muted hover:bg-app-bg hover:text-app-text transition-colors">
+      {isDark ? <Moon className="h-3.5 w-3.5 shrink-0" /> : <Sun className="h-3.5 w-3.5 shrink-0" />}
+      {isDark ? 'Dark mode' : 'Light mode'}
+      {source === 'auto' && <span className="ml-auto text-[9px] text-app-accent-text">AUTO</span>}
+    </button>
+  )
+}
+
 const NAV = [
-  { href: '/admin/dashboard',  icon: LayoutDashboard, label: 'Overview',   perm: 'view_dashboard'   },
+  { href: '/admshboard',  icon: LayoutDashboard, label: 'Overview',   perm: 'view_dashboard'   },
   { href: '/admin/offers',     icon: Store,           label: 'Offers',     perm: 'manage_offers'    },
   { href: '/admin/disputes',   icon: AlertTriangle,   label: 'Disputes',   perm: 'resolve_disputes' },
   { href: '/admin/users',      icon: Users,           label: 'Users',      perm: 'manage_users'     },
@@ -47,7 +68,7 @@ function SidebarContent({
       <div className="shrink-0 border-t border-app-border p-3 space-y-2">
         <div className="rounded-lg bg-app-bg px-3 py-2">
           <p className="text-xs font-medium text-app-text">{admin.username}</p>
-          <p className="text-[10px] text-app-accent">
+          <p className="text-[10px] text-app-accent-text">
             {admin.role === 'super_admin' ? '★ Super Admin' : 'Sub-admin'}
           </p>
         </div>
@@ -66,6 +87,7 @@ function SidebarContent({
           <LogOut className="h-3.5 w-3.5 shrink-0" />
           Logout
         </button>
+        <ThemeToggleRow />
       </div>
     </>
   )
@@ -92,7 +114,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   if (loading) return (
     <div className="flex min-h-screen items-center justify-center bg-app-bg">
-      <Loader2 className="h-6 w-6 animate-spin text-app-accent" />
+      <Loader2 className="h-6 w-6 animate-spin text-app-accent-text" />
     </div>
   )
 
@@ -131,14 +153,17 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {/* Mobile top bar — hidden md+ */}
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-app-border bg-app-surface px-4 md:hidden">
         <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-app-accent" />
+          <Shield className="h-5 w-5 text-app-accent-text" />
           <span className="font-semibold text-app-text">AfriFX Admin</span>
         </div>
-        <button onClick={() => setDrawerOpen(true)}
-          className="rounded-lg p-1.5 text-app-muted hover:bg-app-bg hover:text-app-text"
-          aria-label="Open admin menu">
-          <Menu className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button onClick={() => setDrawerOpen(true)}
+            className="rounded-lg p-1.5 text-app-muted hover:bg-app-bg hover:text-app-text"
+            aria-label="Open admin menu">
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
       </header>
 
       {/* Mobile drawer — hidden md+ */}
@@ -151,7 +176,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <div className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-app-surface shadow-2xl">
             <div className="flex shrink-0 items-center justify-between border-b border-app-border px-4 py-4">
               <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-app-accent" />
+                <Shield className="h-5 w-5 text-app-accent-text" />
                 <span className="font-semibold text-app-text">AfriFX Admin</span>
               </div>
               <button onClick={() => setDrawerOpen(false)}
@@ -171,7 +196,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar — hidden on mobile */}
       <aside className="hidden md:flex md:w-56 md:shrink-0 flex-col border-r border-app-border bg-app-surface">
         <div className="flex items-center gap-2 border-b border-app-border px-4 py-4">
-          <Shield className="h-5 w-5 text-app-accent" />
+          <Shield className="h-5 w-5 text-app-accent-text" />
           <span className="font-semibold text-app-text">AfriFX Admin</span>
         </div>
         <SidebarContent

@@ -17,7 +17,7 @@ export function MediaUploadButton({ offerId, onUpload, disabled }: Props) {
   const [uploading, setUploading] = useState(false)
   const [errMsg,    setErrMsg]    = useState<string | null>(null)
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+  async function hdleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !address) return
 
@@ -66,7 +66,7 @@ export function MediaUploadButton({ offerId, onUpload, disabled }: Props) {
 
       {/* Progress bubble */}
       {uploading && (
-        <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-app-surface border border-app-border px-2 py-0.5 text-[10px] text-app-accent">
+        <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-app-surface border border-app-border px-2 py-0.5 text-[10px] text-app-accent-text">
           {progress}%
         </div>
       )}

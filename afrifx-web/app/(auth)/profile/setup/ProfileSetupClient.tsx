@@ -115,7 +115,7 @@ export function ProfileSetupClient() {
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
       <div className="mb-8 flex items-center gap-2">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-app-accent/20">
-          <ArrowLeftRight className="h-5 w-5 text-app-accent" />
+          <ArrowLeftRight className="h-5 w-5 text-app-accent-text" />
         </div>
         <span className="text-xl font-semibold text-app-text">AfriFX</span>
       </div>
@@ -127,7 +127,7 @@ export function ProfileSetupClient() {
           </div>
           <h1 className="mb-2 text-2xl font-semibold text-app-text">Welcome, {displayName}!</h1>
           <p className="mb-2 text-sm text-app-muted">
-            Your profile <span className="text-app-accent">@{username}</span> is ready.
+            Your profile <span className="text-app-accent-text">@{username}</span> is ready.
           </p>
           <p className="mb-8 text-xs text-app-muted">
             You can update your profile anytime from the sidebar.
@@ -149,7 +149,7 @@ export function ProfileSetupClient() {
             {[1,2].map((s) => (
               <div key={s} className="flex items-center gap-2">
                 <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold
-                  ${step >= s ? 'bg-app-accent text-white' : 'bg-app-border text-app-muted'}`}>
+                  ${step >= s ? 'bg-app-accent text-app-on-accent' : 'bg-app-border text-app-muted'}`}>
                   {step > s ? '✓' : s}
                 </div>
                 <span className={`text-xs ${step >= s ? 'text-app-text' : 'text-app-muted'}`}>

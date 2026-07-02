@@ -135,7 +135,7 @@ export function DisputeChat({
         ) : (
           messages.map(msg => (
             <div key={msg.id} className={`max-w-[80%] rounded-xl border p-3 text-xs ${getBubbleStyle(msg)}`}>
-              <p className={`mb-1 font-medium ${msg.sender_type === 'admin' ? 'text-amber-400' : 'text-app-accent'}`}>
+              <p className={`mb-1 font-medium ${msg.sender_type === 'admin' ? 'text-amber-400' : 'text-app-accent-text'}`}>
                 {getSenderLabel(msg)}
                 {msg.admin_only === 1 && (
                   <span className="ml-2 rounded bg-amber-900/30 px-1 py-0.5 text-[10px] text-amber-400">
@@ -145,11 +145,11 @@ export function DisputeChat({
               </p>
               {msg.is_document === 1 ? (
                 <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-app-accent" />
+                  <FileText className="h-4 w-4 text-app-accent-text" />
                   <span className="text-app-text">{msg.doc_name ?? 'Document'}</span>
                   {msg.doc_url && (
                     <a href={msg.doc_url} target="_blank" rel="noopener noreferrer"
-                      className="text-app-accent hover:underline">View</a>
+                      className="text-app-accent-text hover:underline">View</a>
                   )}
                 </div>
               ) : (

@@ -111,7 +111,7 @@ export default function AdminLoginPage() {
   if (mode === 'checking') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-app-bg">
-        <Loader2 className="h-6 w-6 animate-spin text-app-accent" />
+        <Loader2 className="h-6 w-6 animate-spin text-app-accent-text" />
       </div>
     )
   }
@@ -121,7 +121,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-app-accent/10">
-            <Shield className="h-7 w-7 text-app-accent" />
+            <Shield className="h-7 w-7 text-app-accent-text" />
           </div>
           <h1 className="text-2xl font-bold text-app-text">AfriFX Admin</h1>
           <p className="text-sm text-app-muted">
@@ -172,7 +172,7 @@ export default function AdminLoginPage() {
               {!needs2FA ? (
                 <>
                   <div className="text-center mb-2">
-                    <Lock className="mx-auto mb-2 h-8 w-8 text-app-accent" />
+                    <Lock className="mx-auto mb-2 h-8 w-8 text-app-accent-text" />
                     <p className="text-sm font-medium text-app-text">Enter credentials</p>
                   </div>
                   <div className="relative">
@@ -199,7 +199,7 @@ export default function AdminLoginPage() {
               ) : (
                 <>
                   <div className="text-center mb-2">
-                    <KeyRound className="mx-auto mb-2 h-8 w-8 text-app-accent" />
+                    <KeyRound className="mx-auto mb-2 h-8 w-8 text-app-accent-text" />
                     <p className="text-sm font-medium text-app-text">Two-factor authentication</p>
                     <p className="text-xs text-app-muted">Enter the 6-digit code from your authenticator app</p>
                   </div>
@@ -224,7 +224,7 @@ export default function AdminLoginPage() {
               {!forgotSent ? (
                 <>
                   <div className="text-center mb-2">
-                    <Mail className="mx-auto mb-2 h-8 w-8 text-app-accent" />
+                    <Mail className="mx-auto mb-2 h-8 w-8 text-app-accent-text" />
                     <p className="text-sm font-medium text-app-text">Reset your password</p>
                     <p className="text-xs text-app-muted">We'll email you a reset link</p>
                   </div>

@@ -32,9 +32,9 @@ export function MobileNav() {
               <Link key={href} href={href}
                 className={cn(
                   'flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors',
-                  active ? 'text-app-accent' : 'text-app-muted'
+                  active ? 'text-app-accent-text' : 'text-app-muted'
                 )}>
-                <Icon className={cn('h-5 w-5', active && 'text-app-accent')} />
+                <Icon className={cn('h-5 w-5', active && 'text-app-accent-text')} />
                 <span className="text-[10px] font-medium">{label}</span>
               </Link>
             )

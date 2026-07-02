@@ -58,7 +58,7 @@ export default function AdminUsers() {
       </div>
 
       {loading ? (
-        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-app-accent" /></div>
+        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-app-accent-text" /></div>
       ) : (
         <div className="space-y-2">
           {users.map(u => (
@@ -70,7 +70,7 @@ export default function AdminUsers() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium text-app-text">{u.display_name ?? u.username}</p>
-                  <span className="text-xs text-app-accent">@{u.username}</span>
+                  <span className="text-xs text-app-accent-text">@{u.username}</span>
                   {u.verified ? <Badge variant="arc">Verified</Badge> : null}
                   {u.suspended ? <Badge variant="danger">Suspended</Badge> : null}
                 </div>

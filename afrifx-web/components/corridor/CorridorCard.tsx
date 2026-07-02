@@ -25,7 +25,7 @@ export function CorridorCard() {
   const [quote,     setQuote]     = useState<ReturnType<typeof buildCorridorQuote> | null>(null)
 
   // Fetch both rates
-  const { rate: fromRate } = useRate(`${from}/USDC`)
+  { rate: fromRate } = useRate(`${from}/USDC`)
   const { rate: toRate   } = useRate(`${to}/USDC`)
 
   const fromRateVal = fromRate?.rate ?? 0
@@ -59,7 +59,7 @@ export function CorridorCard() {
   function handleFromChange(c: Currency) {
     if (c === to) setTo(from) // auto-swap if same selected
     setFrom(c)
-    setAmount('')
+   setAmount('')
     setQuote(null)
     reset()
   }
@@ -105,7 +105,7 @@ export function CorridorCard() {
 
       {/* Header */}
       <div className="mb-4 flex items-center gap-2">
-        <Coins className="h-4 w-4 text-app-accent" />
+        <Coins className="h-4 w-4 text-app-accent-text" />
         <span className="text-sm font-medium text-app-text">Cross-border corridor</span>
         <Badge variant="arc" className="ml-auto">2-step · via USDC</Badge>
       </div>
@@ -167,7 +167,7 @@ export function CorridorCard() {
             </div>
             <div className="flex justify-between">
               <span className="text-app-muted">Corridor ID</span>
-              <span className="font-mono text-[10px] text-app-accent">{quote.corridorId}</span>
+              <span className="font-mono text-[10px] text-app-accent-text">{quote.corridorId}</span>
             </div>
           </div>
         </div>
@@ -183,7 +183,7 @@ export function CorridorCard() {
                 ${['step1-done','step2-pending','step2-waiting','complete'].includes(step)
                   ? 'bg-emerald-500 text-white'
                   : ['step1-pending','step1-waiting'].includes(step)
-                  ? 'bg-app-accent text-white'
+                  ? 'bg-app-accent text-app-on-accent'
                   : 'bg-app-border text-app-muted'}`}>
                 {['step1-done','step2-pending','step2-waiting','complete'].includes(step) ? '✓' : '1'}
               </div>
@@ -196,7 +196,7 @@ export function CorridorCard() {
                 ${step === 'complete'
                   ? 'bg-emerald-500 text-white'
                   : ['step2-pending','step2-waiting'].includes(step)
-                  ? 'bg-app-accent text-white'
+                  ? 'bg-app-accent text-app-on-accent'
                   : 'bg-app-border text-app-muted'}`}>
                 {step === 'complete' ? '✓' : '2'}
               </div>
@@ -204,7 +204,7 @@ export function CorridorCard() {
             </div>
           </div>
           <p className="flex items-center gap-1.5 text-xs text-app-muted">
-            {isLoading && <Loader2 className="h-3 w-3 animate-spin text-app-accent" />}
+            {isLoading && <Loader2 className="h-3 w-3 animate-spin text-app-accent-text" />}
             {step === 'complete' && <CheckCircle className="h-3 w-3 text-emerald-400" />}
             {step === 'error' && <AlertCircle className="h-3 w-3 text-red-400" />}
             {stepLabel[step]}
@@ -244,7 +244,7 @@ export function CorridorCard() {
       {error && (
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-900/50 bg-red-900/20 px-3 py-2.5 text-xs text-red-400">
           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <div>
+     <div>
             <p>{error}</p>
             <button onClick={reset} className="mt-1 underline hover:no-underline">Try again</button>
           </div>
@@ -257,7 +257,7 @@ export function CorridorCard() {
           <div className="flex items-start gap-2">
             <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
             <div className="flex-1 text-xs">
-              <p className="font-medium text-emerald-400">
+        <p className="font-medium text-emerald-400">
                 Corridor complete · {CURRENCY_FLAG[from]} {from} → {CURRENCY_FLAG[to]} {to}
               </p>
               <p className="mt-0.5 text-emerald-500">

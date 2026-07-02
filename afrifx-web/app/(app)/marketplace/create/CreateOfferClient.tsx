@@ -97,12 +97,12 @@ export function CreateOfferClient() {
         <div className="flex rounded-xl border border-app-border bg-app-surface p-1">
           <button onClick={() => setOrderType('market')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors
-              ${orderType === 'market' ? 'bg-app-accent text-white' : 'text-app-muted hover:text-app-text'}`}>
+              ${orderType === 'market' ? 'bg-app-accent text-app-on-accent' : 'text-app-muted hover:text-app-text'}`}>
             <TrendingUp className="h-4 w-4" /> Market order
           </button>
           <button onClick={() => setOrderType('limit')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors
-              ${orderType === 'limit' ? 'bg-app-accent text-white' : 'text-app-muted hover:text-app-text'}`}>
+              ${orderType === 'limit' ? 'bg-app-accent text-app-on-accent' : 'text-app-muted hover:text-app-text'}`}>
             <Sliders className="h-4 w-4" /> Limit order
           </button>
         </div>
@@ -110,7 +110,7 @@ export function CreateOfferClient() {
         {/* Description */}
         <div className="rounded-xl border border-app-border bg-app-surface p-3 text-xs text-app-muted">
           <div className="flex items-start gap-2">
-            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-app-accent" />
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-app-accent-text" />
             {orderType === 'market'
               ? 'Market order uses the live exchange rate. Local amount is calculated automatically.'
               : 'Limit order lets you set a custom rate within ±5% of the market rate.'}
@@ -196,7 +196,7 @@ export function CreateOfferClient() {
               <button key={opt.value} onClick={() => setTimerOption(opt.value)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors
                   ${timerOption === opt.value
-                    ? 'bg-app-accent text-white'
+                    ? 'bg-app-accent text-app-on-accent'
                     : 'border border-app-border text-app-muted hover:text-app-text'}`}>
                 {opt.label}
               </button>
@@ -249,7 +249,7 @@ export function CreateOfferClient() {
               'Platform releases USDC to taker',
             ].map((s, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span className="shrink-0 text-app-accent">{i+1}.</span>
+                <span className="shrink-0 text-app-accent-text">{i+1}.</span>
                 <span>{s}</span>
               </li>
             ))}
