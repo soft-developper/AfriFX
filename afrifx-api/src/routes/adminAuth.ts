@@ -9,7 +9,7 @@ import {
   checkLockout, recordLoginAttempt,
   generateTOTPSecret, verifyTOTP, generateRecoveryCodes,
   createInvitation, createPasswordReset,
-  isFirstTimeSetup,
+  isFirstTimeSetup, parsePermissions,
 } from '../services/auth/adminAuth'
 import { sendEmail } from '../services/email/client'
 
@@ -35,7 +35,7 @@ export async function requireAdmin(req: any, res: any, next: any) {
     username:    session.username,
     email:       session.email,
     role:        session.role,
-    permissions: session.permissions,
+    permissions: parsePermissions(session.role, session.permissions),
     totpEnabled: Number(session.totp_enabled ?? 0) === 1,
   }
   next()
@@ -179,7 +179,7 @@ router.post('/login', async (req, res) => {
         username:    admin.username,
         email:       admin.email,
         role:        admin.role,
-        permissions: admin.permissions,
+        permissions: parsePermissions(admin.role, admin.permissions),
         totpEnabled,
       },
     })
@@ -201,7 +201,7 @@ router.get('/verify', async (req, res) => {
       username:    session.username,
       email:       session.email,
       role:        session.role,
-      permissions: session.permissions,
+      permissions: parsePermissions(session.role, session.permissions),
       totpEnabled: Number(session.totp_enabled ?? 0) === 1,
     },
   })

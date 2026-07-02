@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useAdminAuth } from '@/hooks/useAdminAuth'
 import {
   LayoutDashboard, Store, AlertTriangle, Users,
-  Shield, ScrollText, BarChart3, LogOut, Loader2,
+  Shield, ScrollText, BarChart3, LogOut, Loader2, Settings,
 } from 'lucide-react'
 
 const NAV = [
@@ -90,6 +90,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               {admin.role === 'super_admin' ? '★ Super Admin' : 'Sub-admin'}
             </p>
           </div>
+          <Link href="/admin/settings"
+            className="flex items-center gap-2 rounded-lg border border-[#1B2B4B] px-3 py-2 text-xs text-[#64748B] hover:bg-[#080D1B] hover:text-[#E2E8F0] transition-colors">
+            <Settings className="h-3.5 w-3.5 shrink-0" />
+            Settings
+          </Link>
           <Link href="/dashboard"
             className="flex items-center gap-2 rounded-lg border border-[#1B2B4B] px-3 py-2 text-xs text-[#64748B] hover:bg-[#080D1B] hover:text-[#E2E8F0] transition-colors">
             <LayoutDashboard className="h-3.5 w-3.5 shrink-0" />

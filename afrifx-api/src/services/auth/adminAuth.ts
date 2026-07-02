@@ -196,6 +196,23 @@ export async function createPasswordReset(adminId: string): Promise<string> {
   return token
 }
 
+// ── Permissions ─────────────────────────────────────────────
+// admins.permissions stores either the literal 'all' (super_admin)
+// or a JSON-encoded string array (sub_admin). Normalize to string[].
+export function parsePermissions(role: string, raw: any): string[] {
+  if (role === 'super_admin') return ['all']
+  if (Array.isArray(raw)) return raw
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
 // ── Setup check ─────────────────────────────────────────────
 export async function isFirstTimeSetup(): Promise<boolean> {
   const rows = await db.run(sql`

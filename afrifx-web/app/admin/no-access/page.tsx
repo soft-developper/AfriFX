@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShieldOff, LogOut } from 'lucide-react'
+import { TOKEN_KEY, ADMIN_KEY } from '@/hooks/useAdminAuth'
 
 // IMPORTANT: This page does NOT use AdminShell
 // to avoid infinite redirect loops for sub-admins with no permissions
@@ -13,8 +14,8 @@ export default function NoAccessPage() {
 
   useEffect(() => {
     // One-time check — do not loop
-    const token    = sessionStorage.getItem('admin_token')
-    const adminRaw = sessionStorage.getItem('admin')
+    const token    = sessionStorage.getItem(TOKEN_KEY)
+    const adminRaw = sessionStorage.getItem(ADMIN_KEY)
     if (!token || !adminRaw) {
       router.replace('/admin')
       return
@@ -27,8 +28,8 @@ export default function NoAccessPage() {
   }, []) // Empty deps — run once only, no loop
 
   function handleLogout() {
-    sessionStorage.removeItem('admin_token')
-    sessionStorage.removeItem('admin')
+    sessionStorage.removeItem(TOKEN_KEY)
+    sessionStorage.removeItem(ADMIN_KEY)
     router.replace('/admin')
   }
 

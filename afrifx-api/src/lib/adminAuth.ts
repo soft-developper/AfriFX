@@ -1,12 +1,9 @@
-import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import { db } from '../db/client'
 import { sql } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import type { Request, Response, NextFunction } from 'express'
-
-const JWT_SECRET = process.env.ADMIN_JWT_SECRET ?? 'fallback-secret-change-me'
-const JWT_EXPIRY = '8h'
+import { validateSession, parsePermissions } from '../services/auth/adminAuth'
 
 export interface AdminPayload {
   id:          string
@@ -30,18 +27,6 @@ export async function verifyPassword(pw: string, hash: string): Promise<boolean>
   return bcrypt.compare(pw, hash)
 }
 
-export function signToken(payload: AdminPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRY })
-}
-
-export function verifyToken(token: string): AdminPayload | null {
-  try {
-    return jwt.verify(token, JWT_SECRET) as AdminPayload
-  } catch {
-    return null
-  }
-}
-
 // Normalize admin row
 export function normalizeAdmin(row: any) {
   const a = Array.isArray(row) ? {
@@ -52,24 +37,25 @@ export function normalizeAdmin(row: any) {
   } : row
   return {
     ...a,
-    permissions: typeof a.permissions === 'string'
-      ? JSON.parse(a.permissions || '[]')
-      : (a.permissions ?? []),
+    permissions: parsePermissions(a.role, a.permissions),
   }
 }
 
-// Middleware: require valid admin token
+// Middleware: require a valid admin session (shared with /admin-auth/*
+// — issued by services/auth/adminAuth.createSession, backed by admin_sessions)
 export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
   const auth  = req.headers.authorization
   const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null
   if (!token) return res.status(401).json({ error: 'No token provided' })
 
-  const payload = verifyToken(token)
-  if (!payload) return res.status(401).json({ error: 'Invalid or expired token' })
+  const session = await validateSession(token)
+  if (!session) return res.status(401).json({ error: 'Invalid or expired session' })
+
+  const adminId = session.aid ?? session.admin_id
 
   // Re-check admin still exists and is active (not suspended)
   try {
-    const rows = await db.run(sql`SELECT * FROM admins WHERE id = ${payload.id} LIMIT 1`)
+    const rows = await db.run(sql`SELECT * FROM admins WHERE id = ${adminId} LIMIT 1`)
     const r = parseRows(rows)
     if (!r.length) return res.status(401).json({ error: 'Admin not found' })
 

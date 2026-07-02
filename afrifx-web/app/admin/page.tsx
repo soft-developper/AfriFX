@@ -1,11 +1,13 @@
 'use client'
-import { useState } from 'react'
-import { useAccount, useConnect } from 'wagmi'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAdminAuth } from '@/hooks/useAdminAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Shield, Wallet, Lock, Loader2, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react'
+import {
+  Shield, Lock, Mail, User, Loader2, AlertCircle,
+  KeyRound, ArrowLeft,
+} from 'lucide-react'
 
 const PERMISSION_PAGES = [
   { perm: 'manage_offers',    path: '/admin/offers'     },
@@ -17,51 +19,101 @@ const PERMISSION_PAGES = [
 ]
 
 function getRedirectPath(role: string, permissions: string[]): string {
-  if (role === 'super_admin' || permissions.includes('view_dashboard')) {
+  if (role === 'super_admin' || permissions.includes('view_dashboard') || permissions.includes('all')) {
     return '/admin/dashboard'
   }
   const first = PERMISSION_PAGES.find(p => permissions.includes(p.perm))
-  return first ? first.path : '/admin/dashboard'
+  return first ? first.path : '/admin/no-access'
 }
 
+type Mode = 'checking' | 'setup' | 'login'
+
 export default function AdminLoginPage() {
-  const router                   = useRouter()
-  const { address, isConnected } = useAccount()
-  const { connect, connectors }  = useConnect()
-  const { verifyWallet, login }  = useAdminAuth()
+  const router = useRouter()
+  const { checkSetupStatus, setup, login, forgotPassword } = useAdminAuth()
 
-  const [step,       setStep]       = useState<1|2>(1)
-  const [walletOk,   setWalletOk]   = useState(false)
-  const [checking,   setChecking]   = useState(false)
-  const [identifier, setIdentifier] = useState('')
-  const [password,   setPassword]   = useState('')
-  const [error,      setError]      = useState<string|null>(null)
-  const [loggingIn,  setLoggingIn]  = useState(false)
+  const [mode, setMode] = useState<Mode>('checking')
 
-  async function handleVerifyWallet() {
-    if (!address || checking) return
-    setChecking(true); setError(null)
+  // Setup fields
+  const [setupUsername, setSetupUsername] = useState('')
+  const [setupEmail,    setSetupEmail]    = useState('')
+  const [setupPassword, setSetupPassword] = useState('')
+  const [setupConfirm,  setSetupConfirm]  = useState('')
+
+  // Login fields
+  const [email,    setEmail]    = useState('')
+  const [password, setPassword] = useState('')
+  const [totpCode, setTotpCode] = useState('')
+  const [needs2FA, setNeeds2FA] = useState(false)
+
+  // Forgot password
+  const [showForgot,   setShowForgot]   = useState(false)
+  const [forgotEmail,  setForgotEmail]  = useState('')
+  const [forgotSent,   setForgotSent]   = useState(false)
+
+  const [error,   setError]   = useState<string | null>(null)
+  const [busy,    setBusy]    = useState(false)
+
+  useEffect(() => {
+    checkSetupStatus()
+      .then(needsSetup => setMode(needsSetup ? 'setup' : 'login'))
+      .catch(() => setMode('login'))
+  }, [])
+
+  async function handleSetup() {
+    setError(null)
+    if (!setupUsername || !setupEmail || !setupPassword) {
+      setError('All fields are required'); return
+    }
+    if (setupPassword !== setupConfirm) {
+      setError('Passwords do not match'); return
+    }
+    setBusy(true)
     try {
-      const result = await verifyWallet(address)
-      if (result.valid) { setWalletOk(true); setTimeout(() => setStep(2), 600) }
-      else setError(result.error ?? 'Wallet not authorised for admin access')
-    } catch { setError('Failed to verify — check your connection') }
-    finally  { setChecking(false) }
+      const result = await setup(setupEmail, setupPassword, setupUsername)
+      if (result.success) {
+        router.push('/admin/settings?onboarding=2fa')
+      } else {
+        setError((result as any).error ?? 'Setup failed')
+      }
+    } finally { setBusy(false) }
   }
 
   async function handleLogin() {
-    if (!identifier || !password || loggingIn) return
-    setLoggingIn(true); setError(null)
+    setError(null)
+    if (!email || !password) { setError('Email and password are required'); return }
+    if (needs2FA && !totpCode) { setError('Enter your 6-digit authenticator code'); return }
+
+    setBusy(true)
     try {
-      const result = await login(identifier, password, address)
-      if (result.success) {
-        const perms: string[] = (result as any).admin?.permissions ?? []
-        const role: string    = (result as any).admin?.role ?? ''
-        router.push(getRedirectPath(role, perms))
+      const result = await login(email, password, needs2FA ? totpCode : undefined)
+      if (result.success && result.admin) {
+        router.push(getRedirectPath(result.admin.role, result.admin.permissions))
+      } else if ((result as any).needs2FA) {
+        setNeeds2FA(true)
       } else {
         setError((result as any).error ?? 'Login failed')
       }
-    } finally { setLoggingIn(false) }
+    } finally { setBusy(false) }
+  }
+
+  async function handleForgot() {
+    setError(null)
+    if (!forgotEmail) { setError('Enter your email'); return }
+    setBusy(true)
+    try {
+      const result = await forgotPassword(forgotEmail)
+      if (result.success) setForgotSent(true)
+      else setError((result as any).error ?? 'Request failed')
+    } finally { setBusy(false) }
+  }
+
+  if (mode === 'checking') {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#080D1B]">
+        <Loader2 className="h-6 w-6 animate-spin text-[#378ADD]" />
+      </div>
+    )
   }
 
   return (
@@ -72,86 +124,125 @@ export default function AdminLoginPage() {
             <Shield className="h-7 w-7 text-[#378ADD]" />
           </div>
           <h1 className="text-2xl font-bold text-[#E2E8F0]">AfriFX Admin</h1>
-          <p className="text-sm text-[#64748B]">Secure two-factor access</p>
-        </div>
-
-        <div className="mb-6 flex items-center justify-center gap-2">
-          <div className={`flex items-center gap-2 ${step >= 1 ? 'text-[#378ADD]' : 'text-[#64748B]'}`}>
-            <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold
-              ${walletOk ? 'bg-emerald-500 text-white' : step === 1 ? 'bg-[#378ADD] text-white' : 'bg-[#1B2B4B] text-[#64748B]'}`}>
-              {walletOk ? '✓' : '1'}
-            </div>
-            <span className="text-xs">Wallet</span>
-          </div>
-          <div className="h-px w-8 bg-[#1B2B4B]" />
-          <div className={`flex items-center gap-2 ${step >= 2 ? 'text-[#378ADD]' : 'text-[#64748B]'}`}>
-            <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold
-              ${step === 2 ? 'bg-[#378ADD] text-white' : 'bg-[#1B2B4B] text-[#64748B]'}`}>
-              2
-            </div>
-            <span className="text-xs">Credentials</span>
-          </div>
+          <p className="text-sm text-[#64748B]">
+            {mode === 'setup' ? 'Create the super admin account' : 'Sign in to continue'}
+          </p>
         </div>
 
         <div className="rounded-2xl border border-[#1B2B4B] bg-[#0F1729] p-6">
-          {step === 1 && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <Wallet className="mx-auto mb-2 h-8 w-8 text-[#378ADD]" />
-                <p className="text-sm font-medium text-[#E2E8F0]">Connect admin wallet</p>
-                <p className="text-xs text-[#64748B]">Connect then click Verify</p>
+          {mode === 'setup' && (
+            <div className="space-y-3">
+              <div className="text-center mb-2">
+                <p className="text-sm font-medium text-[#E2E8F0]">First-time setup</p>
+                <p className="text-xs text-[#64748B]">No admin account exists yet — create the super admin</p>
               </div>
-              {!isConnected ? (
-                <div className="space-y-2">
-                  {connectors.slice(0,3).map(c => (
-                    <Button key={c.id} className="w-full" variant="outline"
-                      onClick={() => connect({ connector: c })}>
-                      <Wallet className="h-4 w-4" /> Connect {c.name}
-                    </Button>
-                  ))}
-                </div>
-              ) : walletOk ? (
-                <div className="flex items-center justify-center gap-2 rounded-lg bg-emerald-900/20 py-3 text-sm text-emerald-400">
-                  <CheckCircle className="h-4 w-4" /> Wallet authorised
-                </div>
-              ) : (
-                <div className="rounded-lg bg-[#080D1B] p-4 text-center space-y-3">
-                  <p className="font-mono text-xs text-[#378ADD]">{address?.slice(0,10)}…{address?.slice(-8)}</p>
-                  <p className="text-xs text-[#64748B]">Connected — click to verify</p>
-                  <Button className="w-full" onClick={handleVerifyWallet} disabled={checking}>
-                    {checking
-                      ? <><Loader2 className="h-4 w-4 animate-spin" /> Verifying…</>
-                      : <>Verify wallet <ArrowRight className="h-3.5 w-3.5" /></>}
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+                <Input className="pl-9" placeholder="Username" autoComplete="off"
+                  value={setupUsername} onChange={e => setSetupUsername(e.target.value)} />
+              </div>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+                <Input className="pl-9" type="email" placeholder="Email" autoComplete="off"
+                  value={setupEmail} onChange={e => setSetupEmail(e.target.value)} />
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+                <Input className="pl-9" type="password" placeholder="Password" autoComplete="new-password"
+                  value={setupPassword} onChange={e => setSetupPassword(e.target.value)} />
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+                <Input className="pl-9" type="password" placeholder="Confirm password" autoComplete="new-password"
+                  value={setupConfirm} onChange={e => setSetupConfirm(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSetup()} />
+              </div>
+              <p className="text-[11px] text-[#64748B] leading-relaxed">
+                Min 12 characters, with uppercase, lowercase, a number, and a special character.
+              </p>
+              <Button className="w-full" onClick={handleSetup} disabled={busy}>
+                {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> Creating account…</>
+                      : <>Create super admin</>}
+              </Button>
+            </div>
+          )}
+
+          {mode === 'login' && !showForgot && (
+            <div className="space-y-3">
+              {!needs2FA ? (
+                <>
+                  <div className="text-center mb-2">
+                    <Lock className="mx-auto mb-2 h-8 w-8 text-[#378ADD]" />
+                    <p className="text-sm font-medium text-[#E2E8F0]">Enter credentials</p>
+                  </div>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+                    <Input className="pl-9" type="email" placeholder="Email" autoComplete="off"
+                      value={email} onChange={e => setEmail(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+                    <Input className="pl-9" type="password" placeholder="Password" autoComplete="current-password"
+                      value={password} onChange={e => setPassword(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+                  </div>
+                  <Button className="w-full" onClick={handleLogin} disabled={!email || !password || busy}>
+                    {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</>
+                          : <><Lock className="h-4 w-4" /> Sign in</>}
                   </Button>
-                </div>
+                  <button onClick={() => { setShowForgot(true); setError(null) }}
+                    className="w-full text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors">
+                    Forgot password?
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="text-center mb-2">
+                    <KeyRound className="mx-auto mb-2 h-8 w-8 text-[#378ADD]" />
+                    <p className="text-sm font-medium text-[#E2E8F0]">Two-factor authentication</p>
+                    <p className="text-xs text-[#64748B]">Enter the 6-digit code from your authenticator app</p>
+                  </div>
+                  <Input className="text-center tracking-[0.4em] text-lg" placeholder="000000"
+                    maxLength={6} inputMode="numeric" autoFocus
+                    value={totpCode} onChange={e => setTotpCode(e.target.value.replace(/\D/g, ''))}
+                    onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+                  <Button className="w-full" onClick={handleLogin} disabled={totpCode.length !== 6 || busy}>
+                    {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> Verifying…</> : <>Verify & sign in</>}
+                  </Button>
+                  <button onClick={() => { setNeeds2FA(false); setTotpCode(''); setError(null) }}
+                    className="flex w-full items-center justify-center gap-1 text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors">
+                    <ArrowLeft className="h-3 w-3" /> Back
+                  </button>
+                </>
               )}
             </div>
           )}
 
-          {step === 2 && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <Lock className="mx-auto mb-2 h-8 w-8 text-[#378ADD]" />
-                <p className="text-sm font-medium text-[#E2E8F0]">Enter credentials</p>
-                <p className="text-xs text-[#64748B]">Username or email + password</p>
-              </div>
-              <div className="space-y-3">
-                <Input placeholder="Username or email" autoComplete="off"
-                  value={identifier} onChange={e => setIdentifier(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleLogin()} />
-                <Input type="password" placeholder="Password" autoComplete="new-password"
-                  value={password} onChange={e => setPassword(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleLogin()} />
-              </div>
-              <Button className="w-full" onClick={handleLogin}
-                disabled={!identifier || !password || loggingIn}>
-                {loggingIn
-                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</>
-                  : <><Lock className="h-4 w-4" /> Sign in</>}
-              </Button>
-              <button onClick={() => { setStep(1); setWalletOk(false); setError(null) }}
-                className="w-full text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors">
-                ← Use different wallet
+          {mode === 'login' && showForgot && (
+            <div className="space-y-3">
+              {!forgotSent ? (
+                <>
+                  <div className="text-center mb-2">
+                    <Mail className="mx-auto mb-2 h-8 w-8 text-[#378ADD]" />
+                    <p className="text-sm font-medium text-[#E2E8F0]">Reset your password</p>
+                    <p className="text-xs text-[#64748B]">We'll email you a reset link</p>
+                  </div>
+                  <Input type="email" placeholder="Your admin email" autoComplete="off"
+                    value={forgotEmail} onChange={e => setForgotEmail(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleForgot()} />
+                  <Button className="w-full" onClick={handleForgot} disabled={!forgotEmail || busy}>
+                    {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</> : <>Send reset link</>}
+                  </Button>
+                </>
+              ) : (
+                <div className="rounded-lg bg-emerald-900/20 px-3 py-4 text-center text-sm text-emerald-400">
+                  If that email is registered, a reset link is on its way. Check your inbox.
+                </div>
+              )}
+              <button onClick={() => { setShowForgot(false); setForgotSent(false); setError(null) }}
+                className="flex w-full items-center justify-center gap-1 text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors">
+                <ArrowLeft className="h-3 w-3" /> Back to sign in
               </button>
             </div>
           )}

@@ -53,7 +53,7 @@ app.use('/notifications', notificationsRouter)
 app.use('/disputes',       disputesRouter)
 app.use('/invoices',       invoicesRouter)
 app.use('/payments',       paymentsRouter)
-app.use('/admin/auth',     adminAuthRouter)
+app.use('/admin-auth',     adminAuthRouter)
 app.use('/admin/manage',   adminManageRouter)
 
 app.use(errorHandler)
