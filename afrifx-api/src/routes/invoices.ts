@@ -1,4 +1,4 @@
-import { notifyInvoicePaid } from '../services/email/notifications'
+import { notifyInvoicePaid, notifyPaymentReceipt } from '../services/email/notifications'
 import { Router }     from 'express'
 import { db }         from '../db/client'
 import { sql }        from 'drizzle-orm'
@@ -151,6 +151,20 @@ router.patch('/ref/:ref/pay', async (req, res) => {
             invoiceId:     _inv.id ?? '',
             txHash:        txHash ?? '',
           }).catch((e: any) => console.error('[Notify] invoice_paid:', e.message))
+
+          // Send receipt to payer
+          notifyPaymentReceipt({
+            recipientWallet: payerAddress ?? '',
+            recipientRole:   'sender',
+            type:            'invoice',
+            usdcAmount:      Number(_inv.usdc_amount ?? _inv.amount ?? 0),
+            localAmount:     _inv.amount ? Number(_inv.amount) : undefined,
+            localCcy:        _inv.currency ?? undefined,
+            counterpartWallet: _inv.creator_address ?? '',
+            reference:       _inv.memo_ref ?? req.params.ref,
+            txHash:          txHash ?? '',
+            timestamp:       now,
+          }).catch(() => {})
         }
       } catch (err: any) { console.error('[Notify] invoice hook error:', err.message) }
     } else {

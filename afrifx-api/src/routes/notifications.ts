@@ -69,7 +69,12 @@ router.patch('/mark-all-read', async (req, res) => {
 
 // POST /notifications/email — update user email + preferences
 router.post('/email', async (req, res) => {
-  const { wallet, email, notify_trades, notify_disputes, notify_invoices } = req.body
+  const {
+    wallet, email, notify_trades, notify_disputes, notify_invoices,
+    notify_trade_accepted, notify_trade_completed, notify_trade_cancelled,
+    notify_dispute_raised, notify_dispute_accepted,
+    notify_invoice_paid, notify_invoice_reminder, notify_receipts,
+  } = req.body
   if (!wallet) return res.status(400).json({ error: 'wallet required' })
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ error: 'invalid email format' })
@@ -85,9 +90,17 @@ router.post('/email', async (req, res) => {
     await db.run(sql`
       UPDATE profiles SET
         email = ${email ?? null},
-        notify_trades   = ${notify_trades   ? 1 : 0},
-        notify_disputes = ${notify_disputes ? 1 : 0},
-        notify_invoices = ${notify_invoices ? 1 : 0},
+        notify_trades           = ${notify_trades           ? 1 : 0},
+        notify_disputes         = ${notify_disputes         ? 1 : 0},
+        notify_invoices         = ${notify_invoices         ? 1 : 0},
+        notify_trade_accepted   = ${notify_trade_accepted   !== undefined ? (notify_trade_accepted   ? 1 : 0) : 1},
+        notify_trade_completed  = ${notify_trade_completed  !== undefined ? (notify_trade_completed  ? 1 : 0) : 1},
+        notify_trade_cancelled  = ${notify_trade_cancelled  !== undefined ? (notify_trade_cancelled  ? 1 : 0) : 1},
+        notify_dispute_raised   = ${notify_dispute_raised   !== undefined ? (notify_dispute_raised   ? 1 : 0) : 1},
+        notify_dispute_accepted = ${notify_dispute_accepted !== undefined ? (notify_dispute_accepted ? 1 : 0) : 1},
+        notify_invoice_paid     = ${notify_invoice_paid     !== undefined ? (notify_invoice_paid     ? 1 : 0) : 1},
+        notify_invoice_reminder = ${notify_invoice_reminder !== undefined ? (notify_invoice_reminder ? 1 : 0) : 1},
+        notify_receipts         = ${notify_receipts         !== undefined ? (notify_receipts         ? 1 : 0) : 1},
         updated_at = ${now}
       WHERE LOWER(wallet_address) = LOWER(${wallet})
     `)

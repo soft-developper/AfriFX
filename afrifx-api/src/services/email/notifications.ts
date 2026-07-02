@@ -555,3 +555,65 @@ export async function notifyTradeAutoCancelled(params: {
     await notifyParty(takerProfile, params.takerWallet, 'taker', makerProfile)
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+// Wave 3 notification functions
+// ─────────────────────────────────────────────────────────────
+
+import {
+  paymentReceiptEmail,
+  adminAuditSummaryEmail,
+} from './templates'
+
+// ─── Payment receipt (trade or invoice) ─────────────────────
+export async function notifyPaymentReceipt(params: {
+  recipientWallet:  string
+  recipientRole:    'sender' | 'receiver'
+  type:             'trade' | 'invoice'
+  usdcAmount:       number
+  localAmount?:     number
+  localCcy?:        string
+  counterpartWallet: string
+  reference:        string
+  txHash:           string
+  timestamp:        number
+}) {
+  const [recipientProfile, counterpartProfile] = await Promise.all([
+    getProfile(params.recipientWallet),
+    getProfile(params.counterpartWallet),
+  ])
+
+  if (!recipientProfile?.email) return
+  // Check granular pref
+  if (Number(recipientProfile.notify_receipts ?? 1) === 0) return
+  // Skip if recently active
+  if (isRecentlyActive(recipientProfile)) return
+
+  const template = paymentReceiptEmail({
+    recipientName:   getDisplayName(recipientProfile),
+    recipientRole:   params.recipientRole,
+    type:            params.type,
+    usdcAmount:      params.usdcAmount,
+    localAmount:     params.localAmount,
+    localCcy:        params.localCcy,
+    counterpartName: getDisplayName(counterpartProfile),
+    reference:       params.reference,
+    txHash:          params.txHash,
+    timestamp:       params.timestamp,
+  })
+
+  const notifId = await queueAndSend({
+    userWallet:     params.recipientWallet,
+    type:           'payment_receipt',
+    subject:        template.subject,
+    payload:        params,
+    recipientEmail: recipientProfile.email,
+  })
+
+  const result = await sendEmail({
+    to: recipientProfile.email, subject: template.subject, html: template.html,
+  })
+
+  if (result.success) await markSent(notifId, result.id ?? null)
+  else await markFailed(notifId, result.error ?? 'unknown')
+}

@@ -22,6 +22,7 @@ import adminAuthRouter            from './routes/adminAuth'
 import adminManageRouter          from './routes/adminManage'
 import { startRatePoller }        from './jobs/ratePoller'
 import { startEventListener }     from './services/eventListener'
+import { startAdminAuditSummary } from './jobs/adminAuditSummary'
 import { startInvoiceReminders }  from './jobs/invoiceReminders'
 import { startP2PReleaseWatcher } from './jobs/p2pReleaseWatcher'
 import { startTreasuryChecker }   from './jobs/treasuryChecker'
@@ -63,6 +64,7 @@ app.listen(PORT, async () => {
   startEventListener()
   startP2PReleaseWatcher()
 startInvoiceReminders()
+startAdminAuditSummary()
   startTreasuryChecker()
   startTxSettler()
 })

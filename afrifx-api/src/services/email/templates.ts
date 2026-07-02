@@ -579,3 +579,192 @@ Auto-cancellation happens when either party does not act within the timer window
 
   return { subject, html: base2(content, preview), previewText: preview }
 }
+
+// ─────────────────────────────────────────────────────────────
+// Wave 3 Templates
+// ─────────────────────────────────────────────────────────────
+
+const BRAND_3 = '#378ADD'
+const BG_3    = '#080D1B'
+const CARD_3  = '#0F1729'
+const BORDER_3 = '#1B2B4B'
+const TP      = '#E2E8F0'
+const TS3     = '#64748B'
+const SU      = '#10B981'
+const APP3    = process.env.APP_URL ?? 'https://afrifx.xyz'
+
+function base3(content: string, preview?: string) {
+  return `
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AfriFX</title></head>
+<body style="margin:0;padding:0;background:${BG_3};color:${TP};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+${preview ? `<div style="display:none;font-size:1px;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">${preview}</div>` : ''}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BG_3};padding:32px 16px;">
+<tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+<tr><td style="padding-bottom:24px;text-align:center;">
+<div style="display:inline-block;padding:8px 16px;border-radius:8px;background:${CARD_3};border:1px solid ${BORDER_3};">
+<span style="color:${BRAND_3};font-weight:600;font-size:18px;letter-spacing:0.5px;">AfriFX</span>
+<span style="color:${TS3};font-size:11px;margin-left:8px;">Arc Testnet</span>
+</div></td></tr>
+<tr><td style="background:${CARD_3};border:1px solid ${BORDER_3};border-radius:12px;padding:32px 28px;">
+${content}
+</td></tr>
+<tr><td style="padding-top:24px;text-align:center;color:${TS3};font-size:12px;line-height:1.6;">
+<p style="margin:0 0 8px;">AfriFX — Stablecoin-powered cross-border payments on Arc</p>
+<p style="margin:0;"><a href="${APP3}" style="color:${BRAND_3};">afrifx.xyz</a> · <a href="${APP3}/profile" style="color:${TS3};">Notification settings</a></p>
+</td></tr></table></td></tr></table>
+</body></html>`.trim()
+}
+
+function btn3(text: string, url: string) {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0;"><tr><td style="background:${BRAND_3};border-radius:10px;"><a href="${url}" style="display:inline-block;padding:14px 32px;color:white;font-weight:500;font-size:14px;text-decoration:none;">${text}</a></td></tr></table>`.trim()
+}
+
+// ─── Payment receipt ────────────────────────────────────────
+export function paymentReceiptEmail(params: {
+  recipientName: string
+  recipientRole: 'sender' | 'receiver'
+  type:          'trade' | 'invoice'
+  usdcAmount:    number
+  localAmount?:  number
+  localCcy?:     string
+  counterpartName: string
+  reference:     string
+  txHash:        string
+  timestamp:     number
+}) {
+  const isSender = params.recipientRole === 'sender'
+  const date     = new Date(params.timestamp * 1000)
+  const dateStr  = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+  const timeStr  = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+
+  const subject     = params.type === 'trade'
+    ? 'AfriFX Trade Receipt'
+    : 'AfriFX Payment Receipt'
+  const previewText = isSender
+    ? 'Your payment receipt from AfriFX.'
+    : 'Your funds receipt from AfriFX.'
+
+  const content = `
+<div style="text-align:center;margin-bottom:24px;">
+<h1 style="margin:0 0 4px;color:${TP};font-size:22px;font-weight:600;">Payment receipt</h1>
+<p style="margin:0;color:${TS3};font-size:13px;">${dateStr} at ${timeStr} UTC</p>
+</div>
+
+<div style="border:1px solid ${BORDER_3};border-radius:10px;overflow:hidden;margin:20px 0;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr style="background:${BG_3};">
+<td style="padding:16px;border-bottom:1px solid ${BORDER_3};" colspan="2">
+<div style="text-align:center;">
+<div style="font-size:32px;font-weight:700;color:${TP};letter-spacing:-1px;">${params.usdcAmount} USDC</div>
+${params.localAmount && params.localCcy ? `<div style="font-size:14px;color:${TS3};margin-top:4px;">&#8776; ${params.localAmount.toLocaleString()} ${params.localCcy}</div>` : ''}
+</div>
+</td></tr>
+<tr><td style="padding:12px 16px;color:${TS3};font-size:12px;text-transform:uppercase;letter-spacing:0.5px;width:40%;border-bottom:1px solid ${BORDER_3};">Type</td>
+<td style="padding:12px 16px;color:${TP};font-size:14px;border-bottom:1px solid ${BORDER_3};">${params.type === 'trade' ? 'P2P Trade' : 'Invoice Payment'}</td></tr>
+<tr><td style="padding:12px 16px;color:${TS3};font-size:12px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid ${BORDER_3};">Your role</td>
+<td style="padding:12px 16px;color:${TP};font-size:14px;border-bottom:1px solid ${BORDER_3};">${isSender ? 'Sender' : 'Receiver'}</td></tr>
+<tr><td style="padding:12px 16px;color:${TS3};font-size:12px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid ${BORDER_3};">Counterparty</td>
+<td style="padding:12px 16px;color:${TP};font-size:14px;border-bottom:1px solid ${BORDER_3};">${params.counterpartName}</td></tr>
+<tr><td style="padding:12px 16px;color:${TS3};font-size:12px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid ${BORDER_3};">Reference</td>
+<td style="padding:12px 16px;font-family:monospace;color:${TP};font-size:12px;border-bottom:1px solid ${BORDER_3};">${params.reference}</td></tr>
+<tr><td style="padding:12px 16px;color:${TS3};font-size:12px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid ${BORDER_3};">Network</td>
+<td style="padding:12px 16px;color:${TP};font-size:14px;border-bottom:1px solid ${BORDER_3};">Arc Testnet · Chain 5042002</td></tr>
+<tr><td style="padding:12px 16px;color:${TS3};font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">On-chain proof</td>
+<td style="padding:12px 16px;"><a href="https://testnet.arcscan.app/tx/${params.txHash}" style="color:${BRAND_3};font-family:monospace;font-size:11px;">${params.txHash.slice(0,20)}&#8230;</a></td></tr>
+</table>
+</div>
+
+<div style="text-align:center;margin:24px 0 0;padding:16px;border:1px solid ${BORDER_3};border-radius:8px;background:rgba(16,185,129,0.05);">
+<p style="margin:0;color:${SU};font-size:13px;font-weight:500;">&#10003; Settled on-chain · Immutable record</p>
+</div>
+
+<p style="margin:24px 0 0;color:${TS3};font-size:11px;line-height:1.6;text-align:center;">
+This receipt is automatically generated by AfriFX. The on-chain transaction is the authoritative record. Keep this email for your records.
+</p>`
+
+  return { subject, html: base3(content, previewText), previewText }
+}
+
+// ─── Weekly admin audit summary ─────────────────────────────
+export function adminAuditSummaryEmail(params: {
+  adminName:            string
+  periodStart:          string
+  periodEnd:            string
+  disputesOpened:       number
+  disputesResolved:     number
+  avgResolutionHours:   number
+  totalTradeVolume:     number
+  totalTrades:          number
+  totalInvoicesPaid:    number
+  activeAdmins:         { name: string, resolved: number }[]
+  unclaimedDisputes:    number
+}) {
+  const subject     = 'AfriFX Weekly Audit Summary'
+  const previewText = `${params.disputesOpened} disputes opened, ${params.disputesResolved} resolved this week.`
+
+  const adminRows = params.activeAdmins.map(a =>
+    `<tr><td style="padding:8px 12px;color:${TP};font-size:13px;border-bottom:1px solid ${BORDER_3};">${a.name}</td>` +
+    `<td style="padding:8px 12px;color:${TP};font-size:13px;text-align:right;border-bottom:1px solid ${BORDER_3};">${a.resolved}</td></tr>`
+  ).join('')
+
+  const content = `
+<h1 style="margin:0 0 12px;color:${TP};font-size:22px;font-weight:600;">Weekly audit summary</h1>
+<p style="margin:0 0 4px;color:${TS3};font-size:13px;">${params.periodStart} — ${params.periodEnd}</p>
+<p style="margin:0 0 20px;color:${TS3};font-size:14px;">Hi ${params.adminName}, here is what happened on AfriFX this past week.</p>
+
+<!-- Key metrics -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0;">
+<tr>
+<td style="width:25%;text-align:center;padding:16px 8px;background:${BG_3};border-radius:8px 0 0 8px;border:1px solid ${BORDER_3};border-right:none;">
+<div style="font-size:24px;font-weight:700;color:${TP};">${params.totalTrades}</div>
+<div style="font-size:10px;color:${TS3};text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;">Trades</div>
+</td>
+<td style="width:25%;text-align:center;padding:16px 8px;background:${BG_3};border:1px solid ${BORDER_3};border-right:none;">
+<div style="font-size:24px;font-weight:700;color:${TP};">${params.disputesOpened}</div>
+<div style="font-size:10px;color:${TS3};text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;">Disputes</div>
+</td>
+<td style="width:25%;text-align:center;padding:16px 8px;background:${BG_3};border:1px solid ${BORDER_3};border-right:none;">
+<div style="font-size:24px;font-weight:700;color:${SU};">${params.disputesResolved}</div>
+<div style="font-size:10px;color:${TS3};text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;">Resolved</div>
+</td>
+<td style="width:25%;text-align:center;padding:16px 8px;background:${BG_3};border-radius:0 8px 8px 0;border:1px solid ${BORDER_3};">
+<div style="font-size:24px;font-weight:700;color:${TP};">${params.totalInvoicesPaid}</div>
+<div style="font-size:10px;color:${TS3};text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;">Invoices</div>
+</td>
+</tr></table>
+
+<!-- Details -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BG_3};border-radius:10px;margin:20px 0;">
+<tr><td style="padding:12px 16px;border-bottom:1px solid ${BORDER_3};">
+<div style="color:${TS3};font-size:11px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Total USDC volume</div>
+<div style="color:${TP};font-size:16px;font-weight:600;">${params.totalTradeVolume.toLocaleString()} USDC</div>
+</td></tr>
+<tr><td style="padding:12px 16px;border-bottom:1px solid ${BORDER_3};">
+<div style="color:${TS3};font-size:11px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Avg dispute resolution time</div>
+<div style="color:${TP};font-size:16px;font-weight:600;">${params.avgResolutionHours.toFixed(1)} hours</div>
+</td></tr>
+<tr><td style="padding:12px 16px;">
+<div style="color:${TS3};font-size:11px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Unclaimed disputes</div>
+<div style="color:${params.unclaimedDisputes > 0 ? '#EF4444' : SU};font-size:16px;font-weight:600;">${params.unclaimedDisputes}</div>
+</td></tr></table>
+
+${params.activeAdmins.length > 0 ? `
+<!-- Admin leaderboard -->
+<div style="margin:20px 0;">
+<p style="margin:0 0 8px;color:${TP};font-size:14px;font-weight:500;">Admin activity</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BG_3};border-radius:10px;">
+<tr><td style="padding:8px 12px;color:${TS3};font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid ${BORDER_3};">Admin</td>
+<td style="padding:8px 12px;color:${TS3};font-size:11px;text-transform:uppercase;letter-spacing:0.5px;text-align:right;border-bottom:1px solid ${BORDER_3};">Disputes resolved</td></tr>
+${adminRows}
+</table></div>` : ''}
+
+${btn3('Open admin dashboard', `${APP3}/admin/disputes`)}
+
+<p style="margin:16px 0 0;color:${TS3};font-size:11px;text-align:center;">
+This summary is sent weekly to super admins. All data is from the platform database and on-chain records.
+</p>`
+
+  return { subject, html: base3(content, previewText), previewText }
+}
