@@ -8,6 +8,7 @@ export const PERMISSIONS = {
   VIEW_ANALYTICS:    'view_analytics',    // platform analytics
   MANAGE_TREASURY:   'manage_treasury',   // platform treasury / fees
   MANAGE_ADMINS:     'manage_admins',     // add/remove/edit sub-admins
+  MANAGE_CONTENT:    'manage_content',    // edit About / Contact page content
   VIEW_AUDIT_LOG:    'view_audit_log',    // see audit trail
 } as const
 
@@ -25,5 +26,6 @@ export const PERMISSION_META: Record<string, { label: string; description: strin
   view_analytics:   { label: 'View Analytics',    description: 'See platform-wide analytics and charts' },
   manage_treasury:  { label: 'Manage Treasury',   description: 'View and manage platform fees' },
   manage_admins:    { label: 'Manage Admins',     description: 'Add, edit, suspend sub-admins' },
+  manage_content:   { label: 'Manage Content',    description: 'Edit the About and Contact pages' },
   view_audit_log:   { label: 'View Audit Log',    description: 'Review all admin activity' },
 }
