@@ -8,9 +8,9 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 export function Badge({ className, variant = 'default', ...props }: BadgeProps) {
   const styles = {
     default: 'bg-app-border text-app-text',
-    success: 'bg-emerald-900/40 text-emerald-400',
-    warning: 'bg-amber-900/40 text-amber-400',
-    danger:  'bg-red-900/40 text-red-400',
+    success: 'bg-emerald-900/40 text-emerald-400 light:bg-emerald-100 light:text-emerald-800',
+    warning: 'bg-amber-900/40 text-amber-400 light:bg-amber-100 light:text-amber-800',
+    danger:  'bg-red-900/40 text-red-400 light:bg-red-100 light:text-red-700',
     arc:     'bg-app-accent/20 text-app-accent-text',
   }
   return (

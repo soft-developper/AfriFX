@@ -80,3 +80,22 @@ input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
+/*
+  Light-mode semantic color fixes.
+
+  The status colors (emerald/amber/red at the -400/-500 shades) are tuned for
+  the dark theme and wash out on the light ivory background — a light green on
+  near-white has almost no contrast. Under html.light we remap these specific
+  text utilities to darker shades that pass WCAG AA on ivory, without touching
+  the dark theme. Badge FILLS are handled separately via the `light:` variant
+  in components/ui/badge.tsx.
+
+  !important is required to win over Tailwind's own utility classes.
+*/
+.light .text-emerald-400,
+.light .text-emerald-500 { color: #047857 !important; } /* emerald-700 — 4.88:1 on ivory */
+.light .text-amber-400,
+.light .text-amber-500  { color: #92400e !important; } /* amber-800 — passes on ivory */
+.light .text-red-400,
+.light .text-red-500    { color: #b91c1c !important; } /* red-700 — 5.76:1 on ivory */

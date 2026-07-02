@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss'
+import plugin from 'tailwindcss/plugin'
 
 const config: Config = {
   content: [
@@ -44,6 +45,12 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // Enables `light:` utilities that apply only when <html class="light">.
+    // Mirrors how our theme system toggles the root class (see hooks/useTheme.tsx).
+    plugin(({ addVariant }) => {
+      addVariant('light', ':is(.light &)')
+    }),
+  ],
 }
 export default config
