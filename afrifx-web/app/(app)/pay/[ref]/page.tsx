@@ -68,14 +68,14 @@ function PayContent() {
 
   if (isLoading) return (
     <div className="flex h-64 items-center justify-center">
-      <Loader2 className="h-6 w-6 animate-spin text-[#378ADD]" />
+      <Loader2 className="h-6 w-6 animate-spin text-app-accent" />
     </div>
   )
 
   if (!invoice) return (
     <div className="flex h-64 flex-col items-center justify-center gap-3">
       <AlertCircle className="h-8 w-8 text-red-400" />
-      <p className="text-sm text-[#64748B]">Invoice not found</p>
+      <p className="text-sm text-app-muted">Invoice not found</p>
     </div>
   )
 
@@ -185,16 +185,16 @@ function PayContent() {
 
   return (
     <div className="mx-auto max-w-lg">
-      <div className="rounded-2xl border border-[#1B2B4B] bg-[#0F1729] p-6">
+      <div className="rounded-2xl border border-app-border bg-app-surface p-6">
 
         {/* Header */}
         <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#080D1B]">
-            <FileText className="h-6 w-6 text-[#378ADD]" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-app-bg">
+            <FileText className="h-6 w-6 text-app-accent" />
           </div>
           <div>
-            <p className="text-sm font-medium text-[#E2E8F0]">Payment request</p>
-            <p className="font-mono text-xs text-[#378ADD]">{invoice.memo_ref}</p>
+            <p className="text-sm font-medium text-app-text">Payment request</p>
+            <p className="font-mono text-xs text-app-accent">{invoice.memo_ref}</p>
           </div>
           <Badge className="ml-auto" variant={
             alreadyPaid ? 'success' : isCancelled ? 'danger' : 'arc'
@@ -204,23 +204,23 @@ function PayContent() {
         </div>
 
         {/* Amount — show original + USDC equivalent */}
-        <div className="mb-5 rounded-xl bg-[#080D1B] p-5 text-center">
-          <p className="text-xs text-[#64748B]">Amount due</p>
-          <p className="mt-1 font-mono text-4xl font-bold text-[#E2E8F0]">
+        <div className="mb-5 rounded-xl bg-app-bg p-5 text-center">
+          <p className="text-xs text-app-muted">Amount due</p>
+          <p className="mt-1 font-mono text-4xl font-bold text-app-text">
             {formatAmount(invoice.amount)}
           </p>
-          <p className="text-sm text-[#378ADD]">{invoice.currency}</p>
+          <p className="text-sm text-app-accent">{invoice.currency}</p>
 
           {/* USDC conversion — shown when invoice is in local currency */}
           {isLocalCcy && (
             <div className="mt-3 flex items-center justify-center gap-2">
-              <span className="text-xs text-[#64748B]">You will pay</span>
-              <div className="flex items-center gap-1.5 rounded-full border border-[#378ADD]/30 bg-[#378ADD]/10 px-3 py-1">
-                <ArrowRight className="h-3 w-3 text-[#378ADD]" />
+              <span className="text-xs text-app-muted">You will pay</span>
+              <div className="flex items-center gap-1.5 rounded-full border border-app-accent/30 bg-app-accent/10 px-3 py-1">
+                <ArrowRight className="h-3 w-3 text-app-accent" />
                 {!ratesLoaded ? (
-                  <span className="text-xs text-[#64748B] animate-pulse">Loading rate…</span>
+                  <span className="text-xs text-app-muted animate-pulse">Loading rate…</span>
                 ) : usdcAmount > 0 ? (
-                  <span className="font-mono text-sm font-semibold text-[#378ADD]">
+                  <span className="font-mono text-sm font-semibold text-app-accent">
                     {formatAmount(usdcAmount, 6)} USDC
                   </span>
                 ) : (
@@ -232,7 +232,7 @@ function PayContent() {
 
           {/* Rate used */}
           {isLocalCcy && usdcAmount > 0 && (
-            <p className="mt-1.5 text-[10px] text-[#64748B]">
+            <p className="mt-1.5 text-[10px] text-app-muted">
               Rate: 1 USDC = {rates.find(r => r.pair === `${invoice.currency}/USDC`)?.rate.toLocaleString()} {invoice.currency}
             </p>
           )}
@@ -248,12 +248,12 @@ function PayContent() {
               : 'No deadline'],
           ].map(([l, v]) => (
             <div key={l} className="flex justify-between">
-              <span className="text-[#64748B]">{l}</span>
-              <span className="text-[#E2E8F0]">{v}</span>
+              <span className="text-app-muted">{l}</span>
+              <span className="text-app-text">{v}</span>
             </div>
           ))}
           {invoice.notes && (
-            <div className="rounded-lg bg-[#080D1B] p-2.5 text-[#64748B]">{invoice.notes}</div>
+            <div className="rounded-lg bg-app-bg p-2.5 text-app-muted">{invoice.notes}</div>
           )}
         </div>
 
@@ -268,7 +268,7 @@ function PayContent() {
             {txHash && (
               <a href={`https://testnet.arcscan.app/tx/${txHash}`}
                 target="_blank" rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1 text-xs text-[#378ADD] hover:underline">
+                className="mt-2 inline-flex items-center gap-1 text-xs text-app-accent hover:underline">
                 <ExternalLink className="h-3.5 w-3.5" /> View on ArcScan
               </a>
             )}
@@ -312,29 +312,29 @@ function PayContent() {
           </div>
 
         ) : status === 'submitting' ? (
-          <div className="rounded-xl bg-[#080D1B] p-4">
+          <div className="rounded-xl bg-app-bg p-4">
             <div className="flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin shrink-0 text-[#378ADD]" />
+              <Loader2 className="h-5 w-5 animate-spin shrink-0 text-app-accent" />
               <div>
-                <p className="text-sm font-medium text-[#E2E8F0]">Waiting for signature…</p>
-                <p className="text-xs text-[#64748B]">Approve in your wallet</p>
+                <p className="text-sm font-medium text-app-text">Waiting for signature…</p>
+                <p className="text-xs text-app-muted">Approve in your wallet</p>
               </div>
             </div>
           </div>
 
         ) : status === 'confirming' ? (
-          <div className="rounded-xl bg-[#080D1B] p-4">
+          <div className="rounded-xl bg-app-bg p-4">
             <div className="flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin shrink-0 text-[#378ADD]" />
+              <Loader2 className="h-5 w-5 animate-spin shrink-0 text-app-accent" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-[#E2E8F0]">Confirming on Arc…</p>
-                <p className="text-xs text-[#64748B]">Waiting for on-chain confirmation</p>
+                <p className="text-sm font-medium text-app-text">Confirming on Arc…</p>
+                <p className="text-xs text-app-muted">Waiting for on-chain confirmation</p>
               </div>
             </div>
             {txHash && (
               <a href={`https://testnet.arcscan.app/tx/${txHash}`}
                 target="_blank" rel="noopener noreferrer"
-                className="mt-2 flex items-center gap-1 text-xs text-[#378ADD] hover:underline">
+                className="mt-2 flex items-center gap-1 text-xs text-app-accent hover:underline">
                 <ExternalLink className="h-3.5 w-3.5" /> Track on ArcScan
               </a>
             )}
@@ -361,13 +361,13 @@ function PayContent() {
           </div>
 
         ) : !isConnected ? (
-          <div className="rounded-xl bg-[#080D1B] p-4 text-center text-sm text-[#64748B]">
+          <div className="rounded-xl bg-app-bg p-4 text-center text-sm text-app-muted">
             <Wallet className="mx-auto mb-2 h-6 w-6" />
             Connect your wallet to pay this invoice
           </div>
 
         ) : !ratesLoaded && isLocalCcy ? (
-          <div className="rounded-xl bg-[#080D1B] p-4 text-center text-xs text-[#64748B]">
+          <div className="rounded-xl bg-app-bg p-4 text-center text-xs text-app-muted">
             <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />
             Loading exchange rates…
           </div>
@@ -386,7 +386,7 @@ function PayContent() {
                 : `${formatAmount(invoice.amount)} USDC`
               }
             </Button>
-            <p className="mt-2 text-center text-[10px] text-[#64748B]">
+            <p className="mt-2 text-center text-[10px] text-app-muted">
               {isLocalCcy
                 ? `${invoice.currency} converted to USDC at live rate · `
                 : ''}

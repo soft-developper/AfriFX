@@ -125,8 +125,8 @@ export default function MarketplacePage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-[#E2E8F0]">P2P Marketplace</h1>
-          <p className="text-sm text-[#64748B]">Buy USDC directly from verified traders.</p>
+          <h1 className="text-xl font-semibold text-app-text">P2P Marketplace</h1>
+          <p className="text-sm text-app-muted">Buy USDC directly from verified traders.</p>
         </div>
         <Link href="/marketplace/create">
           <Button size="sm"><Plus className="h-4 w-4" /> Create offer</Button>
@@ -135,20 +135,20 @@ export default function MarketplacePage() {
 
       {/* Global accepting banner */}
       {acceptState.phase !== 'idle' && (
-        <div className="mb-4 rounded-xl border border-[#378ADD]/30 bg-[#378ADD]/10 px-4 py-3">
+        <div className="mb-4 rounded-xl border border-app-accent/30 bg-app-accent/10 px-4 py-3">
           <div className="flex items-center gap-3">
             {acceptState.phase === 'done'
               ? <CheckCircle className="h-5 w-5 shrink-0 text-emerald-400" />
-              : <Loader2 className="h-5 w-5 shrink-0 animate-spin text-[#378ADD]" />
+              : <Loader2 className="h-5 w-5 shrink-0 animate-spin text-app-accent" />
             }
             <div>
-              <p className="text-sm font-medium text-[#E2E8F0]">
+              <p className="text-sm font-medium text-app-text">
                 {acceptState.phase === 'signing'     && 'Waiting for wallet signature…'}
                 {acceptState.phase === 'confirming'  && 'Confirming on Arc blockchain…'}
                 {acceptState.phase === 'updating_db' && 'Finalising trade setup…'}
                 {acceptState.phase === 'done'        && 'Trade accepted! Redirecting…'}
               </p>
-              <p className="text-xs text-[#64748B]">
+              <p className="text-xs text-app-muted">
                 {acceptState.phase === 'signing'     && 'Please approve the transaction in your wallet'}
                 {acceptState.phase === 'confirming'  && 'This usually takes a few seconds'}
                 {acceptState.phase === 'updating_db' && 'Almost there…'}
@@ -173,14 +173,14 @@ export default function MarketplacePage() {
                 <div key={key} className="flex items-center gap-2">
                   <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-colors
                     ${isDone    ? 'bg-emerald-500 text-white'
-                    : isActive  ? 'bg-[#378ADD] text-white'
-                    :             'bg-[#1B2B4B] text-[#64748B]'}`}>
+                    : isActive  ? 'bg-app-accent text-white'
+                    :             'bg-app-border text-app-muted'}`}>
                     {isDone ? '✓' : idx + 1}
                   </div>
-                  <span className={`text-xs ${isActive || isDone ? 'text-[#E2E8F0]' : 'text-[#64748B]'}`}>
+                  <span className={`text-xs ${isActive || isDone ? 'text-app-text' : 'text-app-muted'}`}>
                     {label}
                   </span>
-                  {idx < 3 && <div className="h-px w-4 bg-[#1B2B4B]" />}
+                  {idx < 3 && <div className="h-px w-4 bg-app-border" />}
                 </div>
               )
             })}
@@ -196,8 +196,8 @@ export default function MarketplacePage() {
           { icon: Clock,       label: 'Perpetual orders' },
         ].map(({ icon: Icon, label }) => (
           <div key={label}
-            className="flex items-center gap-1.5 rounded-lg border border-[#1B2B4B] bg-[#0F1729] px-3 py-1.5 text-xs text-[#64748B]">
-            <Icon className="h-3.5 w-3.5 text-[#378ADD]" />{label}
+            className="flex items-center gap-1.5 rounded-lg border border-app-border bg-app-surface px-3 py-1.5 text-xs text-app-muted">
+            <Icon className="h-3.5 w-3.5 text-app-accent" />{label}
           </div>
         ))}
       </div>
@@ -208,26 +208,26 @@ export default function MarketplacePage() {
           <button key={c} onClick={() => setCurrency(c)}
             className={`rounded-full px-3 py-1 text-xs transition-colors
               ${currency === c
-                ? 'bg-[#378ADD] text-white'
-                : 'border border-[#1B2B4B] text-[#64748B] hover:text-[#E2E8F0]'}`}>
+                ? 'bg-app-accent text-white'
+                : 'border border-app-border text-app-muted hover:text-app-text'}`}>
             {c === 'all' ? 'All' : `${CURRENCY_FLAG[c]} ${c}`}
           </button>
         ))}
         <button onClick={load}
-          className="ml-auto rounded-full border border-[#1B2B4B] px-3 py-1 text-xs text-[#64748B] hover:text-[#E2E8F0]">
+          className="ml-auto rounded-full border border-app-border px-3 py-1 text-xs text-app-muted hover:text-app-text">
           ↻ Refresh
         </button>
       </div>
 
       {loading && (
         <div className="space-y-2">
-          {[1,2,3].map(i => <div key={i} className="h-24 animate-pulse rounded-xl bg-[#0F1729]" />)}
+          {[1,2,3].map(i => <div key={i} className="h-24 animate-pulse rounded-xl bg-app-surface" />)}
         </div>
       )}
 
       {!loading && offers.length === 0 && (
-        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-10 text-center">
-          <p className="text-sm text-[#64748B]">No open offers right now.</p>
+        <div className="rounded-xl border border-app-border bg-app-surface p-10 text-center">
+          <p className="text-sm text-app-muted">No open offers right now.</p>
           <Link href="/marketplace/create">
             <Button variant="outline" size="sm" className="mt-4">
               <Plus className="h-4 w-4" /> Create the first offer
@@ -245,35 +245,35 @@ export default function MarketplacePage() {
 
           return (
             <div key={offer.id}
-              className={`rounded-xl border bg-[#0F1729] p-4 transition-colors
-                ${isBusy ? 'border-[#378ADD]/40' : 'border-[#1B2B4B]'}`}>
+              className={`rounded-xl border bg-app-surface p-4 transition-colors
+                ${isBusy ? 'border-app-accent/40' : 'border-app-border'}`}>
               <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#080D1B] text-xl">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-app-bg text-xl">
                   {CURRENCY_FLAG[offer.local_currency] ?? '🌍'}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium text-[#E2E8F0]">
+                    <p className="font-medium text-app-text">
                       {Number(offer.local_amount).toLocaleString()} {offer.local_currency}
-                      <span className="mx-1.5 text-[#64748B]">→</span>
+                      <span className="mx-1.5 text-app-muted">→</span>
                       {Number(offer.usdc_amount).toFixed(2)} USDC
                     </p>
                     {isOwn && <Badge variant="arc">Your offer</Badge>}
                     <Badge variant={type === 'limit' ? 'warning' : 'arc'}>{type}</Badge>
                   </div>
                   <div className="mt-1.5 flex flex-wrap items-center gap-3">
-                    <ClientOnly fallback={<span className="text-xs text-[#64748B]">…</span>}>
+                    <ClientOnly fallback={<span className="text-xs text-app-muted">…</span>}>
                       <UserDisplay address={offer.maker_address} size="xs" suffix={isOwn ? '(you)' : undefined} />
                     </ClientOnly>
-                    <span className="text-xs text-[#64748B]">·</span>
-                    <span className="text-xs text-[#64748B]">
+                    <span className="text-xs text-app-muted">·</span>
+                    <span className="text-xs text-app-muted">
                       1 USDC = {Number(offer.rate_offered) > 0
                         ? (1 / Number(offer.rate_offered)).toFixed(2)
                         : '—'} {offer.local_currency}
                     </span>
-                    <span className="text-xs text-[#64748B]">·</span>
-                    <span className="flex items-center gap-1 text-xs text-[#64748B]">
+                    <span className="text-xs text-app-muted">·</span>
+                    <span className="flex items-center gap-1 text-xs text-app-muted">
                       <Clock className="h-3 w-3" />{formatTimer(timer)}
                     </span>
                   </div>

@@ -5,7 +5,7 @@ import { ProfileGuard } from '@/components/profile/ProfileGuard'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#080D1B]">
+    <div className="flex h-screen flex-col overflow-hidden bg-app-bg">
       <TopNav />
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar — hidden on mobile, visible md+ */}

@@ -46,10 +46,10 @@ export function Sidebar() {
 
   return (
     // Hidden on mobile (md:flex), visible on desktop
-    <aside className="hidden md:flex md:w-52 md:shrink-0 flex-col overflow-y-auto border-r border-[#1B2B4B] py-4">
+    <aside className="hidden md:flex md:w-52 md:shrink-0 flex-col overflow-y-auto border-r border-app-border py-4">
       {nav.map((section) => (
         <div key={section.label} className="mb-2">
-          <p className="mb-1 px-4 text-[10px] font-semibold uppercase tracking-widest text-[#64748B]">
+          <p className="mb-1 px-4 text-[10px] font-semibold uppercase tracking-widest text-app-muted">
             {section.label}
           </p>
           {section.items.map(({ href, icon: Icon, label }) => {
@@ -60,8 +60,8 @@ export function Sidebar() {
                 className={cn(
                   'flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors',
                   active
-                    ? 'bg-[#1B2B4B] font-medium text-[#E2E8F0]'
-                    : 'text-[#64748B] hover:bg-[#0F1729] hover:text-[#E2E8F0]'
+                    ? 'bg-app-border font-medium text-app-text'
+                    : 'text-app-muted hover:bg-app-surface hover:text-app-text'
                 )}>
                 <Icon className="h-4 w-4 shrink-0" />
                 {label}
@@ -73,7 +73,7 @@ export function Sidebar() {
 
       {isAdmin && (
         <div className="mb-2">
-          <p className="mb-1 px-4 text-[10px] font-semibold uppercase tracking-widest text-[#64748B]">
+          <p className="mb-1 px-4 text-[10px] font-semibold uppercase tracking-widest text-app-muted">
             Admin
           </p>
           <Link href="/admin"

@@ -35,7 +35,7 @@ export function MessageBubble({ msg, isMe, senderName }: Props) {
   if (!msg.sender || msg.msg_type === 'system' || msg.sender === 'system') {
     return (
       <div className="flex justify-center py-1">
-        <span className="rounded-full bg-[#1B2B4B] px-3 py-1 text-[11px] text-[#64748B]">
+        <span className="rounded-full bg-app-border px-3 py-1 text-[11px] text-app-muted">
           {msg.content}
         </span>
       </div>
@@ -48,7 +48,7 @@ export function MessageBubble({ msg, isMe, senderName }: Props) {
     return (
       <div className={`flex ${isMe ? 'justify-end' : 'justify-start'} py-0.5`}>
         <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium
-          ${qa?.color ?? 'bg-[#1B2B4B] text-[#64748B] border-[#1B2B4B]'}`}>
+          ${qa?.color ?? 'bg-app-border text-app-muted border-app-border'}`}>
           <span>{qa?.emoji}</span>
           <span>{qa?.label ?? msg.quick_action}</span>
           {time && <span className="opacity-60 text-[10px]">{time}</span>}
@@ -63,13 +63,13 @@ export function MessageBubble({ msg, isMe, senderName }: Props) {
 
         {/* Sender name — only for received messages */}
         {!isMe && (
-          <span className="px-1 text-[10px] font-medium text-[#64748B]">{senderName}</span>
+          <span className="px-1 text-[10px] font-medium text-app-muted">{senderName}</span>
         )}
 
         <div className={`rounded-2xl px-3 py-2 ${
           isMe
-            ? 'rounded-tr-sm bg-[#378ADD] text-white'
-            : 'rounded-tl-sm bg-[#1B2B4B] text-[#E2E8F0]'
+            ? 'rounded-tr-sm bg-app-accent text-white'
+            : 'rounded-tl-sm bg-app-border text-app-text'
         }`}>
 
           {/* Media */}
@@ -89,7 +89,7 @@ export function MessageBubble({ msg, isMe, senderName }: Props) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`flex items-center gap-2 rounded-lg p-2 text-xs
-                    ${isMe ? 'bg-white/10 text-white' : 'bg-[#0F1729] text-[#E2E8F0]'}`}
+                    ${isMe ? 'bg-white/10 text-white' : 'bg-app-surface text-app-text'}`}
                 >
                   <FileText className="h-4 w-4 shrink-0" />
                   <span className="flex-1 truncate">{msg.content ?? 'Document'}</span>
@@ -106,7 +106,7 @@ export function MessageBubble({ msg, isMe, senderName }: Props) {
 
           {/* Timestamp + read receipt */}
           {time && (
-            <p className={`mt-0.5 text-right text-[10px] ${isMe ? 'text-white/60' : 'text-[#64748B]'}`}>
+            <p className={`mt-0.5 text-right text-[10px] ${isMe ? 'text-white/60' : 'text-app-muted'}`}>
               {time}
               {isMe && (
                 <span className="ml-1">

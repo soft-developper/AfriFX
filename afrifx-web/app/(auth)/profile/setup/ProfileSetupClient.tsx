@@ -33,7 +33,7 @@ export function ProfileSetupClient() {
   const [submitting,    setSubmitting]    = useState(false)
   const [submitError,   setSubmitError]   = useState('')
 
-  const avatarColor = username ? getAvatarColor(username) : '#378ADD'
+  const avatarColor = username ? getAvatarColor(username) : '#D9A441'
 
   useEffect(() => {
     if (!username) { setUsernameState('idle'); return }
@@ -106,7 +106,7 @@ export function ProfileSetupClient() {
   if (!isConnected) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-[#64748B]">Connect your wallet first.</p>
+        <p className="text-sm text-app-muted">Connect your wallet first.</p>
       </div>
     )
   }
@@ -114,10 +114,10 @@ export function ProfileSetupClient() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
       <div className="mb-8 flex items-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#378ADD]/20">
-          <ArrowLeftRight className="h-5 w-5 text-[#378ADD]" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-app-accent/20">
+          <ArrowLeftRight className="h-5 w-5 text-app-accent" />
         </div>
-        <span className="text-xl font-semibold text-[#E2E8F0]">AfriFX</span>
+        <span className="text-xl font-semibold text-app-text">AfriFX</span>
       </div>
 
       {step === 3 && (
@@ -125,11 +125,11 @@ export function ProfileSetupClient() {
           <div className="mb-6 flex justify-center">
             <ProfileAvatar displayName={displayName} avatarColor={avatarColor} size="xl" />
           </div>
-          <h1 className="mb-2 text-2xl font-semibold text-[#E2E8F0]">Welcome, {displayName}!</h1>
-          <p className="mb-2 text-sm text-[#64748B]">
-            Your profile <span className="text-[#378ADD]">@{username}</span> is ready.
+          <h1 className="mb-2 text-2xl font-semibold text-app-text">Welcome, {displayName}!</h1>
+          <p className="mb-2 text-sm text-app-muted">
+            Your profile <span className="text-app-accent">@{username}</span> is ready.
           </p>
-          <p className="mb-8 text-xs text-[#64748B]">
+          <p className="mb-8 text-xs text-app-muted">
             You can update your profile anytime from the sidebar.
           </p>
           <Button className="w-full" size="lg" onClick={() => router.push('/convert')}>
@@ -141,72 +141,72 @@ export function ProfileSetupClient() {
       {step < 3 && (
         <div className="w-full max-w-sm">
           <div className="mb-6 text-center">
-            <h1 className="text-2xl font-semibold text-[#E2E8F0]">Create your profile</h1>
-            <p className="mt-1 text-sm text-[#64748B]">Your identity on AfriFX. Username is permanent.</p>
+            <h1 className="text-2xl font-semibold text-app-text">Create your profile</h1>
+            <p className="mt-1 text-sm text-app-muted">Your identity on AfriFX. Username is permanent.</p>
           </div>
 
           <div className="mb-8 flex items-center gap-2">
             {[1,2].map((s) => (
               <div key={s} className="flex items-center gap-2">
                 <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold
-                  ${step >= s ? 'bg-[#378ADD] text-white' : 'bg-[#1B2B4B] text-[#64748B]'}`}>
+                  ${step >= s ? 'bg-app-accent text-white' : 'bg-app-border text-app-muted'}`}>
                   {step > s ? '✓' : s}
                 </div>
-                <span className={`text-xs ${step >= s ? 'text-[#E2E8F0]' : 'text-[#64748B]'}`}>
+                <span className={`text-xs ${step >= s ? 'text-app-text' : 'text-app-muted'}`}>
                   {s === 1 ? 'Identity' : 'Socials'}
                 </span>
-                {s < 2 && <div className="h-px w-8 bg-[#1B2B4B]" />}
+                {s < 2 && <div className="h-px w-8 bg-app-border" />}
               </div>
             ))}
           </div>
 
           {step === 1 && (
             <div className="space-y-4">
-              <div className="flex items-center gap-4 rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
+              <div className="flex items-center gap-4 rounded-xl border border-app-border bg-app-surface p-4">
                 <ProfileAvatar displayName={displayName || username || 'A'} avatarColor={avatarColor} size="lg" />
                 <div>
-                  <p className="text-sm font-medium text-[#E2E8F0]">{displayName || 'Your name'}</p>
-                  <p className="text-xs text-[#64748B]">{username ? `@${username}` : '@username'}</p>
+                  <p className="text-sm font-medium text-app-text">{displayName || 'Your name'}</p>
+                  <p className="text-xs text-app-muted">{username ? `@${username}` : '@username'}</p>
                 </div>
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-[#64748B]">
+                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-app-muted">
                   Username <span className="text-red-400">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]">@</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted">@</span>
                   <Input value={username}
                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,''))}
                     placeholder="yourname" className="pl-7 font-mono" maxLength={20} />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {usernameState === 'checking'  && <Loader2 className="h-4 w-4 animate-spin text-[#64748B]" />}
+                    {usernameState === 'checking'  && <Loader2 className="h-4 w-4 animate-spin text-app-muted" />}
                     {usernameState === 'available' && <CheckCircle className="h-4 w-4 text-emerald-400" />}
                     {(usernameState === 'taken' || usernameState === 'invalid') && <XCircle className="h-4 w-4 text-red-400" />}
                   </span>
                 </div>
                 {usernameState === 'available' && <p className="mt-1 text-xs text-emerald-400">@{username} is available!</p>}
                 {usernameError && <p className="mt-1 text-xs text-red-400">{usernameError}</p>}
-                <p className="mt-1 text-[10px] text-[#64748B]">3–20 chars · letters, numbers, underscores · permanent</p>
+                <p className="mt-1 text-[10px] text-app-muted">3–20 chars · letters, numbers, underscores · permanent</p>
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-[#64748B]">
+                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-app-muted">
                   Display name <span className="text-red-400">*</span>
                 </label>
                 <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Your full name" maxLength={40} />
-                <p className="mt-1 text-[10px] text-[#64748B]">Shown instead of your wallet address everywhere</p>
+                <p className="mt-1 text-[10px] text-app-muted">Shown instead of your wallet address everywhere</p>
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-[#64748B]">
-                  Bio <span className="font-normal normal-case text-[#64748B]">(optional)</span>
+                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-app-muted">
+                  Bio <span className="font-normal normal-case text-app-muted">(optional)</span>
                 </label>
                 <textarea value={bio} onChange={(e) => setBio(e.target.value)}
                   placeholder="Tell others about yourself…" maxLength={160} rows={3}
-                  className="w-full rounded-md border border-[#1B2B4B] bg-[#080D1B] px-3 py-2 text-sm text-[#E2E8F0] placeholder:text-[#64748B] focus:outline-none focus:ring-1 focus:ring-[#378ADD] resize-none" />
-                <p className="mt-1 text-right text-[10px] text-[#64748B]">{bio.length}/160</p>
+                  className="w-full rounded-md border border-app-border bg-app-bg px-3 py-2 text-sm text-app-text placeholder:text-app-muted focus:outline-none focus:ring-1 focus:ring-app-accent resize-none" />
+                <p className="mt-1 text-right text-[10px] text-app-muted">{bio.length}/160</p>
               </div>
 
               <Button className="w-full" size="lg" onClick={() => setStep(2)}
@@ -218,39 +218,39 @@ export function ProfileSetupClient() {
 
           {step === 2 && (
             <div className="space-y-4">
-              <p className="text-xs text-[#64748B]">
+              <p className="text-xs text-app-muted">
                 Connect your socials so traders can verify and trust you. All optional.
               </p>
 
               <div>
-                <label className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-[#64748B]">
+                <label className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-app-muted">
                   <Twitter className="h-3.5 w-3.5" /> Twitter / X
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]">@</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted">@</span>
                   <Input value={twitter} onChange={(e) => setTwitter(e.target.value.replace('@',''))}
                     placeholder="yourhandle" className="pl-7" />
                 </div>
               </div>
 
               <div>
-                <label className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-[#64748B]">
+                <label className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-app-muted">
                   <AtSign className="h-3.5 w-3.5" /> Telegram
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]">@</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted">@</span>
                   <Input value={telegram} onChange={(e) => setTelegram(e.target.value.replace('@',''))}
                     placeholder="yourhandle" className="pl-7" />
                 </div>
               </div>
 
-              <div className="flex items-center justify-between rounded-lg border border-[#1B2B4B] bg-[#0F1729] p-3">
+              <div className="flex items-center justify-between rounded-lg border border-app-border bg-app-surface p-3">
                 <div>
-                  <p className="text-sm font-medium text-[#E2E8F0]">Show socials publicly</p>
-                  <p className="text-xs text-[#64748B]">Others can see your Twitter and Telegram</p>
+                  <p className="text-sm font-medium text-app-text">Show socials publicly</p>
+                  <p className="text-xs text-app-muted">Others can see your Twitter and Telegram</p>
                 </div>
                 <button onClick={() => setShowSocials(!showSocials)}
-                  className={`relative h-6 w-11 rounded-full transition-colors ${showSocials ? 'bg-[#378ADD]' : 'bg-[#1B2B4B]'}`}>
+                  className={`relative h-6 w-11 rounded-full transition-colors ${showSocials ? 'bg-app-accent' : 'bg-app-border'}`}>
                   <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${showSocials ? 'translate-x-5' : 'translate-x-0.5'}`} />
                 </button>
               </div>
@@ -264,7 +264,7 @@ export function ProfileSetupClient() {
                 </Button>
               </div>
               <button onClick={handleSubmit} disabled={submitting}
-                className="w-full text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors">
+                className="w-full text-xs text-app-muted hover:text-app-text transition-colors">
                 Skip socials →
               </button>
             </div>

@@ -14,14 +14,14 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#080D1B',
+  themeColor: '#12100B',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className="min-h-screen bg-[#080D1B] text-[#E2E8F0]"
+        className="min-h-screen bg-app-bg text-app-text"
         suppressHydrationWarning
       >
         <Providers>{children}</Providers>

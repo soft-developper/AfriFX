@@ -9,8 +9,10 @@ import {
   TrendingUp, DollarSign, Store, AlertTriangle,
   Users, UserPlus, Loader2,
 } from 'lucide-react'
+import { useTokens } from '@/lib/tokens'
 
 export default function AdminDashboard() {
+  const t = useTokens()
   const [data, setData]       = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
@@ -24,28 +26,28 @@ export default function AdminDashboard() {
 
   return (
     <AdminShell>
-      <h1 className="mb-6 text-xl font-semibold text-[#E2E8F0]">Platform Overview</h1>
+      <h1 className="mb-6 text-xl font-semibold text-app-text">Platform Overview</h1>
 
       {loading ? (
         <div className="flex h-64 items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-[#378ADD]" />
+          <Loader2 className="h-6 w-6 animate-spin text-app-accent" />
         </div>
       ) : (
         <>
           {/* Stat cards */}
           <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
             {[
-              { label: 'Total volume',  value: `$${(data?.totalVolume ?? 0).toLocaleString()}`, icon: TrendingUp, color: 'text-[#378ADD]' },
+              { label: 'Total volume',  value: `$${(data?.totalVolume ?? 0).toLocaleString()}`, icon: TrendingUp, color: 'text-app-accent' },
               { label: 'Fees collected',value: `$${(data?.totalFees ?? 0).toLocaleString()}`,   icon: DollarSign, color: 'text-emerald-400' },
-              { label: 'Total users',   value: String(data?.totalUsers ?? 0),                   icon: Users,      color: 'text-[#378ADD]' },
+              { label: 'Total users',   value: String(data?.totalUsers ?? 0),                   icon: Users,      color: 'text-app-accent' },
               { label: 'New this week', value: `+${data?.newUsersWeek ?? 0}`,                    icon: UserPlus,   color: 'text-emerald-400' },
             ].map(({ label, value, icon: Icon, color }) => (
-              <div key={label} className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
+              <div key={label} className="rounded-xl border border-app-border bg-app-surface p-4">
                 <div className="mb-2 flex items-center justify-between">
-                  <p className="text-xs text-[#64748B]">{label}</p>
+                  <p className="text-xs text-app-muted">{label}</p>
                   <Icon className={`h-4 w-4 ${color}`} />
                 </div>
-                <p className="font-mono text-2xl font-bold text-[#E2E8F0]">{value}</p>
+                <p className="font-mono text-2xl font-bold text-app-text">{value}</p>
               </div>
             ))}
           </div>
@@ -54,34 +56,34 @@ export default function AdminDashboard() {
           <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
             {[
               { label: 'Open offers',    value: data?.p2p.open      ?? 0, color: 'text-amber-400'   },
-              { label: 'Active trades',  value: data?.p2p.accepted  ?? 0, color: 'text-[#378ADD]'   },
+              { label: 'Active trades',  value: data?.p2p.accepted  ?? 0, color: 'text-app-accent'   },
               { label: 'Completed',      value: data?.p2p.released  ?? 0, color: 'text-emerald-400' },
-              { label: 'Cancelled',      value: data?.p2p.cancelled ?? 0, color: 'text-[#64748B]'   },
+              { label: 'Cancelled',      value: data?.p2p.cancelled ?? 0, color: 'text-app-muted'   },
               { label: 'Open disputes',  value: data?.openDisputes  ?? 0, color: 'text-red-400'     },
             ].map(({ label, value, color }) => (
-              <div key={label} className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4 text-center">
+              <div key={label} className="rounded-xl border border-app-border bg-app-surface p-4 text-center">
                 <p className={`font-mono text-2xl font-bold ${color}`}>{value}</p>
-                <p className="mt-1 text-xs text-[#64748B]">{label}</p>
+                <p className="mt-1 text-xs text-app-muted">{label}</p>
               </div>
             ))}
           </div>
 
           {/* Volume chart */}
-          <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
-            <p className="mb-4 text-sm font-medium text-[#E2E8F0]">Platform volume (14 days)</p>
+          <div className="rounded-xl border border-app-border bg-app-surface p-5">
+            <p className="mb-4 text-sm font-medium text-app-text">Platform volume (14 days)</p>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={data?.chartData ?? []} barSize={20}>
-                <XAxis dataKey="label" tick={{ fill: '#64748B', fontSize: 10 }} axisLine={{ stroke: '#1B2B4B' }} tickLine={false} />
-                <YAxis tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${v}`} />
+                <XAxis dataKey="label" tick={{ fill: t.muted, fontSize: 10 }} axisLine={{ stroke: t.border }} tickLine={false} />
+                <YAxis tick={{ fill: t.muted, fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${v}`} />
                 <Tooltip
-                  contentStyle={{ background: '#0F1729', border: '1px solid #1B2B4B', borderRadius: 8, fontSize: 12 }}
-                  labelStyle={{ color: '#E2E8F0' }} itemStyle={{ color: '#E2E8F0' }}
-                  cursor={{ fill: '#1B2B4B' }}
+                  contentStyle={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12 }}
+                  labelStyle={{ color: t.text }} itemStyle={{ color: t.text }}
+                  cursor={{ fill: t.border }}
                   formatter={(v: number) => [`$${v.toLocaleString()}`, 'Volume']}
                 />
                 <Bar dataKey="volume" radius={[4,4,0,0]}>
                   {(data?.chartData ?? []).map((e: any, i: number) => (
-                    <Cell key={i} fill={e.volume > 0 ? '#378ADD' : '#1B2B4B'} />
+                    <Cell key={i} fill={e.volume > 0 ? t.accent : t.border} />
                   ))}
                 </Bar>
               </BarChart>

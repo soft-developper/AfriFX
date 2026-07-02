@@ -6,8 +6,8 @@ export default function ProfileSetupPage() {
     <ClientOnly fallback={
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-full max-w-sm space-y-4">
-          <div className="h-12 animate-pulse rounded-xl bg-[#0F1729]" />
-          <div className="h-64 animate-pulse rounded-xl bg-[#0F1729]" />
+          <div className="h-12 animate-pulse rounded-xl bg-app-surface" />
+          <div className="h-64 animate-pulse rounded-xl bg-app-surface" />
         </div>
       </div>
     }>

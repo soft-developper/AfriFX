@@ -23,7 +23,7 @@ export function MobileNav() {
   return (
     <>
       {/* Bottom tab bar — mobile only */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[#1B2B4B] bg-[#080D1B]">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-app-border bg-app-bg">
         <div className="flex items-center justify-around px-2 py-2">
           {BOTTOM_NAV.map(({ href, icon: Icon, label }) => {
             const active = pathname === href ||
@@ -32,9 +32,9 @@ export function MobileNav() {
               <Link key={href} href={href}
                 className={cn(
                   'flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors',
-                  active ? 'text-[#378ADD]' : 'text-[#64748B]'
+                  active ? 'text-app-accent' : 'text-app-muted'
                 )}>
-                <Icon className={cn('h-5 w-5', active && 'text-[#378ADD]')} />
+                <Icon className={cn('h-5 w-5', active && 'text-app-accent')} />
                 <span className="text-[10px] font-medium">{label}</span>
               </Link>
             )
@@ -42,7 +42,7 @@ export function MobileNav() {
           {/* More button opens full drawer */}
           <button
             onClick={() => setDrawerOpen(true)}
-            className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-[#64748B] transition-colors">
+            className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-app-muted transition-colors">
             <Menu className="h-5 w-5" />
             <span className="text-[10px] font-medium">More</span>
           </button>

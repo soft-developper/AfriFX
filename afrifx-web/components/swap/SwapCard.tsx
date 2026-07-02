@@ -98,13 +98,13 @@ export function SwapCard() {
   const canConvert     = isConnected && rate > 0 && !!fromAmount && parseFloat(fromAmount) > 0 && !swapping
 
   return (
-    <div className="w-full max-w-md rounded-2xl border border-[#1B2B4B] bg-[#0F1729] p-5 shadow-xl">
+    <div className="w-full max-w-md rounded-2xl border border-app-border bg-app-surface p-5 shadow-xl">
 
       {/* Live rate banner */}
       {fxRate && rate > 0 && (
-        <div className="mb-4 flex items-center justify-between rounded-lg bg-[#080D1B] px-3 py-2 text-xs">
-          <span className="text-[#64748B]">Live rate</span>
-          <span className="font-mono font-medium text-[#E2E8F0]">
+        <div className="mb-4 flex items-center justify-between rounded-lg bg-app-bg px-3 py-2 text-xs">
+          <span className="text-app-muted">Live rate</span>
+          <span className="font-mono font-medium text-app-text">
             1 USDC = {fxRate.rate.toLocaleString()} {localCurrency}
           </span>
           <span className={fxRate.change24h >= 0 ? 'text-emerald-400' : 'text-red-400'}>
@@ -125,7 +125,7 @@ export function SwapCard() {
       <div className="my-1 flex justify-center">
         <button
           onClick={flip}
-          className="rounded-full border border-[#1B2B4B] bg-[#0F1729] p-2 text-[#64748B] transition-transform hover:rotate-180 hover:text-[#E2E8F0]"
+          className="rounded-full border border-app-border bg-app-surface p-2 text-app-muted transition-transform hover:rotate-180 hover:text-app-text"
           aria-label="Flip currencies"
         >
           <ArrowUpDown className="h-4 w-4" />

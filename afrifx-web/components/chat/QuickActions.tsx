@@ -18,7 +18,7 @@ export function QuickActions({ onAction, disabled }: Props) {
           key={id}
           onClick={() => onAction(id, label)}
           disabled={disabled}
-          className="flex items-center gap-1.5 rounded-full border border-[#1B2B4B] bg-[#0F1729] px-2.5 py-1 text-xs text-[#64748B] transition-colors hover:border-[#378ADD] hover:text-[#E2E8F0] disabled:opacity-40"
+          className="flex items-center gap-1.5 rounded-full border border-app-border bg-app-surface px-2.5 py-1 text-xs text-app-muted transition-colors hover:border-app-accent hover:text-app-text disabled:opacity-40"
         >
           <span>{emoji}</span>
           <span>{label}</span>

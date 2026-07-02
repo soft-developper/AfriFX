@@ -131,17 +131,17 @@ export default function OfferDetailPage() {
 
   if (loading) return (
     <div className="space-y-4">
-      <div className="h-24 animate-pulse rounded-xl bg-[#0F1729]" />
+      <div className="h-24 animate-pulse rounded-xl bg-app-surface" />
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="h-64 animate-pulse rounded-xl bg-[#0F1729]" />
-        <div className="h-64 animate-pulse rounded-xl bg-[#0F1729]" />
+        <div className="h-64 animate-pulse rounded-xl bg-app-surface" />
+        <div className="h-64 animate-pulse rounded-xl bg-app-surface" />
       </div>
     </div>
   )
 
   if (notFound || !offer) return (
     <div className="flex h-64 flex-col items-center justify-center gap-3">
-      <p className="text-sm text-[#64748B]">Offer not found.</p>
+      <p className="text-sm text-app-muted">Offer not found.</p>
       <Link href="/marketplace"><Button variant="outline" size="sm">← Back</Button></Link>
     </div>
   )
@@ -159,8 +159,8 @@ export default function OfferDetailPage() {
   if (offerStatus === 'accepted' && !isInvolved && address) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-3">
-        <p className="text-sm font-medium text-[#E2E8F0]">This trade is in progress.</p>
-        <p className="text-xs text-[#64748B]">Only the two parties involved can view an active trade.</p>
+        <p className="text-sm font-medium text-app-text">This trade is in progress.</p>
+        <p className="text-xs text-app-muted">Only the two parties involved can view an active trade.</p>
         <Link href="/marketplace">
           <Button variant="outline" size="sm">← Back to marketplace</Button>
         </Link>
@@ -227,13 +227,13 @@ export default function OfferDetailPage() {
       {/* Header */}
       <div className="mb-4 flex items-center gap-3">
         <Link href={isInvolved ? '/my-trades' : '/marketplace'}>
-          <button className="rounded-lg border border-[#1B2B4B] p-2 text-[#64748B] hover:text-[#E2E8F0]">
+          <button className="rounded-lg border border-app-border p-2 text-app-muted hover:text-app-text">
             <ArrowLeft className="h-4 w-4" />
           </button>
         </Link>
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-semibold text-[#E2E8F0]">Offer detail</h1>
+            <h1 className="text-xl font-semibold text-app-text">Offer detail</h1>
             <Badge variant={statusBadge}>{offer.status}</Badge>
             <Badge variant={offer.order_type === 'limit' ? 'warning' : 'arc'}>
               {offer.order_type ?? 'market'}
@@ -241,16 +241,16 @@ export default function OfferDetailPage() {
             {!!offer.dispute_raised && <Badge variant="danger">Disputed</Badge>}
             {isTaker && <Badge variant="success">You are the buyer</Badge>}
           </div>
-          <p className="font-mono text-xs text-[#64748B]">{offer.id.slice(0,26)}…</p>
+          <p className="font-mono text-xs text-app-muted">{offer.id.slice(0,26)}…</p>
         </div>
         <button onClick={load}
-          className="flex items-center gap-1.5 rounded-lg border border-[#1B2B4B] px-3 py-1.5 text-xs text-[#64748B] hover:text-[#E2E8F0]">
+          className="flex items-center gap-1.5 rounded-lg border border-app-border px-3 py-1.5 text-xs text-app-muted hover:text-app-text">
           <RefreshCw className="h-3 w-3" /> Refresh
         </button>
       </div>
 
       {isSyncing && (
-        <div className="mb-4 flex items-center gap-2 rounded-xl border border-[#378ADD]/30 bg-[#378ADD]/10 px-4 py-3 text-sm text-[#378ADD]">
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-app-accent/30 bg-app-accent/10 px-4 py-3 text-sm text-app-accent">
           <Loader2 className="h-4 w-4 animate-spin shrink-0" />
           Trade accepted! Setting up your trade interface…
         </div>
@@ -282,19 +282,19 @@ export default function OfferDetailPage() {
       <div className={`grid gap-4 ${showChat ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
 
         {/* Summary */}
-        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
-          <p className="mb-4 text-sm font-medium text-[#E2E8F0]">Summary</p>
-          <div className="mb-4 flex items-center justify-center gap-6 rounded-lg bg-[#080D1B] p-4">
+        <div className="rounded-xl border border-app-border bg-app-surface p-5">
+          <p className="mb-4 text-sm font-medium text-app-text">Summary</p>
+          <div className="mb-4 flex items-center justify-center gap-6 rounded-lg bg-app-bg p-4">
             <div className="text-center">
               <p className="text-2xl">💵</p>
-              <p className="mt-1 font-mono text-xl font-semibold text-[#E2E8F0]">{Number(offer.usdc_amount).toFixed(2)}</p>
-              <p className="text-xs text-[#64748B]">USDC (escrow)</p>
+              <p className="mt-1 font-mono text-xl font-semibold text-app-text">{Number(offer.usdc_amount).toFixed(2)}</p>
+              <p className="text-xs text-app-muted">USDC (escrow)</p>
             </div>
-            <ArrowRight className="h-5 w-5 text-[#64748B]" />
+            <ArrowRight className="h-5 w-5 text-app-muted" />
             <div className="text-center">
               <p className="text-2xl">{CURRENCY_FLAG[offer.local_currency] ?? '🌍'}</p>
-              <p className="mt-1 font-mono text-xl font-semibold text-[#E2E8F0]">{localAmountFormatted}</p>
-              <p className="text-xs text-[#64748B]">{offer.local_currency} (to maker)</p>
+              <p className="mt-1 font-mono text-xl font-semibold text-app-text">{localAmountFormatted}</p>
+              <p className="text-xs text-app-muted">{offer.local_currency} (to maker)</p>
             </div>
           </div>
 
@@ -306,8 +306,8 @@ export default function OfferDetailPage() {
           />
 
           <div className="mt-2 flex justify-between text-xs">
-            <span className="text-[#64748B]">Rate</span>
-            <span className="font-mono text-[#E2E8F0]">
+            <span className="text-app-muted">Rate</span>
+            <span className="font-mono text-app-text">
               1 USDC = {Number(offer.rate_offered) > 0
                 ? (1 / Number(offer.rate_offered)).toFixed(2) : '—'} {offer.local_currency}
             </span>
@@ -315,17 +315,17 @@ export default function OfferDetailPage() {
 
           {offer.arc_tx_hash && (
             <div className="mt-2 flex justify-between text-xs">
-              <span className="text-[#64748B]">Create tx</span>
+              <span className="text-app-muted">Create tx</span>
               <a href={`https://testnet.arcscan.app/tx/${offer.arc_tx_hash}`}
                 target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1 font-mono text-[#378ADD] hover:underline">
+                className="flex items-center gap-1 font-mono text-app-accent hover:underline">
                 {offer.arc_tx_hash.slice(0,14)}… <ExternalLink className="h-3 w-3" />
               </a>
             </div>
           )}
           {offer.release_tx_hash && (
             <div className="mt-2 flex justify-between text-xs">
-              <span className="text-[#64748B]">Release tx</span>
+              <span className="text-app-muted">Release tx</span>
               <a href={`https://testnet.arcscan.app/tx/${offer.release_tx_hash}`}
                 target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-1 font-mono text-emerald-400 hover:underline">
@@ -344,18 +344,18 @@ export default function OfferDetailPage() {
         </div>
 
         {/* Progress + actions */}
-        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
-          <p className="mb-4 text-sm font-medium text-[#E2E8F0]">Progress</p>
+        <div className="rounded-xl border border-app-border bg-app-surface p-5">
+          <p className="mb-4 text-sm font-medium text-app-text">Progress</p>
           <div className="mb-4 space-y-3">
             {steps.map(({ n, label, done, desc }) => (
               <div key={n} className="flex items-start gap-3">
                 <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold
-                  ${done ? 'bg-emerald-500 text-white' : 'bg-[#1B2B4B] text-[#64748B]'}`}>
+                  ${done ? 'bg-emerald-500 text-white' : 'bg-app-border text-app-muted'}`}>
                   {done ? '✓' : n}
                 </div>
                 <div>
-                  <p className={`text-sm font-medium ${done ? 'text-emerald-400' : 'text-[#E2E8F0]'}`}>{label}</p>
-                  <p className="text-xs text-[#64748B]">{desc}</p>
+                  <p className={`text-sm font-medium ${done ? 'text-emerald-400' : 'text-app-text'}`}>{label}</p>
+                  <p className="text-xs text-app-muted">{desc}</p>
                 </div>
               </div>
             ))}
@@ -396,13 +396,13 @@ export default function OfferDetailPage() {
               )}
 
               {offerStatus === 'open' && isMaker && (
-                <div className="rounded-lg bg-[#080D1B] p-3 text-center text-xs text-[#64748B]">
+                <div className="rounded-lg bg-app-bg p-3 text-center text-xs text-app-muted">
                   Waiting for a buyer to accept your offer…
                 </div>
               )}
 
               {isSyncing && (
-                <div className="flex items-center gap-2 rounded-lg border border-[#378ADD]/30 bg-[#378ADD]/10 px-3 py-3 text-xs text-[#378ADD]">
+                <div className="flex items-center gap-2 rounded-lg border border-app-accent/30 bg-app-accent/10 px-3 py-3 text-xs text-app-accent">
                   <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                   <div>
                     <p className="font-medium">Offer accepted on Arc!</p>
@@ -414,10 +414,10 @@ export default function OfferDetailPage() {
               {offerStatus === 'accepted' && !isSyncing && (
                 <>
                   {isTaker && !offer.taker_confirmed && (
-                    <div className="rounded-lg border border-[#378ADD]/30 bg-[#378ADD]/10 p-3 text-xs">
-                      <p className="font-medium text-[#E2E8F0]">Your turn — send {offer.local_currency} to {makerName}</p>
-                      <p className="mt-1 text-[#64748B]">
-                        Send <strong className="text-[#E2E8F0]">
+                    <div className="rounded-lg border border-app-accent/30 bg-app-accent/10 p-3 text-xs">
+                      <p className="font-medium text-app-text">Your turn — send {offer.local_currency} to {makerName}</p>
+                      <p className="mt-1 text-app-muted">
+                        Send <strong className="text-app-text">
                           {localAmountFormatted} {offer.local_currency}
                         </strong> via bank or mobile money, then confirm below.
                       </p>
@@ -425,17 +425,17 @@ export default function OfferDetailPage() {
                   )}
 
                   {isMaker && !offer.taker_confirmed && (
-                    <div className="flex items-center gap-2 rounded-lg bg-[#080D1B] p-3 text-xs text-[#64748B]">
+                    <div className="flex items-center gap-2 rounded-lg bg-app-bg p-3 text-xs text-app-muted">
                       <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                       Waiting for {takerName} to send and confirm {localAmountFormatted} {offer.local_currency}…
                     </div>
                   )}
 
                   {isMaker && !!offer.taker_confirmed && !offer.maker_confirmed && !offer.dispute_raised && (
-                    <div className="rounded-lg border border-[#378ADD]/30 bg-[#378ADD]/10 p-3 text-xs">
-                      <p className="font-medium text-[#E2E8F0]">Check your account</p>
-                      <p className="mt-1 text-[#64748B]">
-                        {takerName} says they sent <strong className="text-[#E2E8F0]">
+                    <div className="rounded-lg border border-app-accent/30 bg-app-accent/10 p-3 text-xs">
+                      <p className="font-medium text-app-text">Check your account</p>
+                      <p className="mt-1 text-app-muted">
+                        {takerName} says they sent <strong className="text-app-text">
                           {localAmountFormatted} {offer.local_currency}
                         </strong>. Confirm receipt to release USDC.
                       </p>
@@ -473,7 +473,7 @@ export default function OfferDetailPage() {
                   )}
 
                   {isTaker && !!offer.taker_confirmed && !offer.maker_confirmed && !offer.dispute_raised && (
-                    <div className="flex items-center gap-2 rounded-lg bg-[#080D1B] px-3 py-2 text-xs text-[#64748B]">
+                    <div className="flex items-center gap-2 rounded-lg bg-app-bg px-3 py-2 text-xs text-app-muted">
                       <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
                       Waiting for {makerName} to confirm receipt…
                     </div>
@@ -544,7 +544,7 @@ export default function OfferDetailPage() {
           {!!txHash && (
             <a href={`https://testnet.arcscan.app/tx/${txHash}`}
               target="_blank" rel="noopener noreferrer"
-              className="mt-3 flex items-center gap-1.5 text-xs text-[#378ADD] hover:underline">
+              className="mt-3 flex items-center gap-1.5 text-xs text-app-accent hover:underline">
               <ExternalLink className="h-3 w-3" /> View on ArcScan
             </a>
           )}

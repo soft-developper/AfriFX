@@ -25,16 +25,16 @@ export function UserDisplay({
   const { data: profile, isLoading } = useProfileByAddress(address)
 
   if (!address) {
-    return <span className="text-xs text-[#64748B]">{fallback ?? '—'}</span>
+    return <span className="text-xs text-app-muted">{fallback ?? '—'}</span>
   }
 
   if (isLoading) {
     return (
       <span className="inline-flex items-center gap-1.5">
         {showAvatar && (
-          <span className={`${size === 'xs' ? 'h-5 w-5' : 'h-6 w-6'} animate-pulse rounded-full bg-[#1B2B4B]`} />
+          <span className={`${size === 'xs' ? 'h-5 w-5' : 'h-6 w-6'} animate-pulse rounded-full bg-app-border`} />
         )}
-        <span className="h-3 w-20 animate-pulse rounded bg-[#1B2B4B]" />
+        <span className="h-3 w-20 animate-pulse rounded bg-app-border" />
       </span>
     )
   }
@@ -59,9 +59,9 @@ export function UserDisplay({
       <span className={`font-medium ${
         size === 'xs' ? 'text-[11px]' :
         size === 'sm' ? 'text-xs'     : 'text-sm'
-      } text-[#E2E8F0]`}>
+      } text-app-text`}>
         {label}
-        {suffix && <span className="ml-1 text-[#378ADD] text-[10px]">{suffix}</span>}
+        {suffix && <span className="ml-1 text-app-accent text-[10px]">{suffix}</span>}
       </span>
     </span>
   )

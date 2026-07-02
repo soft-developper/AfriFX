@@ -47,20 +47,20 @@ export default function SendPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-[#E2E8F0]">Send</h1>
-        <p className="text-sm text-[#64748B]">Send USDC to any Arc address instantly.</p>
+        <h1 className="text-xl font-semibold text-app-text">Send</h1>
+        <p className="text-sm text-app-muted">Send USDC to any Arc address instantly.</p>
       </div>
 
-      <div className="w-full max-w-md rounded-2xl border border-[#1B2B4B] bg-[#0F1729] p-5">
+      <div className="w-full max-w-md rounded-2xl border border-app-border bg-app-surface p-5">
         {/* Balance */}
         <div className="mb-4 flex items-center justify-between text-xs">
-          <span className="text-[#64748B]">Available balance</span>
-          <span className="font-mono text-[#E2E8F0]">{balance} USDC</span>
+          <span className="text-app-muted">Available balance</span>
+          <span className="font-mono text-app-text">{balance} USDC</span>
         </div>
 
         {/* Recipient */}
         <div className="mb-3 space-y-2">
-          <label className="text-xs font-medium uppercase tracking-wider text-[#64748B]">
+          <label className="text-xs font-medium uppercase tracking-wider text-app-muted">
             Recipient (Arc address)
           </label>
           <Input
@@ -77,11 +77,11 @@ export default function SendPage() {
         {/* Amount */}
         <div className="mb-4 space-y-2">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-medium uppercase tracking-wider text-[#64748B]">
+            <label className="text-xs font-medium uppercase tracking-wider text-app-muted">
               Amount (USDC)
             </label>
             <button onClick={setMax}
-              className="text-xs text-[#378ADD] hover:underline">
+              className="text-xs text-app-accent hover:underline">
               Max
             </button>
           </div>
@@ -110,14 +110,14 @@ export default function SendPage() {
         </div>
 
         {/* Fee info */}
-        <div className="mb-4 space-y-1.5 border-t border-[#1B2B4B] pt-3">
+        <div className="mb-4 space-y-1.5 border-t border-app-border pt-3">
           <div className="flex justify-between text-xs">
-            <span className="text-[#64748B]">Network fee</span>
+            <span className="text-app-muted">Network fee</span>
             <Badge variant="arc"><Zap className="h-2.5 w-2.5" /> ~$0.001</Badge>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-[#64748B]">Chain</span>
-            <span className="text-[#E2E8F0]">Arc Testnet · ID 5042002</span>
+            <span className="text-app-muted">Chain</span>
+            <span className="text-app-text">Arc Testnet · ID 5042002</span>
           </div>
         </div>
 

@@ -32,7 +32,7 @@ export function ProfileAvatar({
         <span className={s.font}>{initials}</span>
       </div>
       {verified && (
-        <div className={`absolute -bottom-0.5 -right-0.5 ${s.badge} rounded-full bg-[#378ADD] ring-1 ring-[#080D1B] flex items-center justify-center`}>
+        <div className={`absolute -bottom-0.5 -right-0.5 ${s.badge} rounded-full bg-app-accent ring-1 ring-app-bg flex items-center justify-center`}>
           <svg viewBox="0 0 10 10" className="h-full w-full p-0.5">
             <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>

@@ -146,13 +146,13 @@ export function PayrollCreateContent() {
     <div>
       <div className="mb-6 flex items-center gap-3">
         <Link href="/treasury">
-          <button className="rounded-lg border border-[#1B2B4B] p-2 text-[#64748B] hover:text-[#E2E8F0]">
+          <button className="rounded-lg border border-app-border p-2 text-app-muted hover:text-app-text">
             <ArrowLeft className="h-4 w-4" />
           </button>
         </Link>
         <div>
-          <h1 className="text-xl font-semibold text-[#E2E8F0]">New payroll batch</h1>
-          <p className="text-sm text-[#64748B]">
+          <h1 className="text-xl font-semibold text-app-text">New payroll batch</h1>
+          <p className="text-sm text-app-muted">
             Send USDC to multiple wallets · each payment gets a unique Memo reference
           </p>
         </div>
@@ -162,16 +162,16 @@ export function PayrollCreateContent() {
         <div className="lg:col-span-2 space-y-4">
 
           {/* Batch details */}
-          <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
-            <p className="mb-3 text-sm font-medium text-[#E2E8F0]">Batch details</p>
+          <div className="rounded-xl border border-app-border bg-app-surface p-5">
+            <p className="mb-3 text-sm font-medium text-app-text">Batch details</p>
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-xs text-[#64748B]">Batch name *</label>
+                <label className="mb-1 block text-xs text-app-muted">Batch name *</label>
                 <Input placeholder="e.g. June 2026 Payroll" value={batchName}
                   onChange={e => setBatchName(e.target.value)} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-[#64748B]">Description (optional)</label>
+                <label className="mb-1 block text-xs text-app-muted">Description (optional)</label>
                 <Input placeholder="e.g. Monthly contractor payments"
                   value={description} onChange={e => setDescription(e.target.value)} />
               </div>
@@ -179,18 +179,18 @@ export function PayrollCreateContent() {
           </div>
 
           {/* Recipients — tabs */}
-          <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
+          <div className="rounded-xl border border-app-border bg-app-surface p-5">
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-medium text-[#E2E8F0]">Recipients</p>
-              <div className="flex rounded-lg border border-[#1B2B4B] bg-[#080D1B] p-0.5">
+              <p className="text-sm font-medium text-app-text">Recipients</p>
+              <div className="flex rounded-lg border border-app-border bg-app-bg p-0.5">
                 <button onClick={() => setActiveTab('manual')}
                   className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs transition-colors
-                    ${activeTab === 'manual' ? 'bg-[#1B2B4B] text-[#E2E8F0]' : 'text-[#64748B]'}`}>
+                    ${activeTab === 'manual' ? 'bg-app-border text-app-text' : 'text-app-muted'}`}>
                   <Users className="h-3 w-3" /> Manual
                 </button>
                 <button onClick={() => setActiveTab('csv')}
                   className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs transition-colors
-                    ${activeTab === 'csv' ? 'bg-[#1B2B4B] text-[#E2E8F0]' : 'text-[#64748B]'}`}>
+                    ${activeTab === 'csv' ? 'bg-app-border text-app-text' : 'text-app-muted'}`}>
                   <FileText className="h-3 w-3" /> CSV upload
                 </button>
               </div>
@@ -200,12 +200,12 @@ export function PayrollCreateContent() {
             {activeTab === 'csv' && (
               <div className="space-y-3">
                 {/* Format guide */}
-                <div className="rounded-lg bg-[#080D1B] p-3 text-xs">
-                  <p className="mb-1 font-medium text-[#E2E8F0]">Expected CSV format:</p>
-                  <pre className="text-[#64748B]">{`name,wallet_address,amount
+                <div className="rounded-lg bg-app-bg p-3 text-xs">
+                  <p className="mb-1 font-medium text-app-text">Expected CSV format:</p>
+                  <pre className="text-app-muted">{`name,wallet_address,amount
 John Doe,0x1234...abcd,100
 Jane Smith,0xabcd...1234,50`}</pre>
-                  <p className="mt-1 text-[#64748B]">
+                  <p className="mt-1 text-app-muted">
                     • <code>name</code> is optional · <code>wallet_address</code> and <code>amount</code> required
                   </p>
                 </div>
@@ -214,11 +214,11 @@ Jane Smith,0xabcd...1234,50`}</pre>
                   onChange={handleCSV} className="hidden" />
 
                 <button onClick={() => fileInputRef.current?.click()}
-                  className="flex w-full flex-col items-center gap-3 rounded-xl border-2 border-dashed border-[#1B2B4B] bg-[#080D1B] p-8 hover:border-[#378ADD]/50 transition-colors">
-                  <Upload className="h-8 w-8 text-[#64748B]" />
+                  className="flex w-full flex-col items-center gap-3 rounded-xl border-2 border-dashed border-app-border bg-app-bg p-8 hover:border-app-accent/50 transition-colors">
+                  <Upload className="h-8 w-8 text-app-muted" />
                   <div className="text-center">
-                    <p className="text-sm font-medium text-[#E2E8F0]">Click to upload CSV</p>
-                    <p className="text-xs text-[#64748B]">Supports .csv and .txt files</p>
+                    <p className="text-sm font-medium text-app-text">Click to upload CSV</p>
+                    <p className="text-xs text-app-muted">Supports .csv and .txt files</p>
                   </div>
                 </button>
 
@@ -239,7 +239,7 @@ Jane Smith,0xabcd...1234,50`}</pre>
             {activeTab === 'manual' && (
               <div className="space-y-2">
                 {/* Column headers */}
-                <div className="hidden sm:grid grid-cols-12 gap-2 px-1 text-[10px] uppercase tracking-wider text-[#64748B]">
+                <div className="hidden sm:grid grid-cols-12 gap-2 px-1 text-[10px] uppercase tracking-wider text-app-muted">
                   <div className="col-span-3">Name</div>
                   <div className="col-span-5">Wallet address</div>
                   <div className="col-span-3">Amount (USDC)</div>
@@ -270,7 +270,7 @@ Jane Smith,0xabcd...1234,50`}</pre>
                     <div className="col-span-1 flex justify-center pt-2">
                       {recipients.length > 1 && (
                         <button onClick={() => removeRecipient(i)}
-                          className="text-[#64748B] hover:text-red-400 transition-colors">
+                          className="text-app-muted hover:text-red-400 transition-colors">
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       )}
@@ -288,8 +288,8 @@ Jane Smith,0xabcd...1234,50`}</pre>
 
         {/* Summary + action */}
         <div className="space-y-4">
-          <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
-            <p className="mb-4 text-sm font-medium text-[#E2E8F0]">Batch summary</p>
+          <div className="rounded-xl border border-app-border bg-app-surface p-5">
+            <p className="mb-4 text-sm font-medium text-app-text">Batch summary</p>
             <div className="space-y-2.5 text-xs">
               {[
                 ['Recipients',      `${validCount} valid`],
@@ -297,13 +297,13 @@ Jane Smith,0xabcd...1234,50`}</pre>
                 ['Your balance',    `${balance} USDC`],
               ].map(([label, val]) => (
                 <div key={label} className="flex justify-between">
-                  <span className="text-[#64748B]">{label}</span>
-                  <span className="font-mono text-[#E2E8F0]">{val}</span>
+                  <span className="text-app-muted">{label}</span>
+                  <span className="font-mono text-app-text">{val}</span>
                 </div>
               ))}
-              <div className="border-t border-[#1B2B4B] pt-2 flex justify-between">
-                <span className="text-[#64748B]">Each payment</span>
-                <span className="text-[#64748B]">Gets unique Memo ref</span>
+              <div className="border-t border-app-border pt-2 flex justify-between">
+                <span className="text-app-muted">Each payment</span>
+                <span className="text-app-muted">Gets unique Memo ref</span>
               </div>
             </div>
 
@@ -319,8 +319,8 @@ Jane Smith,0xabcd...1234,50`}</pre>
           </div>
 
           {/* How it works */}
-          <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4 text-xs text-[#64748B]">
-            <p className="mb-2 font-medium text-[#E2E8F0]">How payroll works</p>
+          <div className="rounded-xl border border-app-border bg-app-surface p-4 text-xs text-app-muted">
+            <p className="mb-2 font-medium text-app-text">How payroll works</p>
             <ol className="space-y-1.5">
               {[
                 'Create batch with recipient list',
@@ -330,7 +330,7 @@ Jane Smith,0xabcd...1234,50`}</pre>
                 'Track status live as payments confirm on Arc',
               ].map((s, i) => (
                 <li key={i} className="flex gap-2">
-                  <span className="shrink-0 text-[#378ADD]">{i+1}.</span>
+                  <span className="shrink-0 text-app-accent">{i+1}.</span>
                   <span>{s}</span>
                 </li>
               ))}

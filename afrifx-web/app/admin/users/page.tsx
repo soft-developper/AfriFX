@@ -44,11 +44,11 @@ export default function AdminUsers() {
 
   return (
     <AdminShell>
-      <h1 className="mb-6 text-xl font-semibold text-[#E2E8F0]">User management</h1>
+      <h1 className="mb-6 text-xl font-semibold text-app-text">User management</h1>
 
       <div className="mb-4 flex gap-2">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" />
           <Input placeholder="Search by username, wallet or name…" value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && load(search)}
@@ -58,27 +58,27 @@ export default function AdminUsers() {
       </div>
 
       {loading ? (
-        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-[#378ADD]" /></div>
+        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-app-accent" /></div>
       ) : (
         <div className="space-y-2">
           {users.map(u => (
-            <div key={u.wallet_address} className="flex items-center gap-4 rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
+            <div key={u.wallet_address} className="flex items-center gap-4 rounded-xl border border-app-border bg-app-surface p-4">
               <div className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white"
-                style={{ background: u.avatar_color ?? '#378ADD' }}>
+                style={{ background: u.avatar_color ?? '#D9A441' }}>
                 {(u.display_name ?? u.username ?? '?')[0].toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-[#E2E8F0]">{u.display_name ?? u.username}</p>
-                  <span className="text-xs text-[#378ADD]">@{u.username}</span>
+                  <p className="text-sm font-medium text-app-text">{u.display_name ?? u.username}</p>
+                  <span className="text-xs text-app-accent">@{u.username}</span>
                   {u.verified ? <Badge variant="arc">Verified</Badge> : null}
                   {u.suspended ? <Badge variant="danger">Suspended</Badge> : null}
                 </div>
-                <p className="font-mono text-[10px] text-[#64748B]">{u.wallet_address}</p>
+                <p className="font-mono text-[10px] text-app-muted">{u.wallet_address}</p>
               </div>
               <div className="text-right text-xs">
-                <p className="font-mono text-[#E2E8F0]">{u.trades} trades</p>
-                <p className="text-[#64748B]">{new Date(Number(u.created_at) * 1000).toLocaleDateString()}</p>
+                <p className="font-mono text-app-text">{u.trades} trades</p>
+                <p className="text-app-muted">{new Date(Number(u.created_at) * 1000).toLocaleDateString()}</p>
               </div>
               {u.suspended ? (
                 <Button size="sm" variant="outline" onClick={() => unsuspend(u.wallet_address)} disabled={busy === u.wallet_address}>
@@ -91,7 +91,7 @@ export default function AdminUsers() {
               )}
             </div>
           ))}
-          {users.length === 0 && <p className="py-8 text-center text-sm text-[#64748B]">No users found</p>}
+          {users.length === 0 && <p className="py-8 text-center text-sm text-app-muted">No users found</p>}
         </div>
       )}
     </AdminShell>

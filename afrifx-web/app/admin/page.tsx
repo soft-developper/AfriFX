@@ -110,54 +110,54 @@ export default function AdminLoginPage() {
 
   if (mode === 'checking') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#080D1B]">
-        <Loader2 className="h-6 w-6 animate-spin text-[#378ADD]" />
+      <div className="flex min-h-screen items-center justify-center bg-app-bg">
+        <Loader2 className="h-6 w-6 animate-spin text-app-accent" />
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#080D1B] p-4">
+    <div className="flex min-h-screen items-center justify-center bg-app-bg p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#378ADD]/10">
-            <Shield className="h-7 w-7 text-[#378ADD]" />
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-app-accent/10">
+            <Shield className="h-7 w-7 text-app-accent" />
           </div>
-          <h1 className="text-2xl font-bold text-[#E2E8F0]">AfriFX Admin</h1>
-          <p className="text-sm text-[#64748B]">
+          <h1 className="text-2xl font-bold text-app-text">AfriFX Admin</h1>
+          <p className="text-sm text-app-muted">
             {mode === 'setup' ? 'Create the super admin account' : 'Sign in to continue'}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-[#1B2B4B] bg-[#0F1729] p-6">
+        <div className="rounded-2xl border border-app-border bg-app-surface p-6">
           {mode === 'setup' && (
             <div className="space-y-3">
               <div className="text-center mb-2">
-                <p className="text-sm font-medium text-[#E2E8F0]">First-time setup</p>
-                <p className="text-xs text-[#64748B]">No admin account exists yet — create the super admin</p>
+                <p className="text-sm font-medium text-app-text">First-time setup</p>
+                <p className="text-xs text-app-muted">No admin account exists yet — create the super admin</p>
               </div>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+                <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" />
                 <Input className="pl-9" placeholder="Username" autoComplete="off"
                   value={setupUsername} onChange={e => setSetupUsername(e.target.value)} />
               </div>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" />
                 <Input className="pl-9" type="email" placeholder="Email" autoComplete="off"
                   value={setupEmail} onChange={e => setSetupEmail(e.target.value)} />
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" />
                 <Input className="pl-9" type="password" placeholder="Password" autoComplete="new-password"
                   value={setupPassword} onChange={e => setSetupPassword(e.target.value)} />
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" />
                 <Input className="pl-9" type="password" placeholder="Confirm password" autoComplete="new-password"
                   value={setupConfirm} onChange={e => setSetupConfirm(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleSetup()} />
               </div>
-              <p className="text-[11px] text-[#64748B] leading-relaxed">
+              <p className="text-[11px] text-app-muted leading-relaxed">
                 Min 12 characters, with uppercase, lowercase, a number, and a special character.
               </p>
               <Button className="w-full" onClick={handleSetup} disabled={busy}>
@@ -172,17 +172,17 @@ export default function AdminLoginPage() {
               {!needs2FA ? (
                 <>
                   <div className="text-center mb-2">
-                    <Lock className="mx-auto mb-2 h-8 w-8 text-[#378ADD]" />
-                    <p className="text-sm font-medium text-[#E2E8F0]">Enter credentials</p>
+                    <Lock className="mx-auto mb-2 h-8 w-8 text-app-accent" />
+                    <p className="text-sm font-medium text-app-text">Enter credentials</p>
                   </div>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" />
                     <Input className="pl-9" type="email" placeholder="Email" autoComplete="off"
                       value={email} onChange={e => setEmail(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleLogin()} />
                   </div>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" />
                     <Input className="pl-9" type="password" placeholder="Password" autoComplete="current-password"
                       value={password} onChange={e => setPassword(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleLogin()} />
@@ -192,16 +192,16 @@ export default function AdminLoginPage() {
                           : <><Lock className="h-4 w-4" /> Sign in</>}
                   </Button>
                   <button onClick={() => { setShowForgot(true); setError(null) }}
-                    className="w-full text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors">
+                    className="w-full text-xs text-app-muted hover:text-app-text transition-colors">
                     Forgot password?
                   </button>
                 </>
               ) : (
                 <>
                   <div className="text-center mb-2">
-                    <KeyRound className="mx-auto mb-2 h-8 w-8 text-[#378ADD]" />
-                    <p className="text-sm font-medium text-[#E2E8F0]">Two-factor authentication</p>
-                    <p className="text-xs text-[#64748B]">Enter the 6-digit code from your authenticator app</p>
+                    <KeyRound className="mx-auto mb-2 h-8 w-8 text-app-accent" />
+                    <p className="text-sm font-medium text-app-text">Two-factor authentication</p>
+                    <p className="text-xs text-app-muted">Enter the 6-digit code from your authenticator app</p>
                   </div>
                   <Input className="text-center tracking-[0.4em] text-lg" placeholder="000000"
                     maxLength={6} inputMode="numeric" autoFocus
@@ -211,7 +211,7 @@ export default function AdminLoginPage() {
                     {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> Verifying…</> : <>Verify & sign in</>}
                   </Button>
                   <button onClick={() => { setNeeds2FA(false); setTotpCode(''); setError(null) }}
-                    className="flex w-full items-center justify-center gap-1 text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors">
+                    className="flex w-full items-center justify-center gap-1 text-xs text-app-muted hover:text-app-text transition-colors">
                     <ArrowLeft className="h-3 w-3" /> Back
                   </button>
                 </>
@@ -224,9 +224,9 @@ export default function AdminLoginPage() {
               {!forgotSent ? (
                 <>
                   <div className="text-center mb-2">
-                    <Mail className="mx-auto mb-2 h-8 w-8 text-[#378ADD]" />
-                    <p className="text-sm font-medium text-[#E2E8F0]">Reset your password</p>
-                    <p className="text-xs text-[#64748B]">We'll email you a reset link</p>
+                    <Mail className="mx-auto mb-2 h-8 w-8 text-app-accent" />
+                    <p className="text-sm font-medium text-app-text">Reset your password</p>
+                    <p className="text-xs text-app-muted">We'll email you a reset link</p>
                   </div>
                   <Input type="email" placeholder="Your admin email" autoComplete="off"
                     value={forgotEmail} onChange={e => setForgotEmail(e.target.value)}
@@ -241,7 +241,7 @@ export default function AdminLoginPage() {
                 </div>
               )}
               <button onClick={() => { setShowForgot(false); setForgotSent(false); setError(null) }}
-                className="flex w-full items-center justify-center gap-1 text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors">
+                className="flex w-full items-center justify-center gap-1 text-xs text-app-muted hover:text-app-text transition-colors">
                 <ArrowLeft className="h-3 w-3" /> Back to sign in
               </button>
             </div>
@@ -253,7 +253,7 @@ export default function AdminLoginPage() {
             </div>
           )}
         </div>
-        <p className="mt-4 text-center text-xs text-[#64748B]">🔒 Restricted area — all actions are logged</p>
+        <p className="mt-4 text-center text-xs text-app-muted">🔒 Restricted area — all actions are logged</p>
       </div>
     </div>
   )

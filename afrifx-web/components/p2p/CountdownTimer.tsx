@@ -18,7 +18,7 @@ export function CountdownTimer({ deadline, totalSeconds, label }: CountdownTimer
         ? 'border border-red-900/50 bg-red-900/20 text-red-400'
         : isWarning
         ? 'border border-amber-900/50 bg-amber-900/20 text-amber-400'
-        : 'border border-[#1B2B4B] bg-[#080D1B] text-[#64748B]'
+        : 'border border-app-border bg-app-bg text-app-muted'
       }`}>
       {isExpired || isDanger
         ? <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
@@ -26,7 +26,7 @@ export function CountdownTimer({ deadline, totalSeconds, label }: CountdownTimer
       }
       <span>{label}</span>
       <span className={`ml-auto font-mono font-medium
-        ${isExpired || isDanger ? 'text-red-300' : isWarning ? 'text-amber-300' : 'text-[#E2E8F0]'}`}>
+        ${isExpired || isDanger ? 'text-red-300' : isWarning ? 'text-amber-300' : 'text-app-text'}`}>
         {formatted}
       </span>
     </div>

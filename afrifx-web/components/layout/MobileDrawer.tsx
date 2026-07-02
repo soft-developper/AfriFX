@@ -69,11 +69,11 @@ export function MobileDrawer({ open, onClose }: Props) {
         onClick={onClose}
       />
       {/* Drawer panel */}
-      <div className="md:hidden fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-[#0F1729] shadow-2xl">
+      <div className="md:hidden fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-app-surface shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#1B2B4B] px-4 py-4">
-          <span className="font-semibold text-[#E2E8F0]">AfriFX</span>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-[#64748B] hover:text-[#E2E8F0]">
+        <div className="flex items-center justify-between border-b border-app-border px-4 py-4">
+          <span className="font-semibold text-app-text">AfriFX</span>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-app-muted hover:text-app-text">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -82,7 +82,7 @@ export function MobileDrawer({ open, onClose }: Props) {
         <div className="py-3">
           {nav.map((section) => (
             <div key={section.label} className="mb-2">
-              <p className="mb-1 px-4 text-[10px] font-semibold uppercase tracking-widest text-[#64748B]">
+              <p className="mb-1 px-4 text-[10px] font-semibold uppercase tracking-widest text-app-muted">
                 {section.label}
               </p>
               {section.items.map(({ href, icon: Icon, label }) => {
@@ -93,8 +93,8 @@ export function MobileDrawer({ open, onClose }: Props) {
                     className={cn(
                       'flex items-center gap-3 px-4 py-3 text-sm transition-colors',
                       active
-                        ? 'bg-[#1B2B4B] font-medium text-[#E2E8F0]'
-                        : 'text-[#64748B] hover:bg-[#080D1B] hover:text-[#E2E8F0]'
+                        ? 'bg-app-border font-medium text-app-text'
+                        : 'text-app-muted hover:bg-app-bg hover:text-app-text'
                     )}>
                     <Icon className="h-4 w-4 shrink-0" />
                     {label}
@@ -106,7 +106,7 @@ export function MobileDrawer({ open, onClose }: Props) {
 
           {isAdmin && (
             <div className="mb-2">
-              <p className="mb-1 px-4 text-[10px] font-semibold uppercase tracking-widest text-[#64748B]">
+              <p className="mb-1 px-4 text-[10px] font-semibold uppercase tracking-widest text-app-muted">
                 Admin
               </p>
               <Link href="/admin"

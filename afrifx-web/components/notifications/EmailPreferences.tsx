@@ -69,18 +69,18 @@ export function EmailPreferences() {
   const validEmail = !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 
   return (
-    <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5 space-y-4">
+    <div className="rounded-xl border border-app-border bg-app-surface p-5 space-y-4">
       <div className="flex items-center gap-2">
-        <Mail className="h-4 w-4 text-[#378ADD]" />
-        <h2 className="text-sm font-medium text-[#E2E8F0]">Email notifications</h2>
+        <Mail className="h-4 w-4 text-app-accent" />
+        <h2 className="text-sm font-medium text-app-text">Email notifications</h2>
       </div>
 
-      <p className="text-xs text-[#64748B]">
+      <p className="text-xs text-app-muted">
         Get notified about your trades, disputes, and invoice payments by email.
       </p>
 
       <div className="space-y-2">
-        <label className="text-xs uppercase tracking-wider text-[#64748B]">
+        <label className="text-xs uppercase tracking-wider text-app-muted">
           Email address (optional)
         </label>
         <Input
@@ -93,8 +93,8 @@ export function EmailPreferences() {
         {!validEmail && <p className="text-xs text-red-400">Invalid email format</p>}
       </div>
 
-      <div className="space-y-3 border-t border-[#1B2B4B] pt-4">
-        <p className="text-xs font-medium uppercase tracking-wider text-[#64748B]">
+      <div className="space-y-3 border-t border-app-border pt-4">
+        <p className="text-xs font-medium uppercase tracking-wider text-app-muted">
           Notification categories
         </p>
 
@@ -106,23 +106,23 @@ export function EmailPreferences() {
 
       {/* Granular toggles */}
       <button onClick={() => setShowAll(!showAll)}
-        className="flex items-center gap-1 text-xs text-[#378ADD] hover:underline">
+        className="flex items-center gap-1 text-xs text-app-accent hover:underline">
         {showAll ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
         {showAll ? 'Hide' : 'Show'} individual event toggles
       </button>
 
       {showAll && (
-        <div className="space-y-2 border-t border-[#1B2B4B] pt-3">
-          <p className="text-[10px] uppercase tracking-wider text-[#64748B]">Trade events</p>
+        <div className="space-y-2 border-t border-app-border pt-3">
+          <p className="text-[10px] uppercase tracking-wider text-app-muted">Trade events</p>
           <MiniToggle label="Trade accepted" checked={prefs.notify_trade_accepted}   onChange={v => setPrefs(p => ({...p, notify_trade_accepted: v}))} />
           <MiniToggle label="Trade completed" checked={prefs.notify_trade_completed}  onChange={v => setPrefs(p => ({...p, notify_trade_completed: v}))} />
           <MiniToggle label="Trade auto-cancelled" checked={prefs.notify_trade_cancelled}  onChange={v => setPrefs(p => ({...p, notify_trade_cancelled: v}))} />
 
-          <p className="text-[10px] uppercase tracking-wider text-[#64748B] pt-2">Dispute events</p>
+          <p className="text-[10px] uppercase tracking-wider text-app-muted pt-2">Dispute events</p>
           <MiniToggle label="Dispute raised against you" checked={prefs.notify_dispute_raised}   onChange={v => setPrefs(p => ({...p, notify_dispute_raised: v}))} />
           <MiniToggle label="Admin accepted your dispute" checked={prefs.notify_dispute_accepted}  onChange={v => setPrefs(p => ({...p, notify_dispute_accepted: v}))} />
 
-          <p className="text-[10px] uppercase tracking-wider text-[#64748B] pt-2">Invoice events</p>
+          <p className="text-[10px] uppercase tracking-wider text-app-muted pt-2">Invoice events</p>
           <MiniToggle label="Invoice paid" checked={prefs.notify_invoice_paid}     onChange={v => setPrefs(p => ({...p, notify_invoice_paid: v}))} />
           <MiniToggle label="Invoice unpaid reminder (48h)" checked={prefs.notify_invoice_reminder}  onChange={v => setPrefs(p => ({...p, notify_invoice_reminder: v}))} />
         </div>
@@ -144,12 +144,12 @@ function Toggle({ label, description, checked, onChange }: {
   label: string, description: string, checked: boolean, onChange: (v: boolean) => void
 }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[#1B2B4B] bg-[#080D1B] p-3 hover:bg-[#0F1729] transition-colors">
+    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-app-border bg-app-bg p-3 hover:bg-app-surface transition-colors">
       <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#378ADD]" />
+        className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-app-accent" />
       <div>
-        <p className="text-sm font-medium text-[#E2E8F0]">{label}</p>
-        <p className="text-xs text-[#64748B]">{description}</p>
+        <p className="text-sm font-medium text-app-text">{label}</p>
+        <p className="text-xs text-app-muted">{description}</p>
       </div>
     </label>
   )
@@ -159,10 +159,10 @@ function MiniToggle({ label, checked, onChange }: {
   label: string, checked: boolean, onChange: (v: boolean) => void
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2.5 rounded-lg bg-[#080D1B] px-3 py-2 hover:bg-[#0F1729] transition-colors">
+    <label className="flex cursor-pointer items-center gap-2.5 rounded-lg bg-app-bg px-3 py-2 hover:bg-app-surface transition-colors">
       <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)}
-        className="h-3.5 w-3.5 shrink-0 cursor-pointer accent-[#378ADD]" />
-      <span className="text-xs text-[#E2E8F0]">{label}</span>
+        className="h-3.5 w-3.5 shrink-0 cursor-pointer accent-app-accent" />
+      <span className="text-xs text-app-text">{label}</span>
     </label>
   )
 }

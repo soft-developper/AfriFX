@@ -36,41 +36,41 @@ export default function AcceptInvitePage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#080D1B] p-4">
+    <div className="flex min-h-screen items-center justify-center bg-app-bg p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#378ADD]/10">
-            <Shield className="h-7 w-7 text-[#378ADD]" />
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-app-accent/10">
+            <Shield className="h-7 w-7 text-app-accent" />
           </div>
-          <h1 className="text-2xl font-bold text-[#E2E8F0]">Accept invitation</h1>
-          <p className="text-sm text-[#64748B]">Set up your AfriFX admin account</p>
+          <h1 className="text-2xl font-bold text-app-text">Accept invitation</h1>
+          <p className="text-sm text-app-muted">Set up your AfriFX admin account</p>
         </div>
 
-        <div className="rounded-2xl border border-[#1B2B4B] bg-[#0F1729] p-6">
+        <div className="rounded-2xl border border-app-border bg-app-surface p-6">
           {done ? (
             <div className="flex flex-col items-center gap-2 py-4 text-center">
               <CheckCircle className="h-8 w-8 text-emerald-400" />
-              <p className="text-sm text-[#E2E8F0]">Account created — redirecting…</p>
+              <p className="text-sm text-app-text">Account created — redirecting…</p>
             </div>
           ) : (
             <div className="space-y-3">
               <div className="relative">
-                <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+                <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" />
                 <Input className="pl-9" placeholder="Choose a username" autoComplete="off"
                   value={username} onChange={e => setUsername(e.target.value)} />
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" />
                 <Input className="pl-9" type="password" placeholder="Password" autoComplete="new-password"
                   value={password} onChange={e => setPassword(e.target.value)} />
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" />
                 <Input className="pl-9" type="password" placeholder="Confirm password" autoComplete="new-password"
                   value={confirm} onChange={e => setConfirm(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAccept()} />
               </div>
-              <p className="text-[11px] text-[#64748B] leading-relaxed">
+              <p className="text-[11px] text-app-muted leading-relaxed">
                 Min 12 characters, with uppercase, lowercase, a number, and a special character.
               </p>
               <Button className="w-full" onClick={handleAccept} disabled={busy}>

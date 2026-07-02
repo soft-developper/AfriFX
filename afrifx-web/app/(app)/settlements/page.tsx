@@ -108,12 +108,12 @@ function SettlementsContent() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-[#E2E8F0]">Settlement reports</h1>
-          <p className="text-sm text-[#64748B]">Full payment history with USD equivalents · exportable</p>
+          <h1 className="text-xl font-semibold text-app-text">Settlement reports</h1>
+          <p className="text-sm text-app-muted">Full payment history with USD equivalents · exportable</p>
         </div>
         <div className="flex gap-2">
           <select value={range} onChange={e => setRange(e.target.value)}
-            className="rounded-lg border border-[#1B2B4B] bg-[#0F1729] px-3 py-1.5 text-xs text-[#E2E8F0] outline-none">
+            className="rounded-lg border border-app-border bg-app-surface px-3 py-1.5 text-xs text-app-text outline-none">
             <option value="7">Last 7 days</option>
             <option value="30">Last 30 days</option>
             <option value="90">Last 90 days</option>
@@ -147,20 +147,20 @@ function SettlementsContent() {
             color: netFlow >= 0 ? 'text-emerald-400' : 'text-red-400',
           },
         ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
+          <div key={label} className="rounded-xl border border-app-border bg-app-surface p-4">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-[#64748B]">{label}</p>
+              <p className="text-xs text-app-muted">{label}</p>
               <Icon className={`h-4 w-4 ${color}`} />
             </div>
             <p className={`mt-1 font-mono text-xl font-bold ${color}`}>
-              {isLoading ? <span className="inline-block h-6 w-24 animate-pulse rounded bg-[#1B2B4B]" /> : value}
+              {isLoading ? <span className="inline-block h-6 w-24 animate-pulse rounded bg-app-border" /> : value}
             </p>
           </div>
         ))}
       </div>
 
       {/* Tabs */}
-      <div className="mb-4 flex gap-1 rounded-lg border border-[#1B2B4B] bg-[#0F1729] p-1 w-fit">
+      <div className="mb-4 flex gap-1 rounded-lg border border-app-border bg-app-surface p-1 w-fit">
         {([
           ['sent',         'Sent'],
           ['received',     'Received'],
@@ -169,7 +169,7 @@ function SettlementsContent() {
         ] as const).map(([t, l]) => (
           <button key={t} onClick={() => setTab(t)}
             className={`rounded-md px-3 py-1.5 text-xs transition-colors
-              ${activeTab === t ? 'bg-[#1B2B4B] text-[#E2E8F0]' : 'text-[#64748B] hover:text-[#E2E8F0]'}`}>
+              ${activeTab === t ? 'bg-app-border text-app-text' : 'text-app-muted hover:text-app-text'}`}>
             {l} {data ? `(${tabData[t].length})` : ''}
           </button>
         ))}
@@ -177,17 +177,17 @@ function SettlementsContent() {
 
       {isLoading ? (
         <div className="flex h-40 items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-[#378ADD]" />
+          <Loader2 className="h-6 w-6 animate-spin text-app-accent" />
         </div>
       ) : tabData[activeTab].length === 0 ? (
-        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-8 text-center text-sm text-[#64748B]">
+        <div className="rounded-xl border border-app-border bg-app-surface p-8 text-center text-sm text-app-muted">
           No {activeTab} in this period
         </div>
       ) : (
-        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] overflow-hidden overflow-x-auto">
+        <div className="rounded-xl border border-app-border bg-app-surface overflow-hidden overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#1B2B4B] text-left text-xs text-[#64748B]">
+              <tr className="border-b border-app-border text-left text-xs text-app-muted">
                 <th className="px-4 py-3 font-medium">Reference</th>
                 <th className="px-4 py-3 font-medium">Amount</th>
                 <th className="px-4 py-3 font-medium">USD value</th>
@@ -215,12 +215,12 @@ function SettlementsContent() {
                 const hash     = item.arc_tx_hash ?? item.payment_tx_hash
 
                 return (
-                  <tr key={item.id} className="border-b border-[#1B2B4B]/50 last:border-0 hover:bg-[#080D1B]/50 transition-colors">
+                  <tr key={item.id} className="border-b border-app-border/50 last:border-0 hover:bg-app-bg/50 transition-colors">
                     <td className="px-4 py-3">
-                      <span className="font-mono text-xs text-[#378ADD]">{ref}</span>
+                      <span className="font-mono text-xs text-app-accent">{ref}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-mono text-xs text-[#E2E8F0]">
+                      <span className="font-mono text-xs text-app-text">
                         {formatAmount(Number(amount))} {currency}
                       </span>
                     </td>
@@ -230,13 +230,13 @@ function SettlementsContent() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-mono text-xs text-[#64748B]">
+                      <span className="font-mono text-xs text-app-muted">
                         {typeof counterparty === 'string' && counterparty.startsWith('0x')
                           ? `${counterparty.slice(0,8)}…`
                           : counterparty}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-[#64748B] whitespace-nowrap">{date}</td>
+                    <td className="px-4 py-3 text-xs text-app-muted whitespace-nowrap">{date}</td>
                     <td className="px-4 py-3">
                       <Badge variant={
                         status === 'settled' || status === 'paid' ? 'success' :
@@ -249,7 +249,7 @@ function SettlementsContent() {
                       {hash && (
                         <a href={`https://testnet.arcscan.app/tx/${hash}`}
                           target="_blank" rel="noopener noreferrer"
-                          className="text-[#64748B] hover:text-[#378ADD] transition-colors">
+                          className="text-app-muted hover:text-app-accent transition-colors">
                           <ExternalLink className="h-3.5 w-3.5" />
                         </a>
                       )}

@@ -101,12 +101,12 @@ export function CorridorCard() {
   }
 
   return (
-    <div className="w-full max-w-md rounded-2xl border border-[#1B2B4B] bg-[#0F1729] p-5 shadow-xl">
+    <div className="w-full max-w-md rounded-2xl border border-app-border bg-app-surface p-5 shadow-xl">
 
       {/* Header */}
       <div className="mb-4 flex items-center gap-2">
-        <Coins className="h-4 w-4 text-[#378ADD]" />
-        <span className="text-sm font-medium text-[#E2E8F0]">Cross-border corridor</span>
+        <Coins className="h-4 w-4 text-app-accent" />
+        <span className="text-sm font-medium text-app-text">Cross-border corridor</span>
         <Badge variant="arc" className="ml-auto">2-step · via USDC</Badge>
       </div>
 
@@ -124,7 +124,7 @@ export function CorridorCard() {
       <div className="my-1 flex justify-center">
         <button
           onClick={flip}
-          className="rounded-full border border-[#1B2B4B] bg-[#0F1729] p-2 text-[#64748B] transition-transform hover:rotate-180 hover:text-[#E2E8F0]"
+          className="rounded-full border border-app-border bg-app-surface p-2 text-app-muted transition-transform hover:rotate-180 hover:text-app-text"
         >
           <ArrowUpDown className="h-4 w-4" />
         </button>
@@ -143,9 +143,9 @@ export function CorridorCard() {
 
       {/* Route breakdown */}
       {quote && (
-        <div className="mb-4 rounded-lg bg-[#080D1B] p-3 text-xs">
-          <p className="mb-2 font-medium text-[#E2E8F0]">Route</p>
-          <div className="flex items-center gap-2 text-[#64748B]">
+        <div className="mb-4 rounded-lg bg-app-bg p-3 text-xs">
+          <p className="mb-2 font-medium text-app-text">Route</p>
+          <div className="flex items-center gap-2 text-app-muted">
             <span>{CURRENCY_FLAG[from]} {from}</span>
             <ArrowRight className="h-3 w-3 shrink-0" />
             <span>💵 USDC</span>
@@ -154,20 +154,20 @@ export function CorridorCard() {
           </div>
           <div className="mt-2 space-y-1">
             <div className="flex justify-between">
-              <span className="text-[#64748B]">Step 1 · {from} → USDC</span>
-              <span className="font-mono text-[#E2E8F0]">~{quote.step1.toAmount.toFixed(4)} USDC</span>
+              <span className="text-app-muted">Step 1 · {from} → USDC</span>
+              <span className="font-mono text-app-text">~{quote.step1.toAmount.toFixed(4)} USDC</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#64748B]">Step 2 · USDC → {to}</span>
-              <span className="font-mono text-[#E2E8F0]">{quote.step2.toAmount.toFixed(2)} {to}</span>
+              <span className="text-app-muted">Step 2 · USDC → {to}</span>
+              <span className="font-mono text-app-text">{quote.step2.toAmount.toFixed(2)} {to}</span>
             </div>
-            <div className="flex justify-between border-t border-[#1B2B4B] pt-1">
-              <span className="text-[#64748B]">Total fees</span>
-              <span className="font-mono text-[#E2E8F0]">${quote.totalFee.toFixed(4)} USDC</span>
+            <div className="flex justify-between border-t border-app-border pt-1">
+              <span className="text-app-muted">Total fees</span>
+              <span className="font-mono text-app-text">${quote.totalFee.toFixed(4)} USDC</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#64748B]">Corridor ID</span>
-              <span className="font-mono text-[10px] text-[#378ADD]">{quote.corridorId}</span>
+              <span className="text-app-muted">Corridor ID</span>
+              <span className="font-mono text-[10px] text-app-accent">{quote.corridorId}</span>
             </div>
           </div>
         </div>
@@ -175,7 +175,7 @@ export function CorridorCard() {
 
       {/* Step progress indicator */}
       {step !== 'idle' && (
-        <div className="mb-3 rounded-lg border border-[#1B2B4B] bg-[#080D1B] p-3">
+        <div className="mb-3 rounded-lg border border-app-border bg-app-bg p-3">
           <div className="mb-2 flex items-center gap-4">
             {/* Step 1 indicator */}
             <div className="flex items-center gap-1.5">
@@ -183,28 +183,28 @@ export function CorridorCard() {
                 ${['step1-done','step2-pending','step2-waiting','complete'].includes(step)
                   ? 'bg-emerald-500 text-white'
                   : ['step1-pending','step1-waiting'].includes(step)
-                  ? 'bg-[#378ADD] text-white'
-                  : 'bg-[#1B2B4B] text-[#64748B]'}`}>
+                  ? 'bg-app-accent text-white'
+                  : 'bg-app-border text-app-muted'}`}>
                 {['step1-done','step2-pending','step2-waiting','complete'].includes(step) ? '✓' : '1'}
               </div>
-              <span className="text-xs text-[#64748B]">{from} → USDC</span>
+              <span className="text-xs text-app-muted">{from} → USDC</span>
             </div>
-            <ArrowRight className="h-3 w-3 text-[#1B2B4B]" />
+            <ArrowRight className="h-3 w-3 text-app-border" />
             {/* Step 2 indicator */}
             <div className="flex items-center gap-1.5">
               <div className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold
                 ${step === 'complete'
                   ? 'bg-emerald-500 text-white'
                   : ['step2-pending','step2-waiting'].includes(step)
-                  ? 'bg-[#378ADD] text-white'
-                  : 'bg-[#1B2B4B] text-[#64748B]'}`}>
+                  ? 'bg-app-accent text-white'
+                  : 'bg-app-border text-app-muted'}`}>
                 {step === 'complete' ? '✓' : '2'}
               </div>
-              <span className="text-xs text-[#64748B]">USDC → {to}</span>
+              <span className="text-xs text-app-muted">USDC → {to}</span>
             </div>
           </div>
-          <p className="flex items-center gap-1.5 text-xs text-[#64748B]">
-            {isLoading && <Loader2 className="h-3 w-3 animate-spin text-[#378ADD]" />}
+          <p className="flex items-center gap-1.5 text-xs text-app-muted">
+            {isLoading && <Loader2 className="h-3 w-3 animate-spin text-app-accent" />}
             {step === 'complete' && <CheckCircle className="h-3 w-3 text-emerald-400" />}
             {step === 'error' && <AlertCircle className="h-3 w-3 text-red-400" />}
             {stepLabel[step]}

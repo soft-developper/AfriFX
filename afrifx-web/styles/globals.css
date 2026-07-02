@@ -2,15 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  Semantic color tokens as "R G B" channel triples so Tailwind can apply
+  opacity modifiers, e.g. bg-app-accent/10. These defaults define the warm,
+  African-inspired palette. A future light mode simply overrides these
+  variables (no component changes needed).
+*/
 :root {
-  --bg:      #080D1B;
-  --card:    #0F1729;
-  --border:  #1B2B4B;
-  --accent:  #378ADD;
-  --success: #10B981;
-  --danger:  #EF4444;
-  --muted:   #64748B;
-  --text:    #E2E8F0;
+  --app-bg:      18 16 11;     /* #12100B — warm espresso */
+  --app-surface: 28 24 16;     /* #1C1810 — warm dark brown */
+  --app-border:  51 41 27;     /* #33291B — clay border */
+  --app-accent:  217 164 65;   /* #D9A441 — rich gold */
+  --app-text:    242 233 216;  /* #F2E9D8 — parchment */
+  --app-muted:   156 138 110;  /* #9C8A6E — warm taupe */
+
+  /* Legacy aliases (kept for any direct var() consumers) */
+  --bg:      #12100B;
+  --card:    #1C1810;
+  --border:  #33291B;
+  --accent:  #D9A441;
+  --success: #5BAE7B;
+  --danger:  #D9694A;
+  --muted:   #9C8A6E;
+  --text:    #F2E9D8;
 }
 
 * { box-sizing: border-box; }

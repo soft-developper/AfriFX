@@ -118,7 +118,7 @@ export default function AdminSubAdmins() {
   return (
     <AdminShell>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-[#E2E8F0]">Sub-admin management</h1>
+        <h1 className="text-xl font-semibold text-app-text">Sub-admin management</h1>
         {admin?.role === 'super_admin' && (
           <Button size="sm" onClick={() => { setShowForm(!showForm); setInviteError(null); setInviteSuccess(null) }}>
             <Plus className="h-4 w-4" /> Invite sub-admin
@@ -127,7 +127,7 @@ export default function AdminSubAdmins() {
       </div>
 
       {admin?.role !== 'super_admin' && (
-        <div className="mb-6 flex items-center gap-2 rounded-lg bg-[#0F1729] border border-[#1B2B4B] px-4 py-3 text-xs text-[#64748B]">
+        <div className="mb-6 flex items-center gap-2 rounded-lg bg-app-surface border border-app-border px-4 py-3 text-xs text-app-muted">
           Only the super admin can invite new sub-admins.
         </div>
       )}
@@ -156,32 +156,32 @@ export default function AdminSubAdmins() {
 
       {/* Invite form */}
       {showForm && (
-        <div className="mb-6 rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
-          <p className="mb-1 text-sm font-medium text-[#E2E8F0]">Invite a sub-admin</p>
-          <p className="mb-4 text-xs text-[#64748B]">
+        <div className="mb-6 rounded-xl border border-app-border bg-app-surface p-5">
+          <p className="mb-1 text-sm font-medium text-app-text">Invite a sub-admin</p>
+          <p className="mb-4 text-xs text-app-muted">
             They'll get an email with a link to set their own password and, optionally, 2FA.
           </p>
           <div className="relative mb-4">
-            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
+            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" />
             <Input className="pl-9" placeholder="Email address" type="email" autoComplete="off"
               value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
           </div>
 
-          <p className="mb-2 text-xs font-medium text-[#E2E8F0]">Permissions</p>
+          <p className="mb-2 text-xs font-medium text-app-text">Permissions</p>
           <div className="mb-4 grid grid-cols-2 gap-2 lg:grid-cols-3">
             {allPerms.map(perm => (
               <button key={perm} onClick={() => togglePerm(selectedPerms, setSelectedPerms, perm)}
                 className={`flex items-start gap-2 rounded-lg border p-2.5 text-left transition-colors
                   ${selectedPerms.includes(perm)
-                    ? 'border-[#378ADD] bg-[#378ADD]/10'
-                    : 'border-[#1B2B4B] bg-[#080D1B]'}`}>
+                    ? 'border-app-accent bg-app-accent/10'
+                    : 'border-app-border bg-app-bg'}`}>
                 <div className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded
-                  ${selectedPerms.includes(perm) ? 'bg-[#378ADD]' : 'border border-[#1B2B4B]'}`}>
+                  ${selectedPerms.includes(perm) ? 'bg-app-accent' : 'border border-app-border'}`}>
                   {selectedPerms.includes(perm) && <Check className="h-3 w-3 text-white" />}
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-[#E2E8F0]">{permMeta[perm]?.label ?? perm}</p>
-                  <p className="text-[10px] text-[#64748B]">{permMeta[perm]?.description}</p>
+                  <p className="text-xs font-medium text-app-text">{permMeta[perm]?.label ?? perm}</p>
+                  <p className="text-[10px] text-app-muted">{permMeta[perm]?.description}</p>
                 </div>
               </button>
             ))}
@@ -210,28 +210,28 @@ export default function AdminSubAdmins() {
 
       {/* Admins list */}
       {loading ? (
-        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-[#378ADD]" /></div>
+        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-app-accent" /></div>
       ) : (
         <div className="space-y-3">
           {admins.map(a => (
-            <div key={a.id} className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
+            <div key={a.id} className="rounded-xl border border-app-border bg-app-surface p-5">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`flex h-10 w-10 items-center justify-center rounded-full
-                    ${a.role === 'super_admin' ? 'bg-amber-500/20' : 'bg-[#378ADD]/10'}`}>
-                    <Shield className={`h-5 w-5 ${a.role === 'super_admin' ? 'text-amber-400' : 'text-[#378ADD]'}`} />
+                    ${a.role === 'super_admin' ? 'bg-amber-500/20' : 'bg-app-accent/10'}`}>
+                    <Shield className={`h-5 w-5 ${a.role === 'super_admin' ? 'text-amber-400' : 'text-app-accent'}`} />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-[#E2E8F0]">{a.username}</p>
+                      <p className="text-sm font-medium text-app-text">{a.username}</p>
                       <Badge variant={a.role === 'super_admin' ? 'warning' : 'arc'}>
                         {a.role === 'super_admin' ? '★ Super Admin' : 'Sub-admin'}
                       </Badge>
                       {a.status === 'suspended' && <Badge variant="danger">Suspended</Badge>}
                     </div>
-                    <p className="text-xs text-[#64748B]">{a.email}</p>
+                    <p className="text-xs text-app-muted">{a.email}</p>
                     {a.last_login && (
-                      <p className="text-[10px] text-[#64748B]">
+                      <p className="text-[10px] text-app-muted">
                         Last login: {new Date(Number(a.last_login) * 1000).toLocaleString()}
                       </p>
                     )}
@@ -242,17 +242,17 @@ export default function AdminSubAdmins() {
                   <div className="flex gap-1">
                     <button onClick={() => resetCredentials(a)} disabled={busy === a.id}
                       title="Reset password"
-                      className="rounded p-1.5 text-[#64748B] hover:text-[#378ADD]">
+                      className="rounded p-1.5 text-app-muted hover:text-app-accent">
                       <Key className="h-3.5 w-3.5" />
                     </button>
                     <button onClick={() => toggleStatus(a)} disabled={busy === a.id}
                       title={a.status === 'active' ? 'Suspend' : 'Activate'}
-                      className="rounded p-1.5 text-[#64748B] hover:text-amber-400">
+                      className="rounded p-1.5 text-app-muted hover:text-amber-400">
                       {a.status === 'active' ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
                     </button>
                     <button onClick={() => deleteAdmin(a.id)} disabled={busy === a.id}
                       title="Remove"
-                      className="rounded p-1.5 text-[#64748B] hover:text-red-400">
+                      className="rounded p-1.5 text-app-muted hover:text-red-400">
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -261,16 +261,16 @@ export default function AdminSubAdmins() {
 
               {/* Permissions */}
               {a.role !== 'super_admin' && (
-                <div className="mt-3 border-t border-[#1B2B4B] pt-3">
+                <div className="mt-3 border-t border-app-border pt-3">
                   {editingId === a.id ? (
                     <div>
                       <div className="mb-2 grid grid-cols-2 gap-2 lg:grid-cols-3">
                         {allPerms.map(perm => (
                           <button key={perm} onClick={() => togglePerm(editPerms, setEditPerms, perm)}
                             className={`flex items-center gap-1.5 rounded-lg border p-2 text-left text-xs transition-colors
-                              ${editPerms.includes(perm) ? 'border-[#378ADD] bg-[#378ADD]/10 text-[#E2E8F0]' : 'border-[#1B2B4B] text-[#64748B]'}`}>
+                              ${editPerms.includes(perm) ? 'border-app-accent bg-app-accent/10 text-app-text' : 'border-app-border text-app-muted'}`}>
                             <div className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded
-                              ${editPerms.includes(perm) ? 'bg-[#378ADD]' : 'border border-[#1B2B4B]'}`}>
+                              ${editPerms.includes(perm) ? 'bg-app-accent' : 'border border-app-border'}`}>
                               {editPerms.includes(perm) && <Check className="h-2.5 w-2.5 text-white" />}
                             </div>
                             {permMeta[perm]?.label ?? perm}
@@ -288,15 +288,15 @@ export default function AdminSubAdmins() {
                     <div className="flex items-center justify-between">
                       <div className="flex flex-wrap gap-1.5">
                         {(a.permissions ?? []).length === 0 ? (
-                          <span className="text-xs text-[#64748B]">No permissions granted</span>
+                          <span className="text-xs text-app-muted">No permissions granted</span>
                         ) : (a.permissions ?? []).map((p: string) => (
-                          <span key={p} className="rounded-full bg-[#1B2B4B] px-2 py-0.5 text-[10px] text-[#E2E8F0]">
+                          <span key={p} className="rounded-full bg-app-border px-2 py-0.5 text-[10px] text-app-text">
                             {permMeta[p]?.label ?? p}
                           </span>
                         ))}
                       </div>
                       <button onClick={() => { setEditingId(a.id); setEditPerms(a.permissions ?? []) }}
-                        className="shrink-0 text-xs text-[#378ADD] hover:underline">
+                        className="shrink-0 text-xs text-app-accent hover:underline">
                         Edit permissions
                       </button>
                     </div>

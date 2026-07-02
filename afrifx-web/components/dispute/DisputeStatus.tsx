@@ -47,7 +47,7 @@ export function DisputeStatus({ disputeId, offerId, userAddress, userRole, usern
   )
 
   if (loading) return (
-    <div className="flex items-center gap-2 rounded-lg bg-[#080D1B] p-3 text-xs text-[#64748B]">
+    <div className="flex items-center gap-2 rounded-lg bg-app-bg p-3 text-xs text-app-muted">
       <Loader2 className="h-3.5 w-3.5 animate-spin" />
       Checking dispute status…
     </div>

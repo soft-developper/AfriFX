@@ -93,13 +93,13 @@ export default function AdminDisputesPage() {
     <AdminShell>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-[#E2E8F0]">Disputes</h1>
-          <p className="text-sm text-[#64748B]">
+          <h1 className="text-xl font-semibold text-app-text">Disputes</h1>
+          <p className="text-sm text-app-muted">
             {openCount} open · {inReviewCount} in review · {resolvedCount} resolved
           </p>
         </div>
         <button onClick={load}
-          className="flex items-center gap-1.5 rounded-lg border border-[#1B2B4B] px-3 py-1.5 text-xs text-[#64748B] hover:text-[#E2E8F0]">
+          className="flex items-center gap-1.5 rounded-lg border border-app-border px-3 py-1.5 text-xs text-app-muted hover:text-app-text">
           <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} /> Refresh
         </button>
       </div>
@@ -116,11 +116,11 @@ export default function AdminDisputesPage() {
       )}
 
       {/* Filter */}
-      <div className="mb-4 flex gap-1 rounded-lg border border-[#1B2B4B] bg-[#0F1729] p-1 w-fit">
+      <div className="mb-4 flex gap-1 rounded-lg border border-app-border bg-app-surface p-1 w-fit">
         {(['open','in_review','resolved','all'] as const).map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={`rounded-md px-3 py-1.5 text-xs capitalize transition-colors
-              ${filter === f ? 'bg-[#1B2B4B] text-[#E2E8F0]' : 'text-[#64748B]'}`}>
+              ${filter === f ? 'bg-app-border text-app-text' : 'text-app-muted'}`}>
             {f.replace('_', ' ')}
           </button>
         ))}
@@ -128,12 +128,12 @@ export default function AdminDisputesPage() {
 
       {loading ? (
         <div className="flex h-40 items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-[#378ADD]" />
+          <Loader2 className="h-6 w-6 animate-spin text-app-accent" />
         </div>
       ) : disputes.length === 0 ? (
-        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-10 text-center">
-          <Scale className="mx-auto mb-2 h-8 w-8 text-[#1B2B4B]" />
-          <p className="text-sm text-[#64748B]">No {filter} disputes</p>
+        <div className="rounded-xl border border-app-border bg-app-surface p-10 text-center">
+          <Scale className="mx-auto mb-2 h-8 w-8 text-app-border" />
+          <p className="text-sm text-app-muted">No {filter} disputes</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -161,17 +161,17 @@ export default function AdminDisputesPage() {
 
             return (
               <div key={id}
-                className={`rounded-xl border bg-[#0F1729] overflow-hidden
+                className={`rounded-xl border bg-app-surface overflow-hidden
                   ${isOpen ? 'border-amber-900/50' :
-                    isInReview ? 'border-[#378ADD]/40' : 'border-[#1B2B4B]'}`}>
+                    isInReview ? 'border-app-accent/40' : 'border-app-border'}`}>
 
                 {/* Header */}
                 <div className="p-5">
                   <div className="mb-3 flex flex-wrap items-start gap-3">
                     <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full
-                      ${isOpen ? 'bg-amber-900/20' : isInReview ? 'bg-[#378ADD]/10' : 'bg-emerald-900/20'}`}>
+                      ${isOpen ? 'bg-amber-900/20' : isInReview ? 'bg-app-accent/10' : 'bg-emerald-900/20'}`}>
                       {isOpen ? <AlertTriangle className="h-5 w-5 text-amber-400" />
-                       : isInReview ? <Scale className="h-5 w-5 text-[#378ADD]" />
+                       : isInReview ? <Scale className="h-5 w-5 text-app-accent" />
                        : <CheckCircle className="h-5 w-5 text-emerald-400" />}
                     </div>
 
@@ -190,43 +190,43 @@ export default function AdminDisputesPage() {
                           <Badge variant="success">⚖️ {assignment.admin_name}</Badge>
                         )}
                       </div>
-                      <p className="text-xs text-[#64748B]">
+                      <p className="text-xs text-app-muted">
                         {new Date(createdAt * 1000).toLocaleString()} ·
-                        <span className="font-mono text-[#378ADD] ml-1">{offerId?.slice(0,16)}…</span>
+                        <span className="font-mono text-app-accent ml-1">{offerId?.slice(0,16)}…</span>
                       </p>
                     </div>
 
                     {/* Expand toggle */}
                     <button onClick={() => setExpanded(isExpanded ? null : id)}
-                      className="text-[#64748B] hover:text-[#E2E8F0]">
+                      className="text-app-muted hover:text-app-text">
                       {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </button>
                   </div>
 
                   {/* Trade details */}
                   <div className="mb-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-                    <div className="rounded-lg bg-[#080D1B] p-2">
-                      <p className="text-[#64748B]">USDC</p>
-                      <p className="font-mono font-semibold text-[#E2E8F0]">${formatAmount(usdcAmount)}</p>
+                    <div className="rounded-lg bg-app-bg p-2">
+                      <p className="text-app-muted">USDC</p>
+                      <p className="font-mono font-semibold text-app-text">${formatAmount(usdcAmount)}</p>
                     </div>
-                    <div className="rounded-lg bg-[#080D1B] p-2">
-                      <p className="text-[#64748B]">Local</p>
-                      <p className="font-mono font-semibold text-[#E2E8F0]">{localAmt.toLocaleString()} {localCcy}</p>
+                    <div className="rounded-lg bg-app-bg p-2">
+                      <p className="text-app-muted">Local</p>
+                      <p className="font-mono font-semibold text-app-text">{localAmt.toLocaleString()} {localCcy}</p>
                     </div>
-                    <div className="rounded-lg bg-[#080D1B] p-2">
-                      <p className="text-[#64748B]">Maker</p>
-                      <p className="font-mono text-[#E2E8F0]">{makerAddr.slice(0,10)}…</p>
+                    <div className="rounded-lg bg-app-bg p-2">
+                      <p className="text-app-muted">Maker</p>
+                      <p className="font-mono text-app-text">{makerAddr.slice(0,10)}…</p>
                     </div>
-                    <div className="rounded-lg bg-[#080D1B] p-2">
-                      <p className="text-[#64748B]">Taker</p>
-                      <p className="font-mono text-[#E2E8F0]">{takerAddr.slice(0,10)}…</p>
+                    <div className="rounded-lg bg-app-bg p-2">
+                      <p className="text-app-muted">Taker</p>
+                      <p className="font-mono text-app-text">{takerAddr.slice(0,10)}…</p>
                     </div>
                   </div>
 
                   {/* Reason */}
-                  <div className="mb-3 rounded-lg bg-[#080D1B] p-2.5 text-xs">
-                    <p className="text-[#64748B] mb-1">Reason</p>
-                    <p className="text-[#E2E8F0]">{reason || '—'}</p>
+                  <div className="mb-3 rounded-lg bg-app-bg p-2.5 text-xs">
+                    <p className="text-app-muted mb-1">Reason</p>
+                    <p className="text-app-text">{reason || '—'}</p>
                   </div>
 
                   {/* Resolution */}
@@ -252,7 +252,7 @@ export default function AdminDisputesPage() {
 
                     {/* Already assigned to another admin */}
                     {(isOpen || isInReview) && assignment && !isMyCase && (
-                      <p className="text-xs text-[#64748B] py-1">
+                      <p className="text-xs text-app-muted py-1">
                         Handled by Admin {assignment.admin_name}
                       </p>
                     )}
@@ -278,7 +278,7 @@ export default function AdminDisputesPage() {
                     )}
 
                     <a href={`https://testnet.arcscan.app`} target="_blank" rel="noopener noreferrer"
-                      className="ml-auto text-[#64748B] hover:text-[#378ADD]">
+                      className="ml-auto text-app-muted hover:text-app-accent">
                       <ExternalLink className="h-4 w-4" />
                     </a>
                   </div>
@@ -286,8 +286,8 @@ export default function AdminDisputesPage() {
 
                 {/* Chat — expanded section */}
                 {isExpanded && admin && (isInReview || isOpen) && isMyCase && (
-                  <div className="border-t border-[#1B2B4B] p-4">
-                    <p className="mb-2 text-xs font-medium text-[#64748B]">
+                  <div className="border-t border-app-border p-4">
+                    <p className="mb-2 text-xs font-medium text-app-muted">
                       ⚖️ Messages go to both parties · Request statements privately below
                     </p>
                     {/* Request statement buttons */}
@@ -304,7 +304,7 @@ export default function AdminDisputesPage() {
                             }),
                           })
                         }}
-                        className="rounded-lg border border-[#378ADD]/40 bg-[#378ADD]/10 px-3 py-1.5 text-xs text-[#378ADD] hover:bg-[#378ADD]/20 transition-colors">
+                        className="rounded-lg border border-app-accent/40 bg-app-accent/10 px-3 py-1.5 text-xs text-app-accent hover:bg-app-accent/20 transition-colors">
                         📋 Request statement from maker
                       </button>
                       <button
@@ -319,7 +319,7 @@ export default function AdminDisputesPage() {
                             }),
                           })
                         }}
-                        className="rounded-lg border border-[#378ADD]/40 bg-[#378ADD]/10 px-3 py-1.5 text-xs text-[#378ADD] hover:bg-[#378ADD]/20 transition-colors">
+                        className="rounded-lg border border-app-accent/40 bg-app-accent/10 px-3 py-1.5 text-xs text-app-accent hover:bg-app-accent/20 transition-colors">
                         📋 Request statement from taker
                       </button>
                     </div>

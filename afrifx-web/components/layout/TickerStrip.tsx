@@ -14,14 +14,14 @@ export function TickerStrip() {
   const items = (rates ?? FALLBACK).concat(rates ?? FALLBACK) // doubled for seamless loop
 
   return (
-    <div className="overflow-hidden border-b border-[#1B2B4B] bg-[#0F1729] py-1.5">
+    <div className="overflow-hidden border-b border-app-border bg-app-surface py-1.5">
       <div className="flex w-max animate-[ticker_30s_linear_infinite] gap-8 whitespace-nowrap">
         {items.map((r, i) => {
           const up = r.change24h >= 0
           return (
             <span key={i} className="inline-flex items-center gap-2 text-xs">
-              <span className="font-medium text-[#E2E8F0]">{r.pair}</span>
-              <span className="font-mono text-[#E2E8F0]">{r.rate.toLocaleString()}</span>
+              <span className="font-medium text-app-text">{r.pair}</span>
+              <span className="font-mono text-app-text">{r.rate.toLocaleString()}</span>
               <span className={up ? 'text-emerald-400' : 'text-red-400'}>
                 {up ? '+' : ''}{r.change24h.toFixed(2)}%
               </span>

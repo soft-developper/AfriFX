@@ -56,7 +56,7 @@ export function MediaUploadButton({ offerId, onUpload, disabled }: Props) {
         onClick={() => { setErrMsg(null); inputRef.current?.click() }}
         disabled={disabled || uploading}
         title="Attach image, PDF, or document (max 10 MB)"
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#1B2B4B] bg-[#0F1729] text-[#64748B] transition-colors hover:border-[#378ADD] hover:text-[#E2E8F0] disabled:opacity-40"
+        className="flex h-9 w-9 items-center justify-center rounded-full border border-app-border bg-app-surface text-app-muted transition-colors hover:border-app-accent hover:text-app-text disabled:opacity-40"
       >
         {uploading
           ? <Loader2 className="h-4 w-4 animate-spin" />
@@ -66,7 +66,7 @@ export function MediaUploadButton({ offerId, onUpload, disabled }: Props) {
 
       {/* Progress bubble */}
       {uploading && (
-        <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#0F1729] border border-[#1B2B4B] px-2 py-0.5 text-[10px] text-[#378ADD]">
+        <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-app-surface border border-app-border px-2 py-0.5 text-[10px] text-app-accent">
           {progress}%
         </div>
       )}

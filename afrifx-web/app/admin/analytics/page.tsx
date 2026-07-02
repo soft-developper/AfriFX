@@ -7,8 +7,10 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { Loader2 } from 'lucide-react'
+import { useTokens } from '@/lib/tokens'
 
 export default function AdminAnalytics() {
+  const t = useTokens()
   const [data, setData]       = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
@@ -19,38 +21,38 @@ export default function AdminAnalytics() {
   }, [])
 
   const splitData = data ? [
-    { name: 'Direct', value: data.split.direct.volume, color: '#378ADD' },
+    { name: 'Direct', value: data.split.direct.volume, color: t.accent },
     { name: 'P2P',    value: data.split.p2p.volume,    color: '#10B981' },
   ] : []
 
   return (
     <AdminShell>
-      <h1 className="mb-6 text-xl font-semibold text-[#E2E8F0]">Platform analytics</h1>
+      <h1 className="mb-6 text-xl font-semibold text-app-text">Platform analytics</h1>
 
       {loading ? (
-        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-[#378ADD]" /></div>
+        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-app-accent" /></div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {/* Volume by corridor */}
-          <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
-            <p className="mb-4 text-sm font-medium text-[#E2E8F0]">Volume by corridor</p>
+          <div className="rounded-xl border border-app-border bg-app-surface p-5">
+            <p className="mb-4 text-sm font-medium text-app-text">Volume by corridor</p>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={data?.corridors ?? []} layout="vertical" barSize={16}>
-                <XAxis type="number" tick={{ fill: '#64748B', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${v}`} />
-                <YAxis type="category" dataKey="pair" tick={{ fill: '#E2E8F0', fontSize: 10 }} axisLine={false} tickLine={false} width={70} />
+                <XAxis type="number" tick={{ fill: t.muted, fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${v}`} />
+                <YAxis type="category" dataKey="pair" tick={{ fill: t.text, fontSize: 10 }} axisLine={false} tickLine={false} width={70} />
                 <Tooltip
-                  contentStyle={{ background: '#0F1729', border: '1px solid #1B2B4B', borderRadius: 8, fontSize: 12 }}
-                  itemStyle={{ color: '#E2E8F0' }}
+                  contentStyle={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12 }}
+                  itemStyle={{ color: t.text }}
                   formatter={(v: number) => [`$${v.toLocaleString()}`, 'Volume']}
                 />
-                <Bar dataKey="volume" fill="#378ADD" radius={[0,4,4,0]} />
+                <Bar dataKey="volume" fill={t.accent} radius={[0,4,4,0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           {/* P2P vs Direct */}
-          <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
-            <p className="mb-4 text-sm font-medium text-[#E2E8F0]">P2P vs Direct conversion</p>
+          <div className="rounded-xl border border-app-border bg-app-surface p-5">
+            <p className="mb-4 text-sm font-medium text-app-text">P2P vs Direct conversion</p>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie data={splitData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value">
@@ -58,14 +60,14 @@ export default function AdminAnalytics() {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    background:   '#0F1729',
-                    border:       '1px solid #1B2B4B',
+                    background:   t.surface,
+                    border:       `1px solid ${t.border}`,
                     borderRadius: 8,
                     fontSize:     12,
-                    color:        '#E2E8F0',
+                    color:        t.text,
                   }}
-                  labelStyle={{ color: '#E2E8F0' }}
-                  itemStyle={{ color: '#E2E8F0' }}
+                  labelStyle={{ color: t.text }}
+                  itemStyle={{ color: t.text }}
                   formatter={(v: number, name: string) => [`$${v.toLocaleString()}`, name]}
                 />
               </PieChart>
@@ -74,7 +76,7 @@ export default function AdminAnalytics() {
               {splitData.map(d => (
                 <div key={d.name} className="flex items-center gap-1.5 text-xs">
                   <span className="h-2.5 w-2.5 rounded-full" style={{ background: d.color }} />
-                  <span className="text-[#64748B]">{d.name}: ${d.value.toLocaleString()}</span>
+                  <span className="text-app-muted">{d.name}: ${d.value.toLocaleString()}</span>
                 </div>
               ))}
             </div>

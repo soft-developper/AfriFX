@@ -27,7 +27,7 @@ function UserChip({ address }: { address: string }) {
   return (
     <div className="flex items-center gap-1.5">
       <ProfileAvatar displayName={name} avatarColor={color} size="xs" verified={profile?.verified} />
-      <span className="text-xs text-[#E2E8F0]">
+      <span className="text-xs text-app-text">
         {profile?.username ? `@${profile.username}` : name}
       </span>
     </div>
@@ -122,11 +122,11 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
   // ── Not involved: show a locked placeholder ───────────────
   if (!isInvolved) {
     return (
-      <div className="flex h-[520px] flex-col items-center justify-center gap-3 rounded-2xl border border-[#1B2B4B] bg-[#080D1B]">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1B2B4B]">
-          <Lock className="h-5 w-5 text-[#64748B]" />
+      <div className="flex h-[520px] flex-col items-center justify-center gap-3 rounded-2xl border border-app-border bg-app-bg">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-app-border">
+          <Lock className="h-5 w-5 text-app-muted" />
         </div>
-        <p className="text-sm text-[#64748B]">Private trade chat</p>
+        <p className="text-sm text-app-muted">Private trade chat</p>
       </div>
     )
   }
@@ -134,35 +134,35 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
   // ── Wallet not yet connected / hydrating ──────────────────
   if (!address) {
     return (
-      <div className="flex h-[520px] flex-col items-center justify-center gap-3 rounded-2xl border border-[#1B2B4B] bg-[#080D1B]">
-        <div className="h-8 w-32 animate-pulse rounded-lg bg-[#1B2B4B]" />
+      <div className="flex h-[520px] flex-col items-center justify-center gap-3 rounded-2xl border border-app-border bg-app-bg">
+        <div className="h-8 w-32 animate-pulse rounded-lg bg-app-border" />
       </div>
     )
   }
 
   return (
-    <div className={`flex flex-col rounded-2xl border border-[#1B2B4B] bg-[#080D1B] shadow-2xl transition-all duration-200 ${minimized ? 'h-14' : 'h-[520px]'}`}>
+    <div className={`flex flex-col rounded-2xl border border-app-border bg-app-bg shadow-2xl transition-all duration-200 ${minimized ? 'h-14' : 'h-[520px]'}`}>
 
       {/* ── Header ── */}
       <div
-        className="flex cursor-pointer items-center gap-3 rounded-t-2xl border-b border-[#1B2B4B] bg-[#0F1729] px-4 py-3"
+        className="flex cursor-pointer items-center gap-3 rounded-t-2xl border-b border-app-border bg-app-surface px-4 py-3"
         onClick={() => setMinimized(!minimized)}
       >
         <div className="relative">
           <ProfileAvatar displayName={otherName} avatarColor={otherColor} size="sm" verified={otherProfile?.verified} />
-          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-1 ring-[#0F1729]" />
+          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-1 ring-app-surface" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="truncate text-sm font-medium text-[#E2E8F0]">
+            <p className="truncate text-sm font-medium text-app-text">
               {otherProfile?.username ? `@${otherProfile.username}` : otherName}
             </p>
             <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium
-              ${isMaker ? 'bg-[#378ADD]/20 text-[#378ADD]' : 'bg-emerald-900/40 text-emerald-400'}`}>
+              ${isMaker ? 'bg-app-accent/20 text-app-accent' : 'bg-emerald-900/40 text-emerald-400'}`}>
               {isMaker ? 'Taker' : 'Maker'}
             </span>
           </div>
-          <p className="text-[10px] text-[#64748B]">
+          <p className="text-[10px] text-app-muted">
             {typing
               ? <span className="text-emerald-400 animate-pulse">typing…</span>
               : `${amount.toLocaleString()} ${currency} ↔ USDC`
@@ -173,16 +173,16 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
           <div className="flex items-center gap-1 rounded-full bg-emerald-900/30 px-2 py-0.5 text-[10px] text-emerald-400">
             <Shield className="h-3 w-3" /> Secured
           </div>
-          <ChevronDown className={`h-4 w-4 shrink-0 text-[#64748B] transition-transform ${minimized ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`h-4 w-4 shrink-0 text-app-muted transition-transform ${minimized ? 'rotate-180' : ''}`} />
         </div>
       </div>
 
       {!minimized && (
         <>
           {/* ── Parties banner ── */}
-          <div className="flex items-center justify-between border-b border-[#1B2B4B] bg-[#0A1020] px-4 py-2">
+          <div className="flex items-center justify-between border-b border-app-border bg-[#0A1020] px-4 py-2">
             <UserChip address={makerAddress} />
-            <span className="text-[10px] text-[#64748B]">⇄</span>
+            <span className="text-[10px] text-app-muted">⇄</span>
             <UserChip address={takerAddress} />
           </div>
 
@@ -190,15 +190,15 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
             {messages.length === 0 && (
               <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1B2B4B]">
-                  <MessageSquare className="h-5 w-5 text-[#64748B]" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-app-border">
+                  <MessageSquare className="h-5 w-5 text-app-muted" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[#E2E8F0]">Trade chat</p>
-                  <p className="text-xs text-[#64748B]">
+                  <p className="text-sm font-medium text-app-text">Trade chat</p>
+                  <p className="text-xs text-app-muted">
                     Messages are private between you and your trading partner.
                   </p>
-                  <p className="mt-1 text-xs text-[#64748B]">
+                  <p className="mt-1 text-xs text-app-muted">
                     Use quick actions ⚡ to confirm payment status.
                   </p>
                 </div>
@@ -218,11 +218,11 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
             {typing && (
               <div className="flex items-end gap-2">
                 <ProfileAvatar displayName={otherName} avatarColor={otherColor} size="xs" />
-                <div className="rounded-2xl rounded-tl-sm bg-[#1B2B4B] px-3 py-2">
+                <div className="rounded-2xl rounded-tl-sm bg-app-border px-3 py-2">
                   <div className="flex gap-1">
                     {[0,1,2].map(i => (
                       <span key={i}
-                        className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#64748B]"
+                        className="h-1.5 w-1.5 animate-bounce rounded-full bg-app-muted"
                         style={{ animationDelay: `${i * 0.15}s` }}
                       />
                     ))}
@@ -253,15 +253,15 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
           )}
 
           {/* ── Input ── */}
-          <div className="border-t border-[#1B2B4B] bg-[#0F1729] p-3">
+          <div className="border-t border-app-border bg-app-surface p-3">
             <div className="flex items-end gap-2">
               <button
                 onClick={() => setShowActions(!showActions)}
                 title="Quick actions"
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm transition-colors
                   ${showActions
-                    ? 'border-[#378ADD] bg-[#378ADD]/10 text-[#378ADD]'
-                    : 'border-[#1B2B4B] bg-[#0F1729] text-[#64748B] hover:text-[#E2E8F0]'}`}
+                    ? 'border-app-accent bg-app-accent/10 text-app-accent'
+                    : 'border-app-border bg-app-surface text-app-muted hover:text-app-text'}`}
               >
                 ⚡
               </button>
@@ -272,7 +272,7 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
                 disabled={sending}
               />
 
-              <div className="flex flex-1 items-end rounded-xl border border-[#1B2B4B] bg-[#080D1B] px-3 py-2">
+              <div className="flex flex-1 items-end rounded-xl border border-app-border bg-app-bg px-3 py-2">
                 <textarea
                   ref={inputRef}
                   value={input}
@@ -281,20 +281,20 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
                   placeholder="Message… (Enter to send, Shift+Enter for newline)"
                   rows={1}
                   style={{ maxHeight: '80px' }}
-                  className="flex-1 resize-none bg-transparent text-sm text-[#E2E8F0] placeholder:text-[#64748B] outline-none leading-relaxed"
+                  className="flex-1 resize-none bg-transparent text-sm text-app-text placeholder:text-app-muted outline-none leading-relaxed"
                 />
               </div>
 
               <button
                 onClick={handleSend}
                 disabled={(!input.trim() && !pendingMedia) || sending}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#378ADD] text-white transition-all hover:bg-[#2a6fc4] disabled:opacity-40 active:scale-95"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-app-accent text-white transition-all hover:bg-[#2a6fc4] disabled:opacity-40 active:scale-95"
               >
                 <Send className="h-4 w-4" />
               </button>
             </div>
 
-            <p className="mt-1.5 text-center text-[10px] text-[#64748B]">
+            <p className="mt-1.5 text-center text-[10px] text-app-muted">
               🔒 Private · deleted automatically when trade completes
             </p>
           </div>

@@ -21,7 +21,7 @@ export function TimerBanner({ deadline, totalSeconds, phase, isMine }: TimerBann
     ? { bg: 'bg-red-950/40',    border: 'border-red-500/40',   bar: 'bg-red-500',    text: 'text-red-300',    icon: 'text-red-400',    time: 'text-red-200'    }
     : isWarning
     ? { bg: 'bg-amber-950/40',  border: 'border-amber-500/40', bar: 'bg-amber-400',  text: 'text-amber-300',  icon: 'text-amber-400',  time: 'text-amber-200'  }
-    : { bg: 'bg-[#0F1729]',     border: 'border-[#1B2B4B]',    bar: 'bg-[#378ADD]',  text: 'text-[#64748B]',  icon: 'text-[#378ADD]',  time: 'text-[#E2E8F0]'  }
+    : { bg: 'bg-app-surface',     border: 'border-app-border',    bar: 'bg-app-accent',  text: 'text-app-muted',  icon: 'text-app-accent',  time: 'text-app-text'  }
 
   const phaseLabel = phase === 'taker'
     ? isMine ? 'Your window to send local currency' : "Waiting for taker to send"
@@ -56,7 +56,7 @@ export function TimerBanner({ deadline, totalSeconds, phase, isMine }: TimerBann
       </div>
 
       {/* Progress bar — depletes left to right */}
-      <div className="h-2 w-full overflow-hidden rounded-full bg-[#1B2B4B]">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-app-border">
         <div
           className={`h-full rounded-full transition-all duration-1000 ${scheme.bar}`}
           style={{ width: `${Math.max(0, 100 - pctElapsed)}%` }}
@@ -64,9 +64,9 @@ export function TimerBanner({ deadline, totalSeconds, phase, isMine }: TimerBann
       </div>
 
       {/* Bottom label */}
-      <div className="mt-2 flex justify-between text-[10px] text-[#64748B]">
+      <div className="mt-2 flex justify-between text-[10px] text-app-muted">
         <span>Start</span>
-        <span className={`font-medium ${pctElapsed > 90 ? 'text-red-400' : pctElapsed > 70 ? 'text-amber-400' : 'text-[#64748B]'}`}>
+        <span className={`font-medium ${pctElapsed > 90 ? 'text-red-400' : pctElapsed > 70 ? 'text-amber-400' : 'text-app-muted'}`}>
           {Math.round(pctElapsed)}% elapsed
         </span>
         <span>Deadline</span>

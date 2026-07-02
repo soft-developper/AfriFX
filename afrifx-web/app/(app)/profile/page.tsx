@@ -21,8 +21,8 @@ export default function ProfilePage() {
   return (
     <ClientOnly fallback={
       <div className="space-y-4">
-        <div className="h-48 animate-pulse rounded-xl bg-[#0F1729]" />
-        <div className="h-32 animate-pulse rounded-xl bg-[#0F1729]" />
+        <div className="h-48 animate-pulse rounded-xl bg-app-surface" />
+        <div className="h-32 animate-pulse rounded-xl bg-app-surface" />
       </div>
     }>
       <ProfileContent />
@@ -82,7 +82,7 @@ function ProfileContent() {
   if (!profile) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-[#64748B]" />
+        <Loader2 className="h-6 w-6 animate-spin text-app-muted" />
       </div>
     )
   }
@@ -104,18 +104,18 @@ function ProfileContent() {
 
   const repColor = {
     Elite:    'text-amber-400',
-    Verified: 'text-[#378ADD]',
+    Verified: 'text-app-accent',
     Trusted:  'text-emerald-400',
     Active:   'text-emerald-400',
-    New:      'text-[#64748B]',
+    New:      'text-app-muted',
   }[reputation]
 
   const repBg = {
     Elite:    'bg-amber-900/20 border-amber-900/40',
-    Verified: 'bg-[#378ADD]/10 border-[#378ADD]/30',
+    Verified: 'bg-app-accent/10 border-app-accent/30',
     Trusted:  'bg-emerald-900/20 border-emerald-900/40',
     Active:   'bg-emerald-900/10 border-emerald-900/20',
-    New:      'bg-[#1B2B4B] border-[#1B2B4B]',
+    New:      'bg-app-border border-app-border',
   }[reputation]
 
   // Progress to next tier
@@ -128,7 +128,7 @@ function ProfileContent() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-[#E2E8F0]">My profile</h1>
+        <h1 className="text-xl font-semibold text-app-text">My profile</h1>
         {!editing && (
           <Button variant="outline" size="sm" onClick={startEdit}>
             <Edit2 className="h-3.5 w-3.5" /> Edit
@@ -139,7 +139,7 @@ function ProfileContent() {
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
 
         {/* Profile card */}
-        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
+        <div className="rounded-xl border border-app-border bg-app-surface p-5">
           <div className="mb-4 flex flex-col items-center gap-3 text-center">
             <ProfileAvatar
               displayName={profile.display_name}
@@ -153,12 +153,12 @@ function ProfileContent() {
             ) : (
               <div>
                 <div className="flex items-center justify-center gap-2">
-                  <h2 className="text-lg font-semibold text-[#E2E8F0]">
+                  <h2 className="text-lg font-semibold text-app-text">
                     {profile.display_name}
                   </h2>
                   {isVerified && <Badge variant="arc">✓ Verified</Badge>}
                 </div>
-                <p className="text-sm text-[#378ADD]">@{profile.username}</p>
+                <p className="text-sm text-app-accent">@{profile.username}</p>
               </div>
             )}
           </div>
@@ -167,20 +167,20 @@ function ProfileContent() {
           {editing ? (
             <textarea value={bio} onChange={e => setBio(e.target.value)}
               placeholder="Add a bio…" maxLength={160} rows={3}
-              className="mb-3 w-full resize-none rounded-md border border-[#1B2B4B] bg-[#080D1B] px-3 py-2 text-sm text-[#E2E8F0] placeholder:text-[#64748B] focus:outline-none focus:ring-1 focus:ring-[#378ADD]" />
+              className="mb-3 w-full resize-none rounded-md border border-app-border bg-app-bg px-3 py-2 text-sm text-app-text placeholder:text-app-muted focus:outline-none focus:ring-1 focus:ring-app-accent" />
           ) : profile.bio ? (
-            <p className="mb-4 text-center text-sm text-[#64748B]">{profile.bio}</p>
+            <p className="mb-4 text-center text-sm text-app-muted">{profile.bio}</p>
           ) : null}
 
           {/* Wallet address */}
-          <div className="mb-4 flex items-center gap-2 rounded-lg bg-[#080D1B] px-3 py-2">
+          <div className="mb-4 flex items-center gap-2 rounded-lg bg-app-bg px-3 py-2">
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] text-[#64748B]">Wallet</p>
-              <p className="truncate font-mono text-xs text-[#E2E8F0]">
+              <p className="text-[10px] text-app-muted">Wallet</p>
+              <p className="truncate font-mono text-xs text-app-text">
                 {address?.slice(0,10)}…{address?.slice(-6)}
               </p>
             </div>
-            <button onClick={copyAddress} className="shrink-0 text-[#64748B] hover:text-[#E2E8F0]">
+            <button onClick={copyAddress} className="shrink-0 text-app-muted hover:text-app-text">
               {copied
                 ? <Check className="h-3.5 w-3.5 text-emerald-400" />
                 : <Copy className="h-3.5 w-3.5" />
@@ -188,7 +188,7 @@ function ProfileContent() {
             </button>
             <a href={`https://testnet.arcscan.app/address/${address}`}
               target="_blank" rel="noopener noreferrer"
-              className="shrink-0 text-[#64748B] hover:text-[#378ADD]">
+              className="shrink-0 text-app-muted hover:text-app-accent">
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </div>
@@ -197,29 +197,29 @@ function ProfileContent() {
           {editing ? (
             <div className="space-y-2">
               <div className="relative">
-                <Twitter className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#64748B]" />
+                <Twitter className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-app-muted" />
                 <Input value={twitter} onChange={e => setTwitter(e.target.value.replace('@',''))}
                   placeholder="Twitter handle" className="pl-8 text-sm" />
               </div>
               <div className="relative">
-                <AtSign className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#64748B]" />
+                <AtSign className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-app-muted" />
                 <Input value={telegram} onChange={e => setTelegram(e.target.value.replace('@',''))}
                   placeholder="Telegram handle" className="pl-8 text-sm" />
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#64748B]">Show socials publicly</span>
+                <span className="text-app-muted">Show socials publicly</span>
                 <button onClick={() => setShowSocials(!showSocials)}
-                  className={`relative h-5 w-9 rounded-full transition-colors ${showSocials ? 'bg-[#378ADD]' : 'bg-[#1B2B4B]'}`}>
+                  className={`relative h-5 w-9 rounded-full transition-colors ${showSocials ? 'bg-app-accent' : 'bg-app-border'}`}>
                   <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${showSocials ? 'translate-x-4' : 'translate-x-0.5'}`} />
                 </button>
               </div>
             </div>
           ) : (
-            <div className="space-y-1.5 text-xs text-[#64748B]">
+            <div className="space-y-1.5 text-xs text-app-muted">
               {profile.twitter_handle && (
                 <a href={`https://twitter.com/${profile.twitter_handle}`}
                   target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 hover:text-[#E2E8F0]">
+                  className="flex items-center gap-2 hover:text-app-text">
                   <Twitter className="h-3.5 w-3.5" /> @{profile.twitter_handle}
                   <ExternalLink className="ml-auto h-3 w-3" />
                 </a>
@@ -227,7 +227,7 @@ function ProfileContent() {
               {profile.telegram_handle && (
                 <a href={`https://t.me/${profile.telegram_handle}`}
                   target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 hover:text-[#E2E8F0]">
+                  className="flex items-center gap-2 hover:text-app-text">
                   <AtSign className="h-3.5 w-3.5" /> @{profile.telegram_handle}
                   <ExternalLink className="ml-auto h-3 w-3" />
                 </a>
@@ -260,7 +260,7 @@ function ProfileContent() {
                 </div>
                 <div>
                   <p className={`text-lg font-bold ${repColor}`}>{reputation} Trader</p>
-                  <p className="text-xs text-[#64748B]">
+                  <p className="text-xs text-app-muted">
                     {totalTrades} completed trade{totalTrades !== 1 ? 's' : ''} ·{' '}
                     {totalDisputes === 0
                       ? 'Clean record'
@@ -269,7 +269,7 @@ function ProfileContent() {
                 </div>
               </div>
               {isVerified && (
-                <div className="flex items-center gap-2 rounded-full bg-[#378ADD]/10 px-3 py-1.5 text-xs text-[#378ADD]">
+                <div className="flex items-center gap-2 rounded-full bg-app-accent/10 px-3 py-1.5 text-xs text-app-accent">
                   <ShieldCheck className="h-3.5 w-3.5" />
                   Verified
                 </div>
@@ -280,13 +280,13 @@ function ProfileContent() {
             {nextTier && (
               <div className="mt-4">
                 <div className="mb-1 flex justify-between text-xs">
-                  <span className="text-[#64748B]">Progress to {nextTier.label}</span>
-                  <span className="text-[#E2E8F0]">
+                  <span className="text-app-muted">Progress to {nextTier.label}</span>
+                  <span className="text-app-text">
                     {nextTier.current}/{nextTier.need} trades
                     {totalDisputes > 0 ? ' · disputes blocking upgrade' : ''}
                   </span>
                 </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#1B2B4B]">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-app-border">
                   <div
                     className={`h-full rounded-full transition-all ${repColor.replace('text-','bg-')}`}
                     style={{ width: `${Math.min(100, (nextTier.current / nextTier.need) * 100)}%` }}
@@ -310,14 +310,14 @@ function ProfileContent() {
                 label: 'Maker trades',
                 value: String(makerTrades),
                 icon:  TrendingUp,
-                color: 'text-[#378ADD]',
+                color: 'text-app-accent',
                 sub:   'Offers you created',
               },
               {
                 label: 'Taker trades',
                 value: String(takerTrades),
                 icon:  TrendingUp,
-                color: 'text-[#378ADD]',
+                color: 'text-app-accent',
                 sub:   'Offers you accepted',
               },
               {
@@ -328,31 +328,31 @@ function ProfileContent() {
                 sub:   totalDisputes === 0 ? 'Clean record ✓' : 'Raised against you',
               },
             ].map(({ label, value, icon: Icon, color, sub }) => (
-              <div key={label} className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4 text-center">
+              <div key={label} className="rounded-xl border border-app-border bg-app-surface p-4 text-center">
                 <Icon className={`mx-auto mb-1 h-4 w-4 ${color}`} />
                 <p className={`font-mono text-2xl font-bold ${color}`}>{value}</p>
-                <p className="mt-0.5 text-xs font-medium text-[#E2E8F0]">{label}</p>
-                <p className="mt-0.5 text-[10px] text-[#64748B]">{sub}</p>
+                <p className="mt-0.5 text-xs font-medium text-app-text">{label}</p>
+                <p className="mt-0.5 text-[10px] text-app-muted">{sub}</p>
               </div>
             ))}
           </div>
 
           {/* Shareable profile link */}
-          <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
-            <p className="mb-2 text-sm font-medium text-[#E2E8F0]">Public profile link</p>
-            <div className="flex items-center gap-2 rounded-lg bg-[#080D1B] px-3 py-2">
-              <p className="flex-1 truncate font-mono text-xs text-[#378ADD]">
+          <div className="rounded-xl border border-app-border bg-app-surface p-5">
+            <p className="mb-2 text-sm font-medium text-app-text">Public profile link</p>
+            <div className="flex items-center gap-2 rounded-lg bg-app-bg px-3 py-2">
+              <p className="flex-1 truncate font-mono text-xs text-app-accent">
                 {typeof window !== 'undefined' ? window.location.origin : ''}/profile/{profile.username}
               </p>
               <button
                 onClick={() => navigator.clipboard.writeText(
                   `${window.location.origin}/profile/${profile.username}`
                 )}
-                className="shrink-0 text-xs text-[#64748B] hover:text-[#E2E8F0]">
+                className="shrink-0 text-xs text-app-muted hover:text-app-text">
                 Copy
               </button>
             </div>
-            <p className="mt-2 text-xs text-[#64748B]">
+            <p className="mt-2 text-xs text-app-muted">
               Share this link so traders can verify your reputation before trading with you.
             </p>
           </div>

@@ -37,32 +37,32 @@ function SidebarContent({
             <Link key={href} href={href} onClick={onNavigate}
               className={`flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors
                 ${active
-                  ? 'bg-[#1B2B4B] font-medium text-[#E2E8F0]'
-                  : 'text-[#64748B] hover:bg-[#080D1B] hover:text-[#E2E8F0]'}`}>
+                  ? 'bg-app-border font-medium text-app-text'
+                  : 'text-app-muted hover:bg-app-bg hover:text-app-text'}`}>
               <Icon className="h-4 w-4 shrink-0" /> {label}
             </Link>
           )
         })}
       </nav>
-      <div className="shrink-0 border-t border-[#1B2B4B] p-3 space-y-2">
-        <div className="rounded-lg bg-[#080D1B] px-3 py-2">
-          <p className="text-xs font-medium text-[#E2E8F0]">{admin.username}</p>
-          <p className="text-[10px] text-[#378ADD]">
+      <div className="shrink-0 border-t border-app-border p-3 space-y-2">
+        <div className="rounded-lg bg-app-bg px-3 py-2">
+          <p className="text-xs font-medium text-app-text">{admin.username}</p>
+          <p className="text-[10px] text-app-accent">
             {admin.role === 'super_admin' ? '★ Super Admin' : 'Sub-admin'}
           </p>
         </div>
         <Link href="/admin/settings" onClick={onNavigate}
-          className="flex items-center gap-2 rounded-lg border border-[#1B2B4B] px-3 py-2 text-xs text-[#64748B] hover:bg-[#080D1B] hover:text-[#E2E8F0] transition-colors">
+          className="flex items-center gap-2 rounded-lg border border-app-border px-3 py-2 text-xs text-app-muted hover:bg-app-bg hover:text-app-text transition-colors">
           <Settings className="h-3.5 w-3.5 shrink-0" />
           Settings
         </Link>
         <Link href="/dashboard" onClick={onNavigate}
-          className="flex items-center gap-2 rounded-lg border border-[#1B2B4B] px-3 py-2 text-xs text-[#64748B] hover:bg-[#080D1B] hover:text-[#E2E8F0] transition-colors">
+          className="flex items-center gap-2 rounded-lg border border-app-border px-3 py-2 text-xs text-app-muted hover:bg-app-bg hover:text-app-text transition-colors">
           <LayoutDashboard className="h-3.5 w-3.5 shrink-0" />
           Main dashboard
         </Link>
         <button onClick={onLogout}
-          className="flex w-full items-center gap-2 rounded-lg border border-[#1B2B4B] px-3 py-2 text-xs text-[#64748B] hover:bg-[#080D1B] hover:text-red-400 transition-colors">
+          className="flex w-full items-center gap-2 rounded-lg border border-app-border px-3 py-2 text-xs text-app-muted hover:bg-app-bg hover:text-red-400 transition-colors">
           <LogOut className="h-3.5 w-3.5 shrink-0" />
           Logout
         </button>
@@ -91,8 +91,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }, [drawerOpen])
 
   if (loading) return (
-    <div className="flex min-h-screen items-center justify-center bg-[#080D1B]">
-      <Loader2 className="h-6 w-6 animate-spin text-[#378ADD]" />
+    <div className="flex min-h-screen items-center justify-center bg-app-bg">
+      <Loader2 className="h-6 w-6 animate-spin text-app-accent" />
     </div>
   )
 
@@ -127,15 +127,15 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#080D1B] md:flex-row">
+    <div className="flex h-screen flex-col overflow-hidden bg-app-bg md:flex-row">
       {/* Mobile top bar — hidden md+ */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#1B2B4B] bg-[#0F1729] px-4 md:hidden">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-app-border bg-app-surface px-4 md:hidden">
         <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-[#378ADD]" />
-          <span className="font-semibold text-[#E2E8F0]">AfriFX Admin</span>
+          <Shield className="h-5 w-5 text-app-accent" />
+          <span className="font-semibold text-app-text">AfriFX Admin</span>
         </div>
         <button onClick={() => setDrawerOpen(true)}
-          className="rounded-lg p-1.5 text-[#64748B] hover:bg-[#080D1B] hover:text-[#E2E8F0]"
+          className="rounded-lg p-1.5 text-app-muted hover:bg-app-bg hover:text-app-text"
           aria-label="Open admin menu">
           <Menu className="h-5 w-5" />
         </button>
@@ -148,14 +148,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
             onClick={() => setDrawerOpen(false)}
           />
-          <div className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-[#0F1729] shadow-2xl">
-            <div className="flex shrink-0 items-center justify-between border-b border-[#1B2B4B] px-4 py-4">
+          <div className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-app-surface shadow-2xl">
+            <div className="flex shrink-0 items-center justify-between border-b border-app-border px-4 py-4">
               <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-[#378ADD]" />
-                <span className="font-semibold text-[#E2E8F0]">AfriFX Admin</span>
+                <Shield className="h-5 w-5 text-app-accent" />
+                <span className="font-semibold text-app-text">AfriFX Admin</span>
               </div>
               <button onClick={() => setDrawerOpen(false)}
-                className="rounded-lg p-1.5 text-[#64748B] hover:text-[#E2E8F0]"
+                className="rounded-lg p-1.5 text-app-muted hover:text-app-text"
                 aria-label="Close admin menu">
                 <X className="h-5 w-5" />
               </button>
@@ -169,10 +169,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Desktop sidebar — hidden on mobile */}
-      <aside className="hidden md:flex md:w-56 md:shrink-0 flex-col border-r border-[#1B2B4B] bg-[#0F1729]">
-        <div className="flex items-center gap-2 border-b border-[#1B2B4B] px-4 py-4">
-          <Shield className="h-5 w-5 text-[#378ADD]" />
-          <span className="font-semibold text-[#E2E8F0]">AfriFX Admin</span>
+      <aside className="hidden md:flex md:w-56 md:shrink-0 flex-col border-r border-app-border bg-app-surface">
+        <div className="flex items-center gap-2 border-b border-app-border px-4 py-4">
+          <Shield className="h-5 w-5 text-app-accent" />
+          <span className="font-semibold text-app-text">AfriFX Admin</span>
         </div>
         <SidebarContent
           admin={admin} pathname={pathname} visibleNav={visibleNav}

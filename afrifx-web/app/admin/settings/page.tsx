@@ -40,7 +40,7 @@ function ChangePasswordCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Lock className="h-4 w-4 text-[#378ADD]" /> Change password</CardTitle>
+        <CardTitle className="flex items-center gap-2"><Lock className="h-4 w-4 text-app-accent" /> Change password</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <Input type="password" placeholder="Current password" autoComplete="current-password"
@@ -50,7 +50,7 @@ function ChangePasswordCard() {
         <Input type="password" placeholder="Confirm new password" autoComplete="new-password"
           value={confirm} onChange={e => setConfirm(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
-        <p className="text-[11px] text-[#64748B]">
+        <p className="text-[11px] text-app-muted">
           Min 12 characters, with uppercase, lowercase, a number, and a special character.
         </p>
         <Button onClick={handleSubmit} disabled={busy}>
@@ -126,7 +126,7 @@ function TwoFactorCard({ autoStart }: { autoStart: boolean }) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <KeyRound className="h-4 w-4 text-[#378ADD]" /> Two-factor authentication
+          <KeyRound className="h-4 w-4 text-app-accent" /> Two-factor authentication
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -149,7 +149,7 @@ function TwoFactorCard({ autoStart }: { autoStart: boolean }) {
 
         {stage === 'qr' && (
           <div className="space-y-3">
-            <p className="text-xs text-[#64748B]">
+            <p className="text-xs text-app-muted">
               Scan this QR code with an authenticator app (Google Authenticator, 1Password, Authy).
             </p>
             {qrCode && (
@@ -157,7 +157,7 @@ function TwoFactorCard({ autoStart }: { autoStart: boolean }) {
                 <img src={qrCode} alt="2FA QR code" className="h-40 w-40" />
               </div>
             )}
-            <p className="break-all rounded-lg bg-[#080D1B] p-2 text-center font-mono text-[10px] text-[#64748B]">
+            <p className="break-all rounded-lg bg-app-bg p-2 text-center font-mono text-[10px] text-app-muted">
               {secret}
             </p>
             <Input className="text-center tracking-[0.4em] text-lg" placeholder="000000"
@@ -175,10 +175,10 @@ function TwoFactorCard({ autoStart }: { autoStart: boolean }) {
             <div className="flex items-center gap-2 rounded-lg bg-emerald-900/20 px-3 py-2.5 text-xs text-emerald-400">
               <CheckCircle className="h-4 w-4" /> 2FA enabled
             </div>
-            <p className="text-xs text-[#64748B]">
+            <p className="text-xs text-app-muted">
               Save these recovery codes somewhere safe — each can be used once if you lose access to your authenticator.
             </p>
-            <div className="grid grid-cols-2 gap-1.5 rounded-lg bg-[#080D1B] p-3 font-mono text-xs text-[#E2E8F0]">
+            <div className="grid grid-cols-2 gap-1.5 rounded-lg bg-app-bg p-3 font-mono text-xs text-app-text">
               {codes.map(c => <span key={c}>{c}</span>)}
             </div>
             <Button variant="outline" onClick={copyRecoveryCodes}>
@@ -205,10 +205,10 @@ function SettingsBody() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <div>
-        <h1 className="text-lg font-semibold text-[#E2E8F0]">Account settings</h1>
+        <h1 className="text-lg font-semibold text-app-text">Account settings</h1>
         {admin && (
-          <p className="text-sm text-[#64748B]">
-            Signed in as <span className="text-[#378ADD]">{admin.username}</span> · {admin.email}
+          <p className="text-sm text-app-muted">
+            Signed in as <span className="text-app-accent">{admin.username}</span> · {admin.email}
           </p>
         )}
       </div>
@@ -222,7 +222,7 @@ export default function AdminSettingsPage() {
   return (
     <AdminShell>
       <Suspense fallback={
-        <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-[#378ADD]" /></div>
+        <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-app-accent" /></div>
       }>
         <SettingsBody />
       </Suspense>

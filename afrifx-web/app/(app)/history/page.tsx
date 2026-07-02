@@ -46,25 +46,25 @@ export default function HistoryPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-[#E2E8F0]">History</h1>
-          <p className="text-sm text-[#64748B]">All your Arc transactions</p>
+          <h1 className="text-xl font-semibold text-app-text">History</h1>
+          <p className="text-sm text-app-muted">All your Arc transactions</p>
         </div>
-        <div className="flex items-center gap-1 rounded-lg border border-[#1B2B4B] bg-[#0F1729] p-1">
+        <div className="flex items-center gap-1 rounded-lg border border-app-border bg-app-surface p-1">
           {(['all','settled','pending','failed'] as StatusFilter[]).map(s => (
             <button key={s} onClick={() => setStatus(s)}
               className={`rounded-md px-3 py-1 text-xs capitalize transition-colors
                 ${status === s
-                  ? 'bg-[#1B2B4B] text-[#E2E8F0]'
-                  : 'text-[#64748B] hover:text-[#E2E8F0]'}`}>
+                  ? 'bg-app-border text-app-text'
+                  : 'text-app-muted hover:text-app-text'}`}>
               {s}
             </button>
           ))}
         </div>
       </div>
 
-      {loading && <p className="text-sm text-[#64748B]">Loading…</p>}
+      {loading && <p className="text-sm text-app-muted">Loading…</p>}
       {!loading && filtered.length === 0 && (
-        <p className="text-sm text-[#64748B]">No transactions found.</p>
+        <p className="text-sm text-app-muted">No transactions found.</p>
       )}
 
       <div className="space-y-3">
@@ -75,11 +75,11 @@ export default function HistoryPage() {
           const fromCcy = step1?.from_currency ?? step1?.fromCurrency ?? ''
           const toCcy   = step2?.to_currency   ?? step2?.toCurrency   ?? ''
           return (
-            <div key={cid} className="rounded-xl border border-[#378ADD]/20 bg-[#0F1729]">
-              <div className="flex items-center gap-2 border-b border-[#1B2B4B] px-4 py-2.5">
+            <div key={cid} className="rounded-xl border border-app-accent/20 bg-app-surface">
+              <div className="flex items-center gap-2 border-b border-app-border px-4 py-2.5">
                 <Badge variant="arc">Corridor</Badge>
                 {step1 && step2 && (
-                  <span className="flex items-center gap-1 text-xs text-[#64748B]">
+                  <span className="flex items-center gap-1 text-xs text-app-muted">
                     {fromCcy}
                     <ArrowRight className="h-3 w-3" />
                     USDC
@@ -87,7 +87,7 @@ export default function HistoryPage() {
                     {toCcy}
                   </span>
                 )}
-                <span className="ml-auto font-mono text-[10px] text-[#378ADD]">{cid}</span>
+                <span className="ml-auto font-mono text-[10px] text-app-accent">{cid}</span>
               </div>
               {steps
                 .sort((a: any, b: any) =>
@@ -102,7 +102,7 @@ export default function HistoryPage() {
 
         {/* Standalone */}
         {standalone.map((tx: any) => (
-          <div key={tx.id} className="rounded-xl border border-[#1B2B4B] bg-[#0F1729]">
+          <div key={tx.id} className="rounded-xl border border-app-border bg-app-surface">
             <TxRow tx={tx} />
           </div>
         ))}
@@ -124,20 +124,20 @@ function TxRow({ tx, isCorridorStep = false }: { tx: any; isCorridorStep?: boole
 
   return (
     <div className={`flex items-center gap-3 px-4 py-3.5
-      ${isCorridorStep ? 'border-b border-[#1B2B4B] last:border-0' : ''}`}>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#378ADD]/10">
-        <ArrowLeftRight className="h-4 w-4 text-[#378ADD]" />
+      ${isCorridorStep ? 'border-b border-app-border last:border-0' : ''}`}>
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-app-accent/10">
+        <ArrowLeftRight className="h-4 w-4 text-app-accent" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-[#E2E8F0]">
+        <p className="text-sm font-medium text-app-text">
           {isCorridorStep && step && (
-            <span className="mr-1.5 text-[10px] text-[#64748B]">Step {step}</span>
+            <span className="mr-1.5 text-[10px] text-app-muted">Step {step}</span>
           )}
           {fromCcy} → {toCcy}
         </p>
-        <div className="flex items-center gap-2 text-[10px] text-[#64748B]">
+        <div className="flex items-center gap-2 text-[10px] text-app-muted">
           <span>{new Date(createdAt * 1000).toLocaleString()}</span>
-          {ref && <span className="font-mono text-[#378ADD]">{ref}</span>}
+          {ref && <span className="font-mono text-app-accent">{ref}</span>}
         </div>
       </div>
       <div className="shrink-0 text-right">
@@ -158,7 +158,7 @@ function TxRow({ tx, isCorridorStep = false }: { tx: any; isCorridorStep?: boole
         {hash && (
           <a href={`https://testnet.arcscan.app/tx/${hash}`}
             target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="h-3 w-3 text-[#64748B] hover:text-[#378ADD]" />
+            <ExternalLink className="h-3 w-3 text-app-muted hover:text-app-accent" />
           </a>
         )}
       </div>

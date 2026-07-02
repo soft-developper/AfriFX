@@ -13,13 +13,13 @@ export default function PublicProfilePage() {
 
   if (isLoading) return (
     <div className="space-y-4">
-      <div className="h-48 animate-pulse rounded-xl bg-[#0F1729]" />
+      <div className="h-48 animate-pulse rounded-xl bg-app-surface" />
     </div>
   )
 
   if (!profile) return (
     <div className="flex h-64 flex-col items-center justify-center gap-3">
-      <p className="text-sm text-[#E2E8F0]">Profile not found.</p>
+      <p className="text-sm text-app-text">Profile not found.</p>
       <Link href="/marketplace"><Button variant="outline" size="sm">← Back</Button></Link>
     </div>
   )
@@ -29,22 +29,22 @@ export default function PublicProfilePage() {
     ? 'Elite' : totalTrades >= 5 ? 'Trusted' : totalTrades >= 1 ? 'Active' : 'New'
   const repColor = {
     Elite: 'text-amber-400', Trusted: 'text-emerald-400',
-    Active: 'text-[#378ADD]', New: 'text-[#64748B]',
+    Active: 'text-app-accent', New: 'text-app-muted',
   }[reputation]
 
   return (
     <div>
       <div className="mb-6 flex items-center gap-3">
         <Link href="/marketplace">
-          <button className="rounded-lg border border-[#1B2B4B] p-2 text-[#64748B] hover:text-[#E2E8F0]">
+          <button className="rounded-lg border border-app-border p-2 text-app-muted hover:text-app-text">
             <ArrowLeft className="h-4 w-4" />
           </button>
         </Link>
-        <h1 className="text-xl font-semibold text-[#E2E8F0]">Trader profile</h1>
+        <h1 className="text-xl font-semibold text-app-text">Trader profile</h1>
       </div>
 
       <div className="max-w-lg space-y-4">
-        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-6">
+        <div className="rounded-xl border border-app-border bg-app-surface p-6">
           <div className="mb-4 flex items-center gap-4">
             <ProfileAvatar
               displayName={profile.display_name}
@@ -54,13 +54,13 @@ export default function PublicProfilePage() {
             />
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-[#E2E8F0]">{profile.display_name}</h2>
+                <h2 className="text-lg font-semibold text-app-text">{profile.display_name}</h2>
                 {profile.verified && (
                   <Badge variant="arc"><ShieldCheck className="h-3 w-3" /> Verified</Badge>
                 )}
               </div>
-              <p className="text-sm text-[#378ADD]">@{profile.username}</p>
-              {profile.bio && <p className="mt-1 text-xs text-[#64748B]">{profile.bio}</p>}
+              <p className="text-sm text-app-accent">@{profile.username}</p>
+              {profile.bio && <p className="mt-1 text-xs text-app-muted">{profile.bio}</p>}
             </div>
           </div>
 
@@ -68,11 +68,11 @@ export default function PublicProfilePage() {
           <div className="mb-4 grid grid-cols-3 gap-2">
             {[
               { label: 'Reputation', value: reputation, color: repColor },
-              { label: 'Trades',     value: String(totalTrades),          color: 'text-[#E2E8F0]' },
+              { label: 'Trades',     value: String(totalTrades),          color: 'text-app-text' },
               { label: 'Disputes',   value: String(profile.dispute_count), color: profile.dispute_count > 0 ? 'text-red-400' : 'text-emerald-400' },
             ].map(({ label, value, color }) => (
-              <div key={label} className="rounded-lg bg-[#080D1B] p-3 text-center">
-                <p className="text-[10px] text-[#64748B]">{label}</p>
+              <div key={label} className="rounded-lg bg-app-bg p-3 text-center">
+                <p className="text-[10px] text-app-muted">{label}</p>
                 <p className={`mt-1 text-base font-bold ${color}`}>{value}</p>
               </div>
             ))}
@@ -80,17 +80,17 @@ export default function PublicProfilePage() {
 
           {/* Socials */}
           {(profile.twitter_handle || profile.telegram_handle) && (
-            <div className="space-y-1.5 border-t border-[#1B2B4B] pt-4 text-xs text-[#64748B]">
+            <div className="space-y-1.5 border-t border-app-border pt-4 text-xs text-app-muted">
               {profile.twitter_handle && (
                 <a href={`https://twitter.com/${profile.twitter_handle}`} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 hover:text-[#E2E8F0]">
+                  className="flex items-center gap-2 hover:text-app-text">
                   <Twitter className="h-3.5 w-3.5" /> @{profile.twitter_handle}
                   <ExternalLink className="ml-auto h-3 w-3" />
                 </a>
               )}
               {profile.telegram_handle && (
                 <a href={`https://t.me/${profile.telegram_handle}`} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 hover:text-[#E2E8F0]">
+                  className="flex items-center gap-2 hover:text-app-text">
                   <AtSign className="h-3.5 w-3.5" /> @{profile.telegram_handle}
                   <ExternalLink className="ml-auto h-3 w-3" />
                 </a>
@@ -99,7 +99,7 @@ export default function PublicProfilePage() {
           )}
         </div>
 
-        <p className="text-center text-xs text-[#64748B]">
+        <p className="text-center text-xs text-app-muted">
           Member since {new Date(profile.created_at * 1000).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
         </p>
       </div>

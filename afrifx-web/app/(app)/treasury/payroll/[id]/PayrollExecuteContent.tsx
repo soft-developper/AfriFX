@@ -31,7 +31,7 @@ export function PayrollExecuteContent() {
 
   if (!batch) return (
     <div className="flex h-64 items-center justify-center">
-      <Loader2 className="h-6 w-6 animate-spin text-[#64748B]" />
+      <Loader2 className="h-6 w-6 animate-spin text-app-muted" />
     </div>
   )
 
@@ -112,16 +112,16 @@ export function PayrollExecuteContent() {
     <div>
       <div className="mb-6 flex items-center gap-3">
         <Link href="/treasury">
-          <button className="rounded-lg border border-[#1B2B4B] p-2 text-[#64748B] hover:text-[#E2E8F0]">
+          <button className="rounded-lg border border-app-border p-2 text-app-muted hover:text-app-text">
             <ArrowLeft className="h-4 w-4" />
           </button>
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold text-[#E2E8F0]">{batch!.name}</h1>
+            <h1 className="text-xl font-semibold text-app-text">{batch!.name}</h1>
             <Badge variant={statusBadge}>{batch!.status}</Badge>
           </div>
-          <p className="text-xs text-[#64748B]">
+          <p className="text-xs text-app-muted">
             {batch.recipient_count} recipients · ${formatAmount(batch!.total_amount)} USDC
             · Created {new Date(batch!.created_at * 1000).toLocaleDateString()}
           </p>
@@ -130,23 +130,23 @@ export function PayrollExecuteContent() {
 
       {/* Progress bar */}
       {(executing || batch!.status === 'completed') && (
-        <div className="mb-4 rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
+        <div className="mb-4 rounded-xl border border-app-border bg-app-surface p-4">
           <div className="mb-2 flex items-center justify-between text-xs">
-            <span className="text-[#64748B]">
+            <span className="text-app-muted">
               {executing ? `Sending payment ${currentIdx + 1} of ${recipients.filter(r => r.status === 'pending').length}…` : 'All payments sent'}
             </span>
-            <span className={`font-medium ${pct === 100 ? 'text-emerald-400' : 'text-[#E2E8F0]'}`}>
+            <span className={`font-medium ${pct === 100 ? 'text-emerald-400' : 'text-app-text'}`}>
               {sentCount}/{recipients.length} · {pct}%
             </span>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-[#1B2B4B]">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-app-border">
             <div
               className="h-full rounded-full bg-emerald-500 transition-all duration-500"
               style={{ width: `${pct}%` }}
             />
           </div>
           {executing && (
-            <p className="mt-1.5 text-center text-xs text-[#64748B]">
+            <p className="mt-1.5 text-center text-xs text-app-muted">
               Do not close this tab until all payments are sent.
             </p>
           )}
@@ -177,45 +177,45 @@ export function PayrollExecuteContent() {
       <div className="grid gap-4 lg:grid-cols-3">
 
         {/* Recipients table */}
-        <div className="lg:col-span-2 rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
-          <p className="mb-4 text-sm font-medium text-[#E2E8F0]">Recipients</p>
+        <div className="lg:col-span-2 rounded-xl border border-app-border bg-app-surface p-5">
+          <p className="mb-4 text-sm font-medium text-app-text">Recipients</p>
           <div className="space-y-2">
             {recipients.map((r, i) => (
               <div key={r.id}
                 className={`flex items-center gap-3 rounded-xl p-3 transition-colors
                   ${executing && i === currentIdx && r.status === 'pending'
-                    ? 'border border-[#378ADD]/40 bg-[#378ADD]/5'
-                    : 'border border-[#1B2B4B] bg-[#080D1B]'}`}>
+                    ? 'border border-app-accent/40 bg-app-accent/5'
+                    : 'border border-app-border bg-app-bg'}`}>
 
                 {/* Status icon */}
                 <div className="shrink-0">
                   {r.status === 'sent'    ? <CheckCircle className="h-4 w-4 text-emerald-400" />
                   : r.status === 'failed' ? <XCircle     className="h-4 w-4 text-red-400" />
                   : executing && i === currentIdx
-                  ? <Loader2 className="h-4 w-4 animate-spin text-[#378ADD]" />
-                  : <Clock   className="h-4 w-4 text-[#64748B]" />}
+                  ? <Loader2 className="h-4 w-4 animate-spin text-app-accent" />
+                  : <Clock   className="h-4 w-4 text-app-muted" />}
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   {r.name && (
-                    <p className="text-xs font-medium text-[#E2E8F0]">{r.name}</p>
+                    <p className="text-xs font-medium text-app-text">{r.name}</p>
                   )}
-                  <p className="font-mono text-[11px] text-[#64748B] truncate">{r.wallet_address}</p>
+                  <p className="font-mono text-[11px] text-app-muted truncate">{r.wallet_address}</p>
                   {r.memo_ref && (
-                    <p className="text-[10px] text-[#64748B]">{r.memo_ref}</p>
+                    <p className="text-[10px] text-app-muted">{r.memo_ref}</p>
                   )}
                 </div>
 
                 {/* Amount */}
                 <div className="shrink-0 text-right">
-                  <p className="font-mono text-sm font-medium text-[#E2E8F0]">
+                  <p className="font-mono text-sm font-medium text-app-text">
                     {formatAmount(r.amount)} USDC
                   </p>
                   {r.tx_hash && (
                     <a href={`https://testnet.arcscan.app/tx/${r.tx_hash}`}
                       target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[10px] text-[#378ADD] hover:underline">
+                      className="inline-flex items-center gap-1 text-[10px] text-app-accent hover:underline">
                       View tx <ExternalLink className="h-2.5 w-2.5" />
                     </a>
                   )}
@@ -227,8 +227,8 @@ export function PayrollExecuteContent() {
 
         {/* Action panel */}
         <div className="space-y-4">
-          <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-5">
-            <p className="mb-4 text-sm font-medium text-[#E2E8F0]">Execute</p>
+          <div className="rounded-xl border border-app-border bg-app-surface p-5">
+            <p className="mb-4 text-sm font-medium text-app-text">Execute</p>
             <div className="space-y-2 text-xs">
               {[
                 ['Recipients', String(batch.recipient_count)],
@@ -236,8 +236,8 @@ export function PayrollExecuteContent() {
                 ['Sent',       `${sentCount} / ${batch.recipient_count}`],
               ].map(([l,v]) => (
                 <div key={l} className="flex justify-between">
-                  <span className="text-[#64748B]">{l}</span>
-                  <span className="font-mono text-[#E2E8F0]">{v}</span>
+                  <span className="text-app-muted">{l}</span>
+                  <span className="font-mono text-app-text">{v}</span>
                 </div>
               ))}
             </div>
@@ -262,7 +262,7 @@ export function PayrollExecuteContent() {
               </div>
             )}
 
-            <p className="mt-2 text-center text-[10px] text-[#64748B]">
+            <p className="mt-2 text-center text-[10px] text-app-muted">
               Each payment is sent individually on Arc with a unique Memo reference
             </p>
           </div>

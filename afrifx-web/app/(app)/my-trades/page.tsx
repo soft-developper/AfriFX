@@ -60,7 +60,7 @@ export default function MyTradesPage() {
   if (!isConnected) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <p className="text-sm text-[#64748B]">Connect your wallet to view your trades.</p>
+        <p className="text-sm text-app-muted">Connect your wallet to view your trades.</p>
       </div>
     )
   }
@@ -69,8 +69,8 @@ export default function MyTradesPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-[#E2E8F0]">My trades</h1>
-          <p className="text-sm text-[#64748B]">All your P2P trades — as buyer or seller.</p>
+          <h1 className="text-xl font-semibold text-app-text">My trades</h1>
+          <p className="text-sm text-app-muted">All your P2P trades — as buyer or seller.</p>
         </div>
         <Link href="/marketplace/create">
           <Button size="sm"><Plus className="h-4 w-4" /> New offer</Button>
@@ -78,11 +78,11 @@ export default function MyTradesPage() {
       </div>
 
       {/* Filter tabs */}
-      <div className="mb-4 flex gap-1 rounded-lg border border-[#1B2B4B] bg-[#0F1729] p-1 w-fit">
+      <div className="mb-4 flex gap-1 rounded-lg border border-app-border bg-app-surface p-1 w-fit">
         {(['all','open','accepted','released','cancelled'] as const).map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={`rounded-md px-3 py-1.5 text-xs capitalize transition-colors
-              ${filter === f ? 'bg-[#1B2B4B] text-[#E2E8F0]' : 'text-[#64748B] hover:text-[#E2E8F0]'}`}>
+              ${filter === f ? 'bg-app-border text-app-text' : 'text-app-muted hover:text-app-text'}`}>
             {f}
           </button>
         ))}
@@ -90,13 +90,13 @@ export default function MyTradesPage() {
 
       {loading && (
         <div className="space-y-2">
-          {[1,2,3].map(i => <div key={i} className="h-24 animate-pulse rounded-xl bg-[#0F1729]" />)}
+          {[1,2,3].map(i => <div key={i} className="h-24 animate-pulse rounded-xl bg-app-surface" />)}
         </div>
       )}
 
       {!loading && filtered.length === 0 && (
-        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-10 text-center">
-          <p className="text-sm text-[#64748B]">No trades found.</p>
+        <div className="rounded-xl border border-app-border bg-app-surface p-10 text-center">
+          <p className="text-sm text-app-muted">No trades found.</p>
           <Link href="/marketplace/create">
             <Button variant="outline" size="sm" className="mt-4">
               <Plus className="h-4 w-4" /> Create your first offer
@@ -115,19 +115,19 @@ export default function MyTradesPage() {
 
           return (
             <div key={offer.id}
-              className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
+              className="rounded-xl border border-app-border bg-app-surface p-4">
               <div className="flex items-center gap-4">
                 {/* Flag */}
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#080D1B] text-xl">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-app-bg text-xl">
                   {CURRENCY_FLAG[offer.local_currency] ?? '🌍'}
                 </div>
 
                 {/* Details */}
                 <div className="flex-1 min-w-0 space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium text-[#E2E8F0]">
+                    <p className="font-medium text-app-text">
                       {Number(offer.usdc_amount).toFixed(2)} USDC
-                      <span className="mx-1.5 text-[#64748B]">↔</span>
+                      <span className="mx-1.5 text-app-muted">↔</span>
                       {Number(offer.local_amount).toLocaleString()} {offer.local_currency}
                     </p>
                     <Badge variant="arc">{myRole}</Badge>
@@ -141,15 +141,15 @@ export default function MyTradesPage() {
 
                   {/* Counterparty + date */}
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-xs text-[#64748B]">{otherRole}:</span>
-                    <ClientOnly fallback={<span className="text-xs text-[#64748B]">Loading…</span>}>
+                    <span className="text-xs text-app-muted">{otherRole}:</span>
+                    <ClientOnly fallback={<span className="text-xs text-app-muted">Loading…</span>}>
                       {otherAddr
                         ? <UserDisplay address={otherAddr} size="xs" fallback="Waiting…" />
-                        : <span className="text-xs text-[#64748B]">Waiting for buyer…</span>
+                        : <span className="text-xs text-app-muted">Waiting for buyer…</span>
                       }
                     </ClientOnly>
-                    <span className="text-xs text-[#64748B]">·</span>
-                    <span className="text-xs text-[#64748B]">
+                    <span className="text-xs text-app-muted">·</span>
+                    <span className="text-xs text-app-muted">
                       {new Date(offer.created_at * 1000).toLocaleDateString()}
                     </span>
                     {offer.release_tx_hash && (

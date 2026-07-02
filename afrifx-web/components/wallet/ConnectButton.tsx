@@ -8,7 +8,7 @@ export function ConnectButton({ label = 'Connect wallet' }: { label?: string }) 
   return (
     <button
       onClick={openConnectModal}
-      className="rounded-xl bg-[#378ADD] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90">
+      className="rounded-xl bg-app-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90">
       {label}
     </button>
   )

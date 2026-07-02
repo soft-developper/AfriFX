@@ -72,7 +72,7 @@ export function CreateOfferClient() {
   if (!isConnected) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <p className="text-sm text-[#64748B]">Connect your wallet to create an offer.</p>
+        <p className="text-sm text-app-muted">Connect your wallet to create an offer.</p>
       </div>
     )
   }
@@ -81,36 +81,36 @@ export function CreateOfferClient() {
     <div>
       <div className="mb-6 flex items-center gap-3">
         <Link href="/marketplace">
-          <button className="rounded-lg border border-[#1B2B4B] p-2 text-[#64748B] hover:text-[#E2E8F0]">
+          <button className="rounded-lg border border-app-border p-2 text-app-muted hover:text-app-text">
             <ArrowLeft className="h-4 w-4" />
           </button>
         </Link>
         <div>
-          <h1 className="text-xl font-semibold text-[#E2E8F0]">Create P2P offer</h1>
-          <p className="text-sm text-[#64748B]">Lock USDC in escrow — perpetual until filled or cancelled.</p>
+          <h1 className="text-xl font-semibold text-app-text">Create P2P offer</h1>
+          <p className="text-sm text-app-muted">Lock USDC in escrow — perpetual until filled or cancelled.</p>
         </div>
       </div>
 
       <div className="w-full max-w-md space-y-4">
 
         {/* Order type tabs */}
-        <div className="flex rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-1">
+        <div className="flex rounded-xl border border-app-border bg-app-surface p-1">
           <button onClick={() => setOrderType('market')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors
-              ${orderType === 'market' ? 'bg-[#378ADD] text-white' : 'text-[#64748B] hover:text-[#E2E8F0]'}`}>
+              ${orderType === 'market' ? 'bg-app-accent text-white' : 'text-app-muted hover:text-app-text'}`}>
             <TrendingUp className="h-4 w-4" /> Market order
           </button>
           <button onClick={() => setOrderType('limit')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors
-              ${orderType === 'limit' ? 'bg-[#378ADD] text-white' : 'text-[#64748B] hover:text-[#E2E8F0]'}`}>
+              ${orderType === 'limit' ? 'bg-app-accent text-white' : 'text-app-muted hover:text-app-text'}`}>
             <Sliders className="h-4 w-4" /> Limit order
           </button>
         </div>
 
         {/* Description */}
-        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-3 text-xs text-[#64748B]">
+        <div className="rounded-xl border border-app-border bg-app-surface p-3 text-xs text-app-muted">
           <div className="flex items-start gap-2">
-            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#378ADD]" />
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-app-accent" />
             {orderType === 'market'
               ? 'Market order uses the live exchange rate. Local amount is calculated automatically.'
               : 'Limit order lets you set a custom rate within ±5% of the market rate.'}
@@ -118,18 +118,18 @@ export function CreateOfferClient() {
         </div>
 
         {/* USDC + currency */}
-        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
+        <div className="rounded-xl border border-app-border bg-app-surface p-4">
           <div className="mb-3 flex items-center justify-between">
-            <label className="text-xs font-medium uppercase tracking-wider text-[#64748B]">
+            <label className="text-xs font-medium uppercase tracking-wider text-app-muted">
               USDC to lock in escrow
             </label>
-            <span className="text-xs text-[#64748B]">
-              Balance: <span className="text-[#E2E8F0]">{balance}</span>
+            <span className="text-xs text-app-muted">
+              Balance: <span className="text-app-text">{balance}</span>
             </span>
           </div>
           <div className="flex gap-2">
             <select value={localCurrency} onChange={(e) => setLocalCurrency(e.target.value)}
-              className="rounded-lg border border-[#1B2B4B] bg-[#080D1B] px-3 py-2 text-sm text-[#E2E8F0] outline-none">
+              className="rounded-lg border border-app-border bg-app-bg px-3 py-2 text-sm text-app-text outline-none">
               {CURRENCIES.map(c => (
                 <option key={c} value={c}>{CURRENCY_FLAG[c]} {c}</option>
               ))}
@@ -142,23 +142,23 @@ export function CreateOfferClient() {
 
         {/* Rate display + limit slider */}
         {marketRate > 0 && (
-          <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
+          <div className="rounded-xl border border-app-border bg-app-surface p-4">
             <div className="mb-2 flex items-center justify-between text-xs">
-              <span className="text-[#64748B]">Live market rate</span>
-              <span className="font-mono text-[#E2E8F0]">1 USDC = {marketRate.toLocaleString()} {localCurrency}</span>
+              <span className="text-app-muted">Live market rate</span>
+              <span className="font-mono text-app-text">1 USDC = {marketRate.toLocaleString()} {localCurrency}</span>
             </div>
             {orderType === 'limit' && (
               <div className="mt-3">
                 <div className="mb-2 flex items-center justify-between text-xs">
-                  <span className="text-[#64748B]">Your rate</span>
-                  <span className={`font-medium ${limitOffset > 0 ? 'text-emerald-400' : limitOffset < 0 ? 'text-red-400' : 'text-[#E2E8F0]'}`}>
+                  <span className="text-app-muted">Your rate</span>
+                  <span className={`font-medium ${limitOffset > 0 ? 'text-emerald-400' : limitOffset < 0 ? 'text-red-400' : 'text-app-text'}`}>
                     {limitOffset > 0 ? '+' : ''}{limitOffset.toFixed(1)}% · 1 USDC = {effectiveRate.toLocaleString(undefined, { maximumFractionDigits: 2 })} {localCurrency}
                   </span>
                 </div>
                 <input type="range" min="-5" max="5" step="0.5" value={limitOffset}
                   onChange={(e) => setLimitOffset(parseFloat(e.target.value))}
-                  className="w-full accent-[#378ADD]" />
-                <div className="mt-1 flex justify-between text-[10px] text-[#64748B]">
+                  className="w-full accent-app-accent" />
+                <div className="mt-1 flex justify-between text-[10px] text-app-muted">
                   <span>-5%</span><span>Market</span><span>+5%</span>
                 </div>
               </div>
@@ -168,13 +168,13 @@ export function CreateOfferClient() {
 
         {/* Auto-calculated receive */}
         {localAmount > 0 && (
-          <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
+          <div className="rounded-xl border border-app-border bg-app-surface p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-[#64748B]">You will receive</p>
-                <p className="mt-1 font-mono text-2xl font-semibold text-[#E2E8F0]">
+                <p className="text-xs text-app-muted">You will receive</p>
+                <p className="mt-1 font-mono text-2xl font-semibold text-app-text">
                   {localAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                  <span className="ml-2 text-base text-[#64748B]">{localCurrency}</span>
+                  <span className="ml-2 text-base text-app-muted">{localCurrency}</span>
                 </p>
               </div>
               <Badge variant={orderType === 'market' ? 'arc' : 'warning'}>
@@ -185,9 +185,9 @@ export function CreateOfferClient() {
         )}
 
         {/* Timer */}
-        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
+        <div className="rounded-xl border border-app-border bg-app-surface p-4">
           <div className="mb-3 flex items-center gap-2">
-            <label className="text-xs font-medium uppercase tracking-wider text-[#64748B]">
+            <label className="text-xs font-medium uppercase tracking-wider text-app-muted">
               Taker completion window
             </label>
           </div>
@@ -196,8 +196,8 @@ export function CreateOfferClient() {
               <button key={opt.value} onClick={() => setTimerOption(opt.value)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors
                   ${timerOption === opt.value
-                    ? 'bg-[#378ADD] text-white'
-                    : 'border border-[#1B2B4B] text-[#64748B] hover:text-[#E2E8F0]'}`}>
+                    ? 'bg-app-accent text-white'
+                    : 'border border-app-border text-app-muted hover:text-app-text'}`}>
                 {opt.label}
               </button>
             ))}
@@ -207,19 +207,19 @@ export function CreateOfferClient() {
               <Input type="number" placeholder="Minutes (min 5, max 1440)"
                 value={customTimer} onChange={(e) => setCustomTimer(e.target.value)}
                 className="font-mono" />
-              <span className="text-xs text-[#64748B]">min</span>
+              <span className="text-xs text-app-muted">min</span>
             </div>
           )}
-          <p className="mt-2 text-xs text-[#64748B]">
+          <p className="mt-2 text-xs text-app-muted">
             If taker doesn't send {localCurrency} within this window, the offer automatically cancels and USDC returns to you.
           </p>
         </div>
 
         {/* Summary */}
         {usdcAmount && localAmount > 0 && timerSeconds > 0 && (
-          <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4 text-xs">
-            <p className="mb-2 font-medium text-[#E2E8F0]">Order summary</p>
-            <div className="space-y-1.5 text-[#64748B]">
+          <div className="rounded-xl border border-app-border bg-app-surface p-4 text-xs">
+            <p className="mb-2 font-medium text-app-text">Order summary</p>
+            <div className="space-y-1.5 text-app-muted">
               {[
                 ['Order type', orderType],
                 ['You lock',   `${usdcAmount} USDC`],
@@ -230,7 +230,7 @@ export function CreateOfferClient() {
               ].map(([label, val]) => (
                 <div key={label} className="flex justify-between">
                   <span>{label}</span>
-                  <span className="text-[#E2E8F0]">{val}</span>
+                  <span className="text-app-text">{val}</span>
                 </div>
               ))}
             </div>
@@ -238,8 +238,8 @@ export function CreateOfferClient() {
         )}
 
         {/* Trade flow reminder */}
-        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-3 text-xs text-[#64748B]">
-          <p className="mb-1 font-medium text-[#E2E8F0]">Trade flow</p>
+        <div className="rounded-xl border border-app-border bg-app-surface p-3 text-xs text-app-muted">
+          <p className="mb-1 font-medium text-app-text">Trade flow</p>
           <ol className="space-y-0.5">
             {[
               'You lock USDC in vault escrow',
@@ -249,7 +249,7 @@ export function CreateOfferClient() {
               'Platform releases USDC to taker',
             ].map((s, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span className="shrink-0 text-[#378ADD]">{i+1}.</span>
+                <span className="shrink-0 text-app-accent">{i+1}.</span>
                 <span>{s}</span>
               </li>
             ))}

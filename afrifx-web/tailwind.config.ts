@@ -9,6 +9,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Semantic tokens — driven by CSS variables (see globals.css).
+        // Support opacity modifiers via the <alpha-value> placeholder.
+        app: {
+          bg:      'rgb(var(--app-bg) / <alpha-value>)',
+          surface: 'rgb(var(--app-surface) / <alpha-value>)',
+          border:  'rgb(var(--app-border) / <alpha-value>)',
+          accent:  'rgb(var(--app-accent) / <alpha-value>)',
+          text:    'rgb(var(--app-text) / <alpha-value>)',
+          muted:   'rgb(var(--app-muted) / <alpha-value>)',
+        },
         arc: {
           bg:      '#080D1B',
           card:    '#0F1729',

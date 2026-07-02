@@ -61,8 +61,8 @@ export default function AdminOffers() {
   return (
     <AdminShell>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-[#E2E8F0]">Offers management</h1>
-        <button onClick={load} className="flex items-center gap-1.5 rounded-lg border border-[#1B2B4B] px-3 py-1.5 text-xs text-[#64748B] hover:text-[#E2E8F0]">
+        <h1 className="text-xl font-semibold text-app-text">Offers management</h1>
+        <button onClick={load} className="flex items-center gap-1.5 rounded-lg border border-app-border px-3 py-1.5 text-xs text-app-muted hover:text-app-text">
           <RefreshCw className="h-3 w-3" /> Refresh
         </button>
       </div>
@@ -82,25 +82,25 @@ export default function AdminOffers() {
         {['all','open','accepted','released','cancelled'].map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={`rounded-full px-3 py-1 text-xs capitalize transition-colors
-              ${filter === f ? 'bg-[#378ADD] text-white' : 'border border-[#1B2B4B] text-[#64748B]'}`}>
+              ${filter === f ? 'bg-app-accent text-white' : 'border border-app-border text-app-muted'}`}>
             {f}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-[#378ADD]" /></div>
+        <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-app-accent" /></div>
       ) : (
         <div className="space-y-2">
           {offers.map(o => (
-            <div key={o.id} className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
+            <div key={o.id} className="rounded-xl border border-app-border bg-app-surface p-4">
               <div className="flex items-center gap-4">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#080D1B] text-lg">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-app-bg text-lg">
                   {FLAGS[o.local_currency] ?? '🌍'}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-[#E2E8F0]">
+                    <p className="text-sm font-medium text-app-text">
                       {Number(o.usdc_amount).toFixed(2)} USDC ↔ {Number(o.local_amount).toLocaleString()} {o.local_currency}
                     </p>
                     <Badge variant={
@@ -109,7 +109,7 @@ export default function AdminOffers() {
                       o.status === 'cancelled' ? 'danger' : 'warning'
                     }>{o.status}</Badge>
                   </div>
-                  <p className="font-mono text-[10px] text-[#64748B]">
+                  <p className="font-mono text-[10px] text-app-muted">
                     {o.id.slice(0,20)}… · maker {o.maker_address?.slice(0,8)}…
                     {o.taker_address && ` · taker ${o.taker_address.slice(0,8)}…`}
                   </p>
@@ -127,7 +127,7 @@ export default function AdminOffers() {
               </div>
             </div>
           ))}
-          {offers.length === 0 && <p className="py-8 text-center text-sm text-[#64748B]">No offers found</p>}
+          {offers.length === 0 && <p className="py-8 text-center text-sm text-app-muted">No offers found</p>}
         </div>
       )}
     </AdminShell>

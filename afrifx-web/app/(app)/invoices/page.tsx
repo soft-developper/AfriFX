@@ -24,7 +24,7 @@ const STATUS_BADGE: Record<string, any> = {
 
 export default function InvoicesPage() {
   return (
-    <ClientOnly fallback={<div className="h-64 animate-pulse rounded-xl bg-[#0F1729]" />}>
+    <ClientOnly fallback={<div className="h-64 animate-pulse rounded-xl bg-app-surface" />}>
       <InvoicesContent />
     </ClientOnly>
   )
@@ -72,8 +72,8 @@ function InvoicesContent() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-[#E2E8F0]">Invoices</h1>
-          <p className="text-sm text-[#64748B]">
+          <h1 className="text-xl font-semibold text-app-text">Invoices</h1>
+          <p className="text-sm text-app-muted">
             {created.length} created · {received.length} to pay
           </p>
         </div>
@@ -85,35 +85,35 @@ function InvoicesContent() {
       {/* Summary cards */}
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          { label: 'Total invoiced', value: `$${formatAmount(created.reduce((s,i)=>s+toUSD(i.amount,i.currency),0))}`, color: 'text-[#378ADD]' },
+          { label: 'Total invoiced', value: `$${formatAmount(created.reduce((s,i)=>s+toUSD(i.amount,i.currency),0))}`, color: 'text-app-accent' },
           { label: 'Paid',           value: String(created.filter(i=>i.status==='paid').length),      color: 'text-emerald-400' },
           { label: 'Pending',        value: String(created.filter(i=>i.status==='sent').length),      color: 'text-amber-400' },
           { label: 'To pay',         value: String(received.filter(i=>i.status==='sent').length),     color: 'text-red-400' },
         ].map(({ label, value, color }) => (
-          <div key={label} className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4 text-center">
+          <div key={label} className="rounded-xl border border-app-border bg-app-surface p-4 text-center">
             <p className={`font-mono text-2xl font-bold ${color}`}>{value}</p>
-            <p className="mt-1 text-xs text-[#64748B]">{label}</p>
+            <p className="mt-1 text-xs text-app-muted">{label}</p>
           </div>
         ))}
       </div>
 
       {/* Filter */}
-      <div className="mb-4 flex gap-1 rounded-lg border border-[#1B2B4B] bg-[#0F1729] p-1 w-fit">
+      <div className="mb-4 flex gap-1 rounded-lg border border-app-border bg-app-surface p-1 w-fit">
         {['all','draft','sent','paid','overdue','cancelled'].map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={`rounded-md px-3 py-1.5 text-xs capitalize transition-colors
-              ${filter === f ? 'bg-[#1B2B4B] text-[#E2E8F0]' : 'text-[#64748B]'}`}>
+              ${filter === f ? 'bg-app-border text-app-text' : 'text-app-muted'}`}>
             {f}
           </button>
         ))}
       </div>
 
       {isLoading ? (
-        <div className="space-y-2">{[1,2,3].map(i=><div key={i} className="h-20 animate-pulse rounded-xl bg-[#0F1729]"/>)}</div>
+        <div className="space-y-2">{[1,2,3].map(i=><div key={i} className="h-20 animate-pulse rounded-xl bg-app-surface"/>)}</div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-10 text-center">
-          <FileText className="mx-auto mb-2 h-8 w-8 text-[#1B2B4B]" />
-          <p className="text-sm text-[#64748B]">No invoices yet</p>
+        <div className="rounded-xl border border-app-border bg-app-surface p-10 text-center">
+          <FileText className="mx-auto mb-2 h-8 w-8 text-app-border" />
+          <p className="text-sm text-app-muted">No invoices yet</p>
           <Link href="/invoices/create">
             <Button variant="outline" size="sm" className="mt-3">Create your first invoice</Button>
           </Link>
@@ -125,14 +125,14 @@ function InvoicesContent() {
             const isPayer   = inv.payer_address?.toLowerCase() === address?.toLowerCase()
             const isOverdue = inv.due_date && inv.due_date < Math.floor(Date.now()/1000) && inv.status === 'sent'
             return (
-              <div key={inv.id} className="rounded-xl border border-[#1B2B4B] bg-[#0F1729] p-4">
+              <div key={inv.id} className="rounded-xl border border-app-border bg-app-surface p-4">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#080D1B]">
-                    <FileText className="h-4 w-4 text-[#378ADD]" />
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-app-bg">
+                    <FileText className="h-4 w-4 text-app-accent" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-mono text-sm font-medium text-[#E2E8F0]">
+                      <p className="font-mono text-sm font-medium text-app-text">
                         {formatAmount(inv.amount)} {inv.currency}
                       </p>
                       <Badge variant={STATUS_BADGE[isOverdue ? 'overdue' : inv.status]}>
@@ -142,7 +142,7 @@ function InvoicesContent() {
                         {isCreator ? 'Sent by you' : 'To pay'}
                       </Badge>
                     </div>
-                    <p className="text-xs text-[#64748B]">
+                    <p className="text-xs text-app-muted">
                       {inv.memo_ref} · {inv.description ?? 'No description'}
                       {inv.due_date && ` · Due ${new Date(inv.due_date*1000).toLocaleDateString()}`}
                     </p>
@@ -155,7 +155,7 @@ function InvoicesContent() {
                     )}
                     {isCreator && inv.status !== 'paid' && inv.status !== 'cancelled' && (
                       <button onClick={() => copyPayLink(inv.memo_ref)}
-                        className="flex items-center gap-1.5 rounded-lg border border-[#1B2B4B] px-2.5 py-1.5 text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors">
+                        className="flex items-center gap-1.5 rounded-lg border border-app-border px-2.5 py-1.5 text-xs text-app-muted hover:text-app-text transition-colors">
                         {copied === inv.memo_ref ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                         {copied === inv.memo_ref ? 'Copied!' : 'Copy link'}
                       </button>
@@ -168,7 +168,7 @@ function InvoicesContent() {
                     {inv.payment_tx_hash && (
                       <a href={`https://testnet.arcscan.app/tx/${inv.payment_tx_hash}`}
                         target="_blank" rel="noopener noreferrer"
-                        className="text-[#64748B] hover:text-[#378ADD]">
+                        className="text-app-muted hover:text-app-accent">
                         <ExternalLink className="h-4 w-4" />
                       </a>
                     )}
