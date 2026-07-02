@@ -286,3 +286,296 @@ ${ctaButton('View invoice', `${APP_URL}/invoices/${params.invoiceId}`)}
 
   return { subject, html: baseLayout(content, { previewText }), previewText }
 }
+
+// ─────────────────────────────────────────────────────────────
+// Wave 2 Templates
+// ─────────────────────────────────────────────────────────────
+
+const BRAND_2       = '#378ADD'
+const BG_2          = '#080D1B'
+const CARD_2        = '#0F1729'
+const BORDER_2      = '#1B2B4B'
+const TEXT_PRI      = '#E2E8F0'
+const TEXT_SEC      = '#64748B'
+const SUCCESS_2     = '#10B981'
+const WARNING_2     = '#F59E0B'
+const APP_URL_2     = process.env.APP_URL ?? 'https://afrifx.xyz'
+
+function base2(content: string, preview?: string) {
+  return `
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AfriFX</title></head>
+<body style="margin:0;padding:0;background:${BG_2};color:${TEXT_PRI};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+${preview ? `<div style="display:none;font-size:1px;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">${preview}</div>` : ''}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BG_2};padding:32px 16px;">
+<tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+<tr><td style="padding-bottom:24px;text-align:center;">
+<div style="display:inline-block;padding:8px 16px;border-radius:8px;background:${CARD_2};border:1px solid ${BORDER_2};">
+<span style="color:${BRAND_2};font-weight:600;font-size:18px;letter-spacing:0.5px;">AfriFX</span>
+<span style="color:${TEXT_SEC};font-size:11px;margin-left:8px;">Arc Testnet</span>
+</div></td></tr>
+<tr><td style="background:${CARD_2};border:1px solid ${BORDER_2};border-radius:12px;padding:32px 28px;">
+${content}
+</td></tr>
+<tr><td style="padding-top:24px;text-align:center;color:${TEXT_SEC};font-size:12px;line-height:1.6;">
+<p style="margin:0 0 8px;">AfriFX — Stablecoin-powered cross-border payments on Arc</p>
+<p style="margin:0;">
+<a href="${APP_URL_2}" style="color:${BRAND_2};">afrifx.xyz</a> ·
+<a href="${APP_URL_2}/profile" style="color:${TEXT_SEC};">Notification settings</a>
+</p></td></tr>
+</table></td></tr></table>
+</body></html>`.trim()
+}
+
+function btn2(text: string, url: string) {
+  return `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0;">
+<tr><td style="background:${BRAND_2};border-radius:10px;">
+<a href="${url}" style="display:inline-block;padding:14px 32px;color:white;font-weight:500;font-size:14px;text-decoration:none;">${text}</a>
+</td></tr></table>`.trim()
+}
+
+function card2(rows: { label: string, value: string }[]) {
+  return `
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BG_2};border-radius:10px;margin:20px 0;">
+${rows.map((r, i) => `
+<tr><td style="padding:12px 16px;${i < rows.length - 1 ? `border-bottom:1px solid ${BORDER_2};` : ''}">
+<div style="color:${TEXT_SEC};font-size:11px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${r.label}</div>
+<div style="color:${TEXT_PRI};font-size:14px;font-weight:500;">${r.value}</div>
+</td></tr>`).join('')}
+</table>`.trim()
+}
+
+// ─── 1. Welcome email ───────────────────────────────────────
+export function welcomeEmail(params: { username: string, displayName: string }) {
+  const subject = 'Welcome to AfriFX'
+  const preview = 'Your account is ready. Here is how to get started.'
+
+  const content = `
+<h1 style="margin:0 0 12px;color:${TEXT_PRI};font-size:22px;font-weight:600;line-height:1.3;">
+Welcome to AfriFX 👋
+</h1>
+<p style="margin:0 0 8px;color:${TEXT_SEC};font-size:14px;line-height:1.6;">
+Hi ${params.displayName},
+</p>
+<p style="margin:0 0 16px;color:${TEXT_SEC};font-size:14px;line-height:1.6;">
+Your AfriFX account <strong style="color:${TEXT_PRI};">@${params.username}</strong> is ready.
+You can now trade stablecoins for African currencies with anyone on the platform.
+</p>
+
+<div style="background:${BG_2};border:1px solid ${BORDER_2};border-radius:10px;padding:16px;margin:20px 0;">
+<p style="margin:0 0 12px;color:${TEXT_PRI};font-size:14px;font-weight:500;">Here is what you can do:</p>
+<ul style="margin:0;padding:0 0 0 20px;color:${TEXT_SEC};font-size:13px;line-height:1.8;">
+<li>Convert USDC ↔ NGN, GHS, KES, ZAR, EGP at live rates</li>
+<li>Trade peer-to-peer with any wallet at agreed prices</li>
+<li>Generate invoices with shareable payment links</li>
+<li>Track all your trades and payments in one place</li>
+</ul>
+</div>
+
+${btn2('Open dashboard', `${APP_URL_2}/convert`)}
+
+<p style="margin:16px 0 0;color:${TEXT_SEC};font-size:12px;line-height:1.5;">
+Every trade on AfriFX is secured by smart contract escrow on Arc. Your funds are never at risk of third-party mismanagement.
+</p>`
+
+  return { subject, html: base2(content, preview), previewText: preview }
+}
+
+// ─── 2. Admin dispute alert ─────────────────────────────────
+export function adminDisputeAlertEmail(params: {
+  adminName:      string
+  raisedByName:   string
+  raisedByRole:   'maker' | 'taker'
+  disputeType:    'maker_silent' | 'maker_not_received'
+  usdcAmount:     number
+  localAmount:    number
+  localCcy:       string
+  disputeId:      string
+}) {
+  const subject = `⚠️ New dispute needs review — ${params.usdcAmount} USDC`
+  const preview = `${params.raisedByName} raised a dispute. Claim it to become the judge.`
+
+  const disputeReason = params.disputeType === 'maker_silent'
+    ? 'Maker did not confirm receipt within the response window'
+    : 'Maker claims payment was not received'
+
+  const content = `
+<h1 style="margin:0 0 12px;color:${WARNING_2};font-size:22px;font-weight:600;line-height:1.3;">
+⚠️ New dispute opened
+</h1>
+<p style="margin:0 0 8px;color:${TEXT_SEC};font-size:14px;line-height:1.6;">
+Hi ${params.adminName},
+</p>
+<p style="margin:0 0 16px;color:${TEXT_SEC};font-size:14px;line-height:1.6;">
+A new dispute needs admin review. Be the first to claim it and become the assigned judge.
+</p>
+
+${card2([
+  { label: 'Raised by',     value: `${params.raisedByName} (${params.raisedByRole})` },
+  { label: 'Reason',        value: disputeReason },
+  { label: 'Amount at stake', value: `${params.usdcAmount} USDC · ${params.localAmount.toLocaleString()} ${params.localCcy}` },
+])}
+
+${btn2('Claim this dispute →', `${APP_URL_2}/admin/disputes?dispute=${params.disputeId}`)}
+
+<p style="margin:16px 0 0;color:${TEXT_SEC};font-size:12px;line-height:1.5;">
+Once you claim it, other admins will see it as taken. You will get a private chat with both parties and can request bank statements privately.
+</p>`
+
+  return { subject, html: base2(content, preview), previewText: preview }
+}
+
+// ─── 3. Dispute accepted confirmation ───────────────────────
+export function disputeAcceptedEmail(params: {
+  recipientName: string
+  adminName:     string
+  offerId:       string
+}) {
+  const subject = `Admin ${params.adminName} is handling your dispute`
+  const preview = 'You can now chat with the assigned admin.'
+
+  const content = `
+<h1 style="margin:0 0 12px;color:${BRAND_2};font-size:22px;font-weight:600;line-height:1.3;">
+An admin is on your case
+</h1>
+<p style="margin:0 0 8px;color:${TEXT_SEC};font-size:14px;line-height:1.6;">
+Hi ${params.recipientName},
+</p>
+<p style="margin:0 0 16px;color:${TEXT_SEC};font-size:14px;line-height:1.6;">
+Good news — <strong style="color:${TEXT_PRI};">Admin ${params.adminName}</strong> has accepted your dispute and will be handling the review.
+</p>
+
+<div style="background:${BG_2};border:1px solid ${BORDER_2};border-radius:10px;padding:16px;margin:20px 0;">
+<p style="margin:0 0 12px;color:${TEXT_PRI};font-size:14px;font-weight:500;">What happens next:</p>
+<ol style="margin:0;padding:0 0 0 20px;color:${TEXT_SEC};font-size:13px;line-height:1.8;">
+<li>You will get a private chat with the admin on your offer page</li>
+<li>When requested, upload your bank statement (visible only to the admin)</li>
+<li>The admin reviews the evidence and makes a judgement</li>
+<li>The smart contract executes the resolution automatically</li>
+</ol>
+</div>
+
+${btn2('Open dispute chat', `${APP_URL_2}/marketplace/${params.offerId}`)}
+
+<p style="margin:16px 0 0;color:${TEXT_SEC};font-size:12px;line-height:1.5;">
+Your USDC remains safely escrowed until the admin resolves the dispute.
+</p>`
+
+  return { subject, html: base2(content, preview), previewText: preview }
+}
+
+// ─── 4. Admin message nudge (hourly rate-limited) ───────────
+export function adminMessageEmail(params: {
+  recipientName: string
+  adminName:     string
+  offerId:       string
+}) {
+  const subject = `Admin ${params.adminName} sent a new message`
+  const preview = 'Your assigned admin sent a message about your dispute.'
+
+  const content = `
+<h1 style="margin:0 0 12px;color:${TEXT_PRI};font-size:22px;font-weight:600;line-height:1.3;">
+New message from your admin
+</h1>
+<p style="margin:0 0 8px;color:${TEXT_SEC};font-size:14px;line-height:1.6;">
+Hi ${params.recipientName},
+</p>
+<p style="margin:0 0 16px;color:${TEXT_SEC};font-size:14px;line-height:1.6;">
+<strong style="color:${TEXT_PRI};">Admin ${params.adminName}</strong> sent you a message about your active dispute.
+Please respond as soon as you can so the case can be resolved quickly.
+</p>
+
+${btn2('Read message', `${APP_URL_2}/marketplace/${params.offerId}`)}
+
+<p style="margin:16px 0 0;color:${TEXT_SEC};font-size:12px;line-height:1.5;">
+You will receive at most one email per hour about new admin messages, so you can focus without being spammed.
+</p>`
+
+  return { subject, html: base2(content, preview), previewText: preview }
+}
+
+// ─── 5. Invoice reminder (48h unpaid) ───────────────────────
+export function invoiceReminderEmail(params: {
+  creatorName:  string
+  invoiceRef:   string
+  amount:       number
+  currency:     string
+  invoiceId:    string
+  createdAt:    number
+}) {
+  const subject = `Invoice ${params.invoiceRef} is still unpaid`
+  const preview = `${params.amount.toLocaleString()} ${params.currency} pending — consider a reminder.`
+
+  const daysAgo = Math.floor((Date.now() / 1000 - params.createdAt) / 86400)
+
+  const content = `
+<h1 style="margin:0 0 12px;color:${WARNING_2};font-size:22px;font-weight:600;line-height:1.3;">
+Invoice still unpaid
+</h1>
+<p style="margin:0 0 8px;color:${TEXT_SEC};font-size:14px;line-height:1.6;">
+Hi ${params.creatorName},
+</p>
+<p style="margin:0 0 16px;color:${TEXT_SEC};font-size:14px;line-height:1.6;">
+Your invoice <strong style="color:${TEXT_PRI};">${params.invoiceRef}</strong> was created ${daysAgo} days ago and has not been paid yet.
+You might want to send a friendly reminder to your payer.
+</p>
+
+${card2([
+  { label: 'Invoice',      value: params.invoiceRef },
+  { label: 'Amount',       value: `${params.amount.toLocaleString()} ${params.currency}` },
+  { label: 'Days pending', value: `${daysAgo}` },
+])}
+
+${btn2('View invoice', `${APP_URL_2}/invoices/${params.invoiceId}`)}
+
+<p style="margin:16px 0 0;color:${TEXT_SEC};font-size:12px;line-height:1.5;">
+You can copy the payment link from the invoice page and share it with your payer again. This reminder is sent once — future updates come from the platform when the invoice is paid.
+</p>`
+
+  return { subject, html: base2(content, preview), previewText: preview }
+}
+
+// ─── 6. Trade auto-cancelled ────────────────────────────────
+export function tradeAutoCancelledEmail(params: {
+  recipientName:   string
+  recipientRole:   'maker' | 'taker'
+  counterpartName: string
+  usdcAmount:      number
+  offerId:         string
+}) {
+  const isMaker = params.recipientRole === 'maker'
+  const subject = 'Trade auto-cancelled — USDC returned'
+  const preview = isMaker
+    ? `Your offer expired. ${params.usdcAmount} USDC has been returned to your wallet.`
+    : 'The offer you accepted expired because payment was not confirmed in time.'
+
+  const content = `
+<h1 style="margin:0 0 12px;color:${TEXT_PRI};font-size:22px;font-weight:600;line-height:1.3;">
+Trade auto-cancelled
+</h1>
+<p style="margin:0 0 8px;color:${TEXT_SEC};font-size:14px;line-height:1.6;">
+Hi ${params.recipientName},
+</p>
+<p style="margin:0 0 16px;color:${TEXT_SEC};font-size:14px;line-height:1.6;">
+${isMaker
+  ? `Your trade with <strong style="color:${TEXT_PRI};">${params.counterpartName}</strong> was auto-cancelled because they did not confirm sending payment within the response window. Your ${params.usdcAmount} USDC has been safely returned to your wallet.`
+  : `The trade with <strong style="color:${TEXT_PRI};">${params.counterpartName}</strong> was auto-cancelled because payment was not confirmed within the response window. If you did send payment, please contact support with your transfer receipt.`
+}
+</p>
+
+${card2([
+  { label: 'USDC amount',   value: `${params.usdcAmount} USDC` },
+  { label: 'Counterparty',  value: params.counterpartName },
+  { label: 'Status',        value: '⏱️ Auto-cancelled by system' },
+])}
+
+${btn2(isMaker ? 'Create a new offer' : 'Browse marketplace', `${APP_URL_2}/marketplace`)}
+
+<p style="margin:16px 0 0;color:${TEXT_SEC};font-size:12px;line-height:1.5;">
+Auto-cancellation happens when either party does not act within the timer window agreed at trade creation. This protects both sides from indefinite escrow.
+</p>`
+
+  return { subject, html: base2(content, preview), previewText: preview }
+}

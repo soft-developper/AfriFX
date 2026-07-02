@@ -1,5 +1,5 @@
 import { Router }     from 'express'
-import { notifyDisputeRaised } from '../services/email/notifications'
+import { notifyDisputeRaised, notifyAdminsOfNewDispute, notifyDisputeAccepted, notifyAdminMessage } from '../services/email/notifications'
 import { db }         from '../db/client'
 import { sql }        from 'drizzle-orm'
 import { randomUUID } from 'crypto'
@@ -124,6 +124,17 @@ router.post('/', async (req, res) => {
     const otherPartyWallet = raisedByLower === makerAddress ? takerAddress : makerAddress
 
     // Fire notification (non-blocking)
+    // Alert all admins with resolve_disputes permission
+    notifyAdminsOfNewDispute({
+      raisedByWallet: raisedByLower,
+      raisedByRole:   raisedByRole as 'maker' | 'taker',
+      disputeType:    disputeType as 'maker_silent' | 'maker_not_received',
+      usdcAmount:     Number(offer.usdc_amount ?? 0),
+      localAmount:    Number(offer.local_amount ?? 0),
+      localCcy:       offer.local_currency ?? '',
+      disputeId:      id,
+    }).catch((err: any) => console.error('[Notify] admin_alert:', err.message))
+
     notifyDisputeRaised({
       raisedByWallet:   raisedByLower,
       otherPartyWallet: otherPartyWallet ?? '',
@@ -242,6 +253,18 @@ router.post('/:id/accept', async (req, res) => {
       WHERE id = ${req.params.id}
     `)
 
+    // Fetch offer_id from dispute
+    const dRows = await db.run(sql`SELECT offer_id FROM disputes WHERE id = ${req.params.id} LIMIT 1`)
+    const dr = parseRows(dRows)[0]
+
+    if (dr) {
+      notifyDisputeAccepted({
+        disputeId: req.params.id,
+        offerId:   dr.offer_id ?? dr[0],
+        adminName,
+      }).catch((err: any) => console.error('[Notify] dispute_accepted:', err.message))
+    }
+
     res.json({ success: true, adminName })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
@@ -292,6 +315,30 @@ router.post('/:id/messages', async (req, res) => {
         (${id}, ${req.params.id}, ${senderId}, ${senderType},
          ${senderName ?? null}, ${content}, ${adminOnly ? 1 : 0}, ${now})
     `)
+
+    // If admin sent a message, notify both parties (rate-limited)
+    if (senderType === 'admin' && !adminOnly) {
+      const dRows = await db.run(sql`
+        SELECT o.id as offer_id, o.maker_address, o.taker_address
+        FROM disputes d
+        JOIN p2p_offers o ON o.id = d.offer_id
+        WHERE d.id = ${req.params.id} LIMIT 1
+      `)
+      const d = parseRows(dRows)[0]
+      if (d) {
+        const offerId = d.offer_id ?? d[0]
+        const parties = [d.maker_address ?? d[1], d.taker_address ?? d[2]].filter(Boolean)
+        for (const wallet of parties) {
+          notifyAdminMessage({
+            recipientWallet: wallet,
+            adminName:       senderName ?? 'Admin',
+            offerId,
+            disputeId:       req.params.id,
+          }).catch((err: any) => console.error('[Notify] admin_message:', err.message))
+        }
+      }
+    }
+
     res.status(201).json({ id })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
