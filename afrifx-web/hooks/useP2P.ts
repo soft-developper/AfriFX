@@ -104,7 +104,6 @@ export function useP2P() {
           pair: `${params.localCurrency}/USDC`,
         })
         hash = await writeContractAsync(args)
-        console.log(`[Memo] P2P createOffer with memoId ${memoId.slice(0,14)}…`)
       } else {
         hash = await writeContractAsync({
           address: vault, abi: VAULT_P2P_ABI,
@@ -158,7 +157,6 @@ export function useP2P() {
           CONTRACTS.AFRIFX_VAULT, acceptData, memoId,
           { app: 'afrifx', type: 'p2p-accept', offerId },
         ))
-        console.log(`[Memo] P2P accept with memoId ${memoId.slice(0,14)}…`)
       } else {
         hash = await writeContractAsync({
           address: CONTRACTS.AFRIFX_VAULT, abi: VAULT_P2P_ABI,
@@ -197,7 +195,6 @@ export function useP2P() {
           CONTRACTS.AFRIFX_VAULT, confirmData, memoId,
           { app: 'afrifx', type: 'p2p-taker-confirm', offerId },
         ))
-        console.log(`[Memo] P2P takerConfirm with memoId ${memoId.slice(0,14)}…`)
       } else {
         hash = await writeContractAsync({
           address: CONTRACTS.AFRIFX_VAULT, abi: VAULT_P2P_ABI,
@@ -236,7 +233,6 @@ export function useP2P() {
           CONTRACTS.AFRIFX_VAULT, confirmData, memoId,
           { app: 'afrifx', type: 'p2p-maker-confirm', offerId },
         ))
-        console.log(`[Memo] P2P makerConfirm with memoId ${memoId.slice(0,14)}…`)
       } else {
         hash = await writeContractAsync({
           address: CONTRACTS.AFRIFX_VAULT, abi: VAULT_P2P_ABI,

@@ -3,8 +3,25 @@ import { notifyDisputeRaised, notifyAdminsOfNewDispute, notifyDisputeAccepted, n
 import { db }         from '../db/client'
 import { sql }        from 'drizzle-orm'
 import { randomUUID } from 'crypto'
+import multer         from 'multer'
+import { uploadBuffer } from '../lib/cloudinary'
 
 const router = Router()
+
+// Multer — hold the file in memory, then stream it to Cloudinary
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits:  { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = [
+      'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ]
+    cb(null, allowed.includes(file.mimetype))
+  },
+})
 
 function parseRows(r: any): any[] {
   if (!r) return []
@@ -343,32 +360,46 @@ router.post('/:id/messages', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /disputes/:id/messages/document — upload bank statement
-router.post('/:id/messages/document', async (req, res) => {
-  const { senderId, senderType, senderName, docUrl, docName } = req.body
-  if (!senderId || !docUrl) {
-    return res.status(400).json({ error: 'senderId and docUrl required' })
+// POST /disputes/:id/messages/document — upload a supporting document
+// Accepts multipart form-data (field name "file"), stores it on Cloudinary,
+// and records the resulting URL as an admin-only dispute message.
+router.post('/:id/messages/document', upload.single('file'), async (req, res) => {
+  const { senderId, senderType, senderName } = req.body
+  if (!senderId) return res.status(400).json({ error: 'senderId required' })
+  if (!req.file) return res.status(400).json({ error: 'No file provided' })
+
+  if (!process.env.CLOUDINARY_CLOUD_NAME) {
+    return res.status(500).json({ error: 'File storage is not configured on the server' })
   }
+
   const now = Math.floor(Date.now() / 1000)
   try {
-    const { randomUUID } = await import('crypto')
+    const uploaded = await uploadBuffer(
+      req.file.buffer,
+      req.file.originalname,
+      req.file.mimetype,
+      `dispute-${req.params.id}`,
+    )
+
     const id = randomUUID()
     await db.run(sql`
       INSERT INTO dispute_messages
         (id, dispute_id, sender_id, sender_type, sender_name,
          content, is_document, doc_url, doc_name, admin_only, created_at)
       VALUES
-        (${id}, ${req.params.id}, ${senderId}, ${senderType},
+        (${id}, ${req.params.id}, ${senderId}, ${senderType ?? 'user'},
          ${senderName ?? null},
-         'Bank statement submitted',
-         1, ${docUrl}, ${docName ?? 'document'}, 1, ${now})
+         'Supporting document submitted',
+         1, ${uploaded.url}, ${uploaded.name}, 1, ${now})
     `)
-    res.status(201).json({ id })
-  } catch (err: any) { res.status(500).json({ error: err.message }) }
+    res.status(201).json({ id, docUrl: uploaded.url, docName: uploaded.name })
+  } catch (err: any) {
+    console.error('[Disputes] Document upload failed:', err.message)
+    res.status(500).json({ error: 'Upload failed: ' + err.message })
+  }
 })
 
-// GET /disputes/admin/all — already exists but update to include assignment
-// GET /disputes/:id/archive — get full archived dispute for super admin audit
+// GET /disputes/:id/archive — full archived dispute for super-admin audit
 router.get('/:id/archive', async (req, res) => {
   try {
     const [disputeRows, msgRows, assignRows] = await Promise.all([

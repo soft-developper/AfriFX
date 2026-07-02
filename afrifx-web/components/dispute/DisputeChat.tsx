@@ -35,6 +35,7 @@ export function DisputeChat({
   const [text,      setText]      = useState('')
   const [sending,   setSending]   = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileRef   = useRef<HTMLInputElement>(null)
 
@@ -74,28 +75,29 @@ export function DisputeChat({
 
   async function uploadDocument(file: File) {
     setUploading(true)
+    setUploadError(null)
     try {
-      // Upload to Cloudinary via backend
+      // Send the actual file as multipart form-data; the backend streams
+      // it to Cloudinary and records the returned URL.
       const formData = new FormData()
-      formData.append('file', file)
-      formData.append('disputeId', disputeId)
+      formData.append('file',       file)
       formData.append('senderId',   senderId)
       formData.append('senderType', senderType)
       formData.append('senderName', senderName)
 
       const res = await fetch(`${API}/disputes/${disputeId}/messages/document`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          senderId:   senderId,
-          senderType: senderType,
-          senderName: senderName,
-          docUrl:     URL.createObjectURL(file), // placeholder
-          docName:    file.name,
-        }),
+        method: 'POST',
+        body:   formData, // no Content-Type header — the browser sets the multipart boundary
       })
-      if (res.ok) await load()
-    } catch {} finally { setUploading(false) }
+      if (res.ok) {
+        await load()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setUploadError(data.error ?? 'Upload failed. Please try again.')
+      }
+    } catch {
+      setUploadError('Upload failed. Please check your connection and try again.')
+    } finally { setUploading(false) }
   }
 
   function getBubbleStyle(msg: Message) {
@@ -179,18 +181,23 @@ export function DisputeChat({
 
         {/* Document upload — only for users (maker/taker), not admin */}
         {viewerType !== 'admin' && (
-          <div className="flex items-center gap-2">
-            <input ref={fileRef} type="file" className="hidden"
-              accept=".pdf"
-              onChange={e => e.target.files?.[0] && uploadDocument(e.target.files[0])} />
-            <button onClick={() => fileRef.current?.click()}
-              className="flex items-center gap-1.5 rounded-lg border border-[#1B2B4B] px-3 py-1.5 text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors">
-              {uploading
-                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                : <Upload className="h-3.5 w-3.5" />
-              }
-              Upload bank statement (PDF only — admin will review)
-            </button>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <input ref={fileRef} type="file" className="hidden"
+                accept=".pdf,.png,.jpg,.jpeg,.webp"
+                onChange={e => e.target.files?.[0] && uploadDocument(e.target.files[0])} />
+              <button onClick={() => fileRef.current?.click()} disabled={uploading}
+                className="flex items-center gap-1.5 rounded-lg border border-[#1B2B4B] px-3 py-1.5 text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors disabled:opacity-50">
+                {uploading
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <Upload className="h-3.5 w-3.5" />
+                }
+                Upload supporting document (PDF or image — admin will review)
+              </button>
+            </div>
+            {uploadError && (
+              <p className="text-xs text-red-400">{uploadError}</p>
+            )}
           </div>
         )}
       </div>

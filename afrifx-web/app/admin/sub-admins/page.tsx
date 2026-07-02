@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
   Loader2, Plus, Shield, Trash2, Pause, Play,
-  Key, Check, Mail, CheckCircle, AlertCircle,
+  Key, Check, Mail, CheckCircle, AlertCircle, X,
 } from 'lucide-react'
 
 export default function AdminSubAdmins() {
@@ -98,15 +98,16 @@ export default function AdminSubAdmins() {
   }
 
   async function resetCredentials(a: any) {
-    const newPassword = prompt(`Reset password for ${a.username}:\nEnter new password (min 8 chars):`)
+    const newPassword = prompt(`Reset password for ${a.username}:\nEnter new password (min 12 chars):`)
     if (!newPassword) return
+    setInviteError(null); setInviteSuccess(null)
     setBusy(a.id)
     try {
       const res = await adminFetch(`/admin/manage/admins/${a.id}/credentials`, {
         method: 'PATCH', body: JSON.stringify({ newPassword }),
       })
-      if (res.ok) alert('Password reset successfully')
-      else alert((await res.json()).error)
+      if (res.ok) setInviteSuccess(`Password reset for ${a.username}`)
+      else setInviteError((await res.json()).error ?? 'Failed to reset password')
     } finally { setBusy(null) }
   }
 
@@ -128,6 +129,28 @@ export default function AdminSubAdmins() {
       {admin?.role !== 'super_admin' && (
         <div className="mb-6 flex items-center gap-2 rounded-lg bg-[#0F1729] border border-[#1B2B4B] px-4 py-3 text-xs text-[#64748B]">
           Only the super admin can invite new sub-admins.
+        </div>
+      )}
+
+      {/* Standalone feedback (e.g. after a password reset, when the invite form is closed) */}
+      {!showForm && inviteSuccess && (
+        <div className="mb-4 flex items-start justify-between gap-2 rounded-lg bg-emerald-900/20 px-3 py-2.5 text-xs text-emerald-400">
+          <span className="flex items-start gap-2">
+            <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />{inviteSuccess}
+          </span>
+          <button onClick={() => setInviteSuccess(null)} className="shrink-0 hover:text-emerald-300">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+      {!showForm && inviteError && (
+        <div className="mb-4 flex items-start justify-between gap-2 rounded-lg bg-red-900/20 px-3 py-2.5 text-xs text-red-400">
+          <span className="flex items-start gap-2">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />{inviteError}
+          </span>
+          <button onClick={() => setInviteError(null)} className="shrink-0 hover:text-red-300">
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
 

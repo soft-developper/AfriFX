@@ -74,8 +74,7 @@ export function useCorridorSwap() {
     setCorridorId(quote.corridorId)
 
     const useMemo = await isMemoAvailable()
-    if (useMemo) console.log('[Memo] Corridor: using Memo contract for both steps')
-    else console.warn('[Memo] Corridor: Memo not available, using direct transfers')
+    if (!useMemo) console.warn('[Memo] Corridor: Memo not available, using direct transfers')
 
     try {
       // ── STEP 1: from → USDC ───────────────────────────────
@@ -96,7 +95,6 @@ export function useCorridorSwap() {
 
       setStep1Hash(hash1)
       setStep('step1-waiting')
-      console.log(`[Memo] Corridor Step 1 tx: ${hash1.slice(0,14)}…`)
 
       await fetch(`${API_BASE}/transactions`, {
         method: 'POST',
@@ -129,7 +127,6 @@ export function useCorridorSwap() {
 
       setStep2Hash(hash2)
       setStep('step2-waiting')
-      console.log(`[Memo] Corridor Step 2 tx: ${hash2.slice(0,14)}…`)
 
       await fetch(`${API_BASE}/transactions`, {
         method: 'POST',

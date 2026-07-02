@@ -9,6 +9,7 @@ import { formatAmount }  from '@/lib/utils'
 import {
   AlertTriangle, CheckCircle, ExternalLink,
   Loader2, Scale, RefreshCw, ChevronDown, ChevronUp,
+  AlertCircle, X,
 } from 'lucide-react'
 
 export default function AdminDisputesPage() {
@@ -20,6 +21,7 @@ export default function AdminDisputesPage() {
   const [accepting,  setAccepting]    = useState<string|null>(null)
   const [expanded,   setExpanded]     = useState<string|null>(null)
   const [assignments, setAssignments] = useState<Record<string, any>>({})
+  const [error,       setError]       = useState<string|null>(null)
 
   async function load() {
     setLoading(true)
@@ -60,9 +62,9 @@ export default function AdminDisputesPage() {
         await load()
         setExpanded(disputeId) // auto-expand to show chat
       } else {
-        alert(data.error ?? 'Failed to accept')
+        setError(data.error ?? 'Failed to accept dispute')
       }
-    } catch (err: any) { alert(err.message) }
+    } catch (err: any) { setError(err.message ?? 'Failed to accept dispute') }
     finally { setAccepting(null) }
   }
 
@@ -79,7 +81,7 @@ export default function AdminDisputesPage() {
         }),
       })
       await load()
-    } catch (err: any) { alert(err.message) }
+    } catch (err: any) { setError(err.message ?? 'Failed to resolve dispute') }
     finally { setResolving(null) }
   }
 
@@ -101,6 +103,17 @@ export default function AdminDisputesPage() {
           <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} /> Refresh
         </button>
       </div>
+
+      {error && (
+        <div className="mb-4 flex items-start justify-between gap-2 rounded-lg bg-red-900/20 px-3 py-2.5 text-xs text-red-400">
+          <span className="flex items-start gap-2">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />{error}
+          </span>
+          <button onClick={() => setError(null)} className="shrink-0 hover:text-red-300">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Filter */}
       <div className="mb-4 flex gap-1 rounded-lg border border-[#1B2B4B] bg-[#0F1729] p-1 w-fit">
