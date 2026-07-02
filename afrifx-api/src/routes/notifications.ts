@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { db }     from '../db/client'
+import { notifyWelcome } from '../services/email/notifications'
 import { sql }    from 'drizzle-orm'
 
 const router = Router()
@@ -76,6 +77,11 @@ router.post('/email', async (req, res) => {
 
   const now = Math.floor(Date.now() / 1000)
   try {
+    // Check if this is the first time adding an email
+    const existingRows = await db.run(sql`SELECT email FROM profiles WHERE LOWER(wallet_address) = LOWER(${wallet}) LIMIT 1`)
+    const existing = parseRows(existingRows)[0]
+    const isFirstEmail = !existing?.email && email
+
     await db.run(sql`
       UPDATE profiles SET
         email = ${email ?? null},
@@ -85,6 +91,12 @@ router.post('/email', async (req, res) => {
         updated_at = ${now}
       WHERE LOWER(wallet_address) = LOWER(${wallet})
     `)
+
+    // Send welcome email if this is their first email
+    if (isFirstEmail) {
+      notifyWelcome(wallet).catch(err => console.error('[Notify] welcome:', err.message))
+    }
+
     res.json({ success: true })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
@@ -99,6 +111,7 @@ router.post('/heartbeat', async (req, res) => {
       UPDATE profiles SET last_active_at = ${now}
       WHERE LOWER(wallet_address) = LOWER(${wallet})
     `)
+
     res.json({ success: true })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
