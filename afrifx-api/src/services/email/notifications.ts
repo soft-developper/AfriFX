@@ -7,6 +7,12 @@ import {
   tradeCompletedEmail,
   disputeRaisedEmail,
   invoicePaidEmail,
+  welcomeEmail,
+  adminDisputeAlertEmail,
+  disputeAcceptedEmail,
+  adminMessageEmail,
+  invoiceReminderEmail,
+  tradeAutoCancelledEmail,
 } from './templates'
 
 function parseRows(r: any): any[] {
@@ -284,4 +290,268 @@ export async function notifyInvoicePaid(params: {
 
   if (result.success) await markSent(notifId, result.id ?? null)
   else await markFailed(notifId, result.error ?? 'unknown')
+}
+
+// ─────────────────────────────────────────────────────────────
+// Wave 2 notification functions
+// ─────────────────────────────────────────────────────────────
+
+
+// Rate limit check (returns true if allowed to send)
+async function checkRateLimit(key: string, minIntervalSeconds: number): Promise<boolean> {
+  try {
+    const rows = await db.run(sql`SELECT last_sent FROM email_rate_limits WHERE key = ${key} LIMIT 1`)
+    const r = parseRows(rows)
+    const now = Math.floor(Date.now() / 1000)
+
+    if (r.length && (now - Number(r[0].last_sent ?? r[0][0])) < minIntervalSeconds) {
+      return false
+    }
+
+    if (r.length) {
+      await db.run(sql`UPDATE email_rate_limits SET last_sent = ${now} WHERE key = ${key}`)
+    } else {
+      await db.run(sql`INSERT INTO email_rate_limits (key, last_sent) VALUES (${key}, ${now})`)
+    }
+    return true
+  } catch { return true }
+}
+
+// ─── 1. Welcome email ───────────────────────────────────────
+export async function notifyWelcome(wallet: string) {
+  const profile = await getProfile(wallet)
+  if (!profile?.email) return
+
+  const template = welcomeEmail({
+    username:    profile.username ?? 'user',
+    displayName: getDisplayName(profile),
+  })
+
+  const notifId = await queueAndSend({
+    userWallet:     wallet,
+    type:           'welcome',
+    subject:        template.subject,
+    payload:        {},
+    recipientEmail: profile.email,
+  })
+
+  const result = await sendEmail({
+    to: profile.email, subject: template.subject, html: template.html,
+  })
+
+  if (result.success) await markSent(notifId, result.id ?? null)
+  else await markFailed(notifId, result.error ?? 'unknown')
+}
+
+// ─── 2. Admin dispute alert (to ALL admins with resolve_disputes) ─
+export async function notifyAdminsOfNewDispute(params: {
+  raisedByWallet: string
+  raisedByRole:   'maker' | 'taker'
+  disputeType:    'maker_silent' | 'maker_not_received'
+  usdcAmount:     number
+  localAmount:    number
+  localCcy:       string
+  disputeId:      string
+}) {
+  try {
+    // Get all admins with resolve_disputes permission and an email
+    const adminRows = await db.run(sql`
+      SELECT id, username, email FROM admins
+      WHERE email IS NOT NULL
+        AND (role = 'super_admin' OR permissions LIKE '%resolve_disputes%')
+    `)
+    const admins = parseRows(adminRows)
+
+    const raisedByProfile = await getProfile(params.raisedByWallet)
+    const raisedByName    = getDisplayName(raisedByProfile)
+
+    for (const admin of admins) {
+      const email = admin.email ?? admin[2]
+      const name  = admin.username ?? admin[1]
+      if (!email) continue
+
+      const template = adminDisputeAlertEmail({
+        adminName:    name,
+        raisedByName,
+        raisedByRole: params.raisedByRole,
+        disputeType:  params.disputeType,
+        usdcAmount:   params.usdcAmount,
+        localAmount:  params.localAmount,
+        localCcy:     params.localCcy,
+        disputeId:    params.disputeId,
+      })
+
+      await sendEmail({ to: email, subject: template.subject, html: template.html })
+        .catch(err => console.error('[Notify] admin_dispute_alert:', err.message))
+    }
+  } catch (err: any) {
+    console.error('[Notify] notifyAdminsOfNewDispute:', err.message)
+  }
+}
+
+// ─── 3. Dispute accepted confirmation ───────────────────────
+export async function notifyDisputeAccepted(params: {
+  disputeId:  string
+  offerId:    string
+  adminName:  string
+}) {
+  try {
+    // Get maker + taker wallets from the offer
+    const offerRows = await db.run(sql`
+      SELECT maker_address, taker_address FROM p2p_offers WHERE id = ${params.offerId} LIMIT 1
+    `)
+    const o = parseRows(offerRows)[0]
+    if (!o) return
+
+    const makerWallet = o.maker_address ?? o[0]
+    const takerWallet = o.taker_address ?? o[1]
+
+    for (const wallet of [makerWallet, takerWallet]) {
+      if (!wallet) continue
+
+      const profile = await getProfile(wallet)
+      if (!profile?.email || !profile.notify_disputes) continue
+
+      const template = disputeAcceptedEmail({
+        recipientName: getDisplayName(profile),
+        adminName:     params.adminName,
+        offerId:       params.offerId,
+      })
+
+      const notifId = await queueAndSend({
+        userWallet:     wallet,
+        type:           'dispute_accepted',
+        subject:        template.subject,
+        payload:        params,
+        recipientEmail: profile.email,
+      })
+
+      const result = await sendEmail({
+        to: profile.email, subject: template.subject, html: template.html,
+      })
+
+      if (result.success) await markSent(notifId, result.id ?? null)
+      else await markFailed(notifId, result.error ?? 'unknown')
+    }
+  } catch (err: any) {
+    console.error('[Notify] notifyDisputeAccepted:', err.message)
+  }
+}
+
+// ─── 4. Admin message (rate-limited to 1/hour per user) ─────
+export async function notifyAdminMessage(params: {
+  recipientWallet: string
+  adminName:       string
+  offerId:         string
+  disputeId:       string
+}) {
+  const rateKey = `admin_msg:${params.disputeId}:${params.recipientWallet.toLowerCase()}`
+  const allowed = await checkRateLimit(rateKey, 3600) // 1 hour
+  if (!allowed) return
+
+  const profile = await getProfile(params.recipientWallet)
+  if (!profile?.email || !profile.notify_disputes) return
+
+  const template = adminMessageEmail({
+    recipientName: getDisplayName(profile),
+    adminName:     params.adminName,
+    offerId:       params.offerId,
+  })
+
+  const notifId = await queueAndSend({
+    userWallet:     params.recipientWallet,
+    type:           'admin_message',
+    subject:        template.subject,
+    payload:        params,
+    recipientEmail: profile.email,
+  })
+
+  const result = await sendEmail({
+    to: profile.email, subject: template.subject, html: template.html,
+  })
+
+  if (result.success) await markSent(notifId, result.id ?? null)
+  else await markFailed(notifId, result.error ?? 'unknown')
+}
+
+// ─── 5. Invoice reminder (48h unpaid) ───────────────────────
+export async function notifyInvoiceReminder(params: {
+  creatorWallet: string
+  invoiceId:     string
+  invoiceRef:    string
+  amount:        number
+  currency:      string
+  createdAt:     number
+}) {
+  const profile = await getProfile(params.creatorWallet)
+  if (!profile?.email || !profile.notify_invoices) return
+
+  const template = invoiceReminderEmail({
+    creatorName: getDisplayName(profile),
+    invoiceRef:  params.invoiceRef,
+    amount:      params.amount,
+    currency:    params.currency,
+    invoiceId:   params.invoiceId,
+    createdAt:   params.createdAt,
+  })
+
+  const notifId = await queueAndSend({
+    userWallet:     params.creatorWallet,
+    type:           'invoice_reminder',
+    subject:        template.subject,
+    payload:        params,
+    recipientEmail: profile.email,
+  })
+
+  const result = await sendEmail({
+    to: profile.email, subject: template.subject, html: template.html,
+  })
+
+  if (result.success) await markSent(notifId, result.id ?? null)
+  else await markFailed(notifId, result.error ?? 'unknown')
+}
+
+// ─── 6. Trade auto-cancelled ────────────────────────────────
+export async function notifyTradeAutoCancelled(params: {
+  makerWallet: string
+  takerWallet: string | null
+  usdcAmount:  number
+  offerId:     string
+}) {
+  const makerProfile = await getProfile(params.makerWallet)
+  const takerProfile = params.takerWallet ? await getProfile(params.takerWallet) : null
+
+  const notifyParty = async (
+    profile: any, wallet: string,
+    role: 'maker' | 'taker',
+    counterpartProfile: any,
+  ) => {
+    if (!profile?.email || !profile.notify_trades) return
+
+    const template = tradeAutoCancelledEmail({
+      recipientName:   getDisplayName(profile),
+      recipientRole:   role,
+      counterpartName: counterpartProfile ? getDisplayName(counterpartProfile) : 'the other party',
+      usdcAmount:      params.usdcAmount,
+      offerId:         params.offerId,
+    })
+
+    const notifId = await queueAndSend({
+      userWallet:     wallet, type: 'trade_auto_cancelled',
+      subject:        template.subject, payload: params,
+      recipientEmail: profile.email,
+    })
+
+    const result = await sendEmail({
+      to: profile.email, subject: template.subject, html: template.html,
+    })
+
+    if (result.success) await markSent(notifId, result.id ?? null)
+    else await markFailed(notifId, result.error ?? 'unknown')
+  }
+
+  await notifyParty(makerProfile, params.makerWallet, 'maker', takerProfile)
+  if (params.takerWallet) {
+    await notifyParty(takerProfile, params.takerWallet, 'taker', makerProfile)
+  }
 }
