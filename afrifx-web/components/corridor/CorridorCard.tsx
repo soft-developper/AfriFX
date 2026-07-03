@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { CurrencyInput } from '@/components/swap/CurrencyInput'
 import { useRate } from '@/hooks/useFXRate'
 import { useCorridorSwap } from '@/hooks/useCorridorSwap'
+import { useUSDCBalance } from '@/hooks/useUSDCBalance'
 import {
   LOCAL_CURRENCIES, CURRENCY_FLAG, CURRENCY_LABELS,
   buildCorridorQuote, isCorridorSupported,
@@ -81,12 +82,31 @@ export function CorridorCard() {
   }
 
   async function handleExecute() {
-    if (!quote) return
+    if (!quote || insufficientUsdc) return
     await execute(quote)
   }
 
   const supported = isCorridorSupported(from, to)
-  const canSwap   = isConnected && !!quote && supported && !isLoading
+
+  // The corridor spends USDC from the wallet (step 1 sends usdcIn1, step 2
+  // sends usdcIn2). Step 1 must clear first, so the wallet needs at least the
+  // step-1 USDC amount. Two transfers => reserve 2x the per-tx gas buffer.
+  const { formatted: usdcBalance } = useUSDCBalance()
+  const balanceNum   = parseFloat(usdcBalance) || 0
+  const GAS_BUFFER   = 0.001
+  const usdcNeeded   = quote
+    ? quote.step1.toAmount + quote.step1.spreadFee + quote.step1.networkFee
+    : 0
+  const maxUsdc      = Math.max(0, balanceNum - GAS_BUFFER * 2)
+  const insufficientUsdc = !!quote && usdcNeeded > maxUsdc
+
+  // Max input = the largest FROM amount whose step-1 USDC fits the balance.
+  // step-1 USDC ≈ inputAmount / fromRate, so inputAmount ≈ maxUsdc * fromRate.
+  function setMaxInput() {
+    if (fromRateVal > 0) setAmount((maxUsdc * fromRateVal).toFixed(2))
+  }
+
+  const canSwap   = isConnected && !!quote && supported && !isLoading && !insufficientUsdc
 
   // Step label helper
   const stepLabel: Record<string, string> = {
@@ -110,6 +130,17 @@ export function CorridorCard() {
         <Badge variant="arc" className="ml-auto">2-step · via USDC</Badge>
       </div>
 
+      {/* USDC balance + Max — the corridor spends USDC from the wallet */}
+      {isConnected && (
+        <div className="mb-2 flex items-center justify-between text-xs">
+          <span className="text-app-muted">Available balance</span>
+          <span className="flex items-center gap-2">
+            <span className="font-mono text-app-text">{usdcBalance} USDC</span>
+            <button onClick={setMaxInput} className="text-app-accent-text hover:underline">Max</button>
+          </span>
+        </div>
+      )}
+
       {/* From currency */}
       <CurrencyInput
         label="You send"
@@ -119,6 +150,19 @@ export function CorridorCard() {
         onCurrencyChange={handleFromChange}
         currencies={LOCAL_CURRENCIES.filter(c => c !== to)}
       />
+
+      {/* USDC insufficiency / remaining */}
+      {insufficientUsdc && (
+        <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-red-900/20 px-3 py-2 text-xs text-red-400">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          Needs ~{usdcNeeded.toFixed(2)} USDC — you only have {usdcBalance} USDC
+        </div>
+      )}
+      {!insufficientUsdc && quote && usdcNeeded > 0 && (
+        <p className="mt-2 text-xs text-emerald-400">
+          Uses ~{usdcNeeded.toFixed(2)} USDC · remaining after: {(balanceNum - usdcNeeded).toFixed(4)} USDC
+        </p>
+      )}
 
       {/* Flip button */}
       <div className="my-1 flex justify-center">

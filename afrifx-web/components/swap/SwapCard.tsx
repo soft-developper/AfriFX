@@ -8,10 +8,12 @@ import { Button } from '@/components/ui/button'
 import { useRate } from '@/hooks/useFXRate'
 import { useSwap } from '@/hooks/useSwap'
 import { useArcTransaction } from '@/hooks/useArcTransaction'
+import { useUSDCBalance } from '@/hooks/useUSDCBalance'
 import { SPREAD_BPS } from '@/lib/contracts'
 import type { Currency } from '@/types'
 
 const LOCAL_CURRENCIES: Currency[] = ['NGN', 'GHS', 'KES', 'ZAR', 'EGP']
+const GAS_BUFFER = 0.001 // ~network fee per tx, kept aside so Max never over-spends
 
 export function SwapCard() {
   const { isConnected } = useAccount()
@@ -35,6 +37,18 @@ export function SwapCard() {
 
   const { buildQuote, execute, isLoading: swapping, error, txHash } = useSwap()
   const { isSuccess, explorerUrl } = useArcTransaction(txHash ?? undefined)
+  const { formatted: usdcBalance } = useUSDCBalance()
+
+  // USDC balance only matters when the user is SPENDING USDC (USDC → local).
+  const spendingUsdc  = fromCurrency === 'USDC'
+  const balanceNum    = parseFloat(usdcBalance) || 0
+  const spendAmount   = parseFloat(fromAmount) || 0
+  const maxSpendable  = Math.max(0, balanceNum - GAS_BUFFER)
+  const insufficientUsdc = spendingUsdc && spendAmount > 0 && spendAmount > maxSpendable
+
+  function setMaxUsdc() {
+    setFromAmount(maxSpendable.toFixed(6))
+  }
 
   // Recalculate receive amount whenever inputs change
   useEffect(() => {
@@ -87,7 +101,7 @@ export function SwapCard() {
   }
 
   async function handleConvert() {
-    if (!isConnected || rate === 0 || !fromAmount) return
+    if (!isConnected || rate === 0 || !fromAmount || insufficientUsdc) return
     setLastTx(null)
     const quote = buildQuote(fromCurrency, toCurrency, parseFloat(fromAmount), rate)
     await execute(quote)
@@ -95,7 +109,7 @@ export function SwapCard() {
 
   const fromCurrencies = toCurrency === 'USDC' ? LOCAL_CURRENCIES : (['USDC'] as Currency[])
   const toCurrencies   = fromCurrency === 'USDC' ? LOCAL_CURRENCIES : (['USDC', 'EURC'] as Currency[])
-  const canConvert     = isConnected && rate > 0 && !!fromAmount && parseFloat(fromAmount) > 0 && !swapping
+  const canConvert     = isConnected && rate > 0 && !!fromAmount && parseFloat(fromAmount) > 0 && !swapping && !insufficientUsdc
 
   return (
     <div className="w-full max-w-md rounded-2xl border border-app-border bg-app-surface p-5 shadow-xl">
@@ -113,6 +127,17 @@ export function SwapCard() {
         </div>
       )}
 
+      {/* USDC balance + Max — only when spending USDC */}
+      {spendingUsdc && isConnected && (
+        <div className="mb-2 flex items-center justify-between text-xs">
+          <span className="text-app-muted">Available balance</span>
+          <span className="flex items-center gap-2">
+            <span className="font-mono text-app-text">{usdcBalance} USDC</span>
+            <button onClick={setMaxUsdc} className="text-app-accent-text hover:underline">Max</button>
+          </span>
+        </div>
+      )}
+
       <CurrencyInput
         label="You send"
         amount={fromAmount}
@@ -121,6 +146,19 @@ export function SwapCard() {
         onCurrencyChange={(c) => { setFromCurrency(c); setFromAmount(''); setToAmount('') }}
         currencies={fromCurrencies}
       />
+
+      {/* Insufficient / remaining — only when spending USDC */}
+      {spendingUsdc && insufficientUsdc && (
+        <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-red-900/20 px-3 py-2 text-xs text-red-400">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          Insufficient balance — you only have {usdcBalance} USDC
+        </div>
+      )}
+      {spendingUsdc && !insufficientUsdc && spendAmount > 0 && (
+        <p className="mt-2 text-xs text-emerald-400">
+          Remaining after: {(balanceNum - spendAmount).toFixed(4)} USDC
+        </p>
+      )}
 
       <div className="my-1 flex justify-center">
         <button
@@ -165,6 +203,8 @@ export function SwapCard() {
           'Fetching live rate…'
         ) : !fromAmount ? (
           'Enter an amount'
+        ) : insufficientUsdc ? (
+          'Insufficient USDC balance'
         ) : (
           `Convert ${parseFloat(fromAmount).toLocaleString()} ${fromCurrency} → ${toCurrency}`
         )}

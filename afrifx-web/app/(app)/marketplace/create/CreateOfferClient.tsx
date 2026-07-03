@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { useP2P, type OrderType } from '@/hooks/useP2P'
 import { useUSDCBalance } from '@/hooks/useUSDCBalance'
 import { useRate } from '@/hooks/useFXRate'
-import { ArrowLeft, Info, CheckCircle, TrendingUp, Sliders } from 'lucide-react'
+import { ArrowLeft, Info, CheckCircle, TrendingUp, Sliders, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 
 const CURRENCIES      = ['NGN', 'GHS', 'KES', 'ZAR', 'EGP']
@@ -47,6 +47,14 @@ export function CreateOfferClient() {
     ? parseFloat(usdcAmount) * effectiveRate
     : 0
 
+  // The offer locks usdcAmount of USDC from the wallet; keep a small gas buffer.
+  const GAS_BUFFER    = 0.001
+  const balanceNum    = parseFloat(balance) || 0
+  const usdcNum       = parseFloat(usdcAmount) || 0
+  const maxUsdc       = Math.max(0, balanceNum - GAS_BUFFER)
+  const insufficientUsdc = usdcNum > 0 && usdcNum > maxUsdc
+  function setMaxUsdc() { setUsdcAmount(maxUsdc.toFixed(6)) }
+
   const timerSeconds = timerOption === 0
     ? (parseInt(customTimer) || 0) * 60
     : timerOption
@@ -54,7 +62,7 @@ export function CreateOfferClient() {
   const rateVsMarket = orderType === 'limit' ? limitOffset : 0
 
   async function handleCreate() {
-    if (!usdcAmount || localAmount <= 0 || timerSeconds < 300) return
+    if (!usdcAmount || localAmount <= 0 || timerSeconds < 300 || insufficientUsdc) return
     try {
       await createOffer({
         usdcAmount:        parseFloat(usdcAmount),
@@ -125,6 +133,8 @@ export function CreateOfferClient() {
             </label>
             <span className="text-xs text-app-muted">
               Balance: <span className="text-app-text">{balance}</span>
+              <button type="button" onClick={setMaxUsdc}
+                className="ml-2 text-app-accent-text hover:underline">Max</button>
             </span>
           </div>
           <div className="flex gap-2">
@@ -136,8 +146,21 @@ export function CreateOfferClient() {
             </select>
             <Input type="number" placeholder="0.00" value={usdcAmount}
               onChange={(e) => setUsdcAmount(e.target.value)}
-              className="flex-1 font-mono text-lg" />
+              className={`flex-1 font-mono text-lg ${insufficientUsdc ? 'border-red-500/50' : ''}`} />
           </div>
+
+          {/* Insufficiency / remaining */}
+          {insufficientUsdc && (
+            <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-red-900/20 px-3 py-2 text-xs text-red-400">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+              Insufficient balance — you only have {balance} USDC
+            </div>
+          )}
+          {!insufficientUsdc && usdcNum > 0 && (
+            <p className="mt-2 text-xs text-emerald-400">
+              Remaining after: {(balanceNum - usdcNum).toFixed(4)} USDC
+            </p>
+          )}
         </div>
 
         {/* Rate display + limit slider */}
@@ -265,10 +288,13 @@ export function CreateOfferClient() {
           <Button className="w-full" size="lg" onClick={handleCreate}
             disabled={
               isLoading || !usdcAmount || localAmount <= 0 || timerSeconds < 300 ||
+              insufficientUsdc ||
               (timerOption === 0 && (!customTimer || parseInt(customTimer) < 5))
             }>
             {isLoading
               ? 'Locking USDC in escrow…'
+              : insufficientUsdc
+              ? 'Insufficient USDC balance'
               : `Create ${orderType} order — ${usdcAmount || '0'} USDC`}
           </Button>
         )}
