@@ -8,7 +8,7 @@ import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import {
   LayoutDashboard, Store, AlertTriangle, Users,
   Shield, ScrollText, BarChart3, LogOut, Loader2, Settings,
-  Menu, X, Sun, Moon, FileText,
+  Menu, X, Sun, Moon, FileText, Mail,
 } from 'lucide-react'
 
 // Full-width labeled theme toggle for the admin sidebar footer
@@ -37,6 +37,7 @@ const NAV = [
   { href: '/admin/users',      icon: Users,           label: 'Users',      perm: 'manage_users'     },
   { href: '/admin/sub-admins', icon: Shield,          label: 'Sub-admins', perm: 'manage_admins'    },
   { href: '/admin/content',    icon: FileText,        label: 'Site content', perm: 'manage_content' },
+  { href: '/admin/messages',   icon: Mail,            label: 'Messages',   perm: 'view_messages'    },
   { href: '/admin/analytics',  icon: BarChart3,       label: 'Analytics',  perm: 'view_analytics'   },
   { href: '/admin/audit',      icon: ScrollText,      label: 'Audit log',  perm: 'view_audit_log'   },
 ]

@@ -154,4 +154,40 @@ function escapeHtml(s: string): string {
   ))
 }
 
+// ── Admin: read contact-form submissions ─────────────────────
+// GET /content/messages?status=new|read|archived  (super admin, or
+// sub-admin with view_messages)
+router.get('/messages', requireAdmin, requirePermission(PERMISSIONS.VIEW_MESSAGES), async (req, res) => {
+  const filter = String(req.query.status ?? 'all')
+  try {
+    const rows = parseRows(await db.run(
+      filter === 'all'
+        ? sql`SELECT * FROM contact_messages ORDER BY created_at DESC LIMIT 500`
+        : sql`SELECT * FROM contact_messages WHERE status = ${filter} ORDER BY created_at DESC LIMIT 500`
+    ))
+    const messages = rows.map((r: any) => Array.isArray(r) ? {
+      id: r[0], name: r[1], email: r[2], subject: r[3],
+      message: r[4], status: r[5], created_at: r[6],
+    } : r)
+    // Unread count for the badge
+    const countRows = parseRows(await db.run(
+      sql`SELECT COUNT(*) AS c FROM contact_messages WHERE status = 'new'`
+    ))
+    const unread = Number(Array.isArray(countRows[0]) ? countRows[0][0] : countRows[0]?.c ?? 0)
+    res.json({ messages, unread })
+  } catch (err: any) { res.status(500).json({ error: err.message }) }
+})
+
+// PATCH /content/messages/:id  body: { status: 'new'|'read'|'archived' }
+router.patch('/messages/:id', requireAdmin, requirePermission(PERMISSIONS.VIEW_MESSAGES), async (req, res) => {
+  const { status } = req.body
+  if (!['new', 'read', 'archived'].includes(status)) {
+    return res.status(400).json({ error: 'Invalid status' })
+  }
+  try {
+    await db.run(sql`UPDATE contact_messages SET status = ${status} WHERE id = ${req.params.id}`)
+    res.json({ success: true })
+  } catch (err: any) { res.status(500).json({ error: err.message }) }
+})
+
 export default router
