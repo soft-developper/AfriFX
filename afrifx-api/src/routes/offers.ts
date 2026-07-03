@@ -108,11 +108,18 @@ router.patch('/:id', async (req, res) => {
     // Fetch offer data for email notification
     const _offerRows = await db.run(sql`SELECT * FROM p2p_offers WHERE id = ${req.params.id} LIMIT 1`)
     const _offerData = Array.isArray((_offerRows as any).rows) ? (_offerRows as any).rows[0] : (_offerRows as any)[0]
-    // Fire email + in-app notification (non-blocking)
-    if (_offerData) {
+    // Fire the "trade accepted" email ONLY on the actual accept transition —
+    // i.e. when the taker accepts (status -> 'accepted' with a takerAddress).
+    // Other PATCHes (takerConfirmed / makerConfirmed / release, etc.) hit this
+    // same endpoint and must NOT re-trigger the email (that caused duplicate
+    // notifications, including ones with a blank taker name).
+    const isAcceptTransition =
+      status === 'accepted' && !!takerAddress
+
+    if (_offerData && isAcceptTransition) {
       notifyTradeAccepted({
         makerWallet: _offerData.maker_address ?? _offerData[1] ?? '',
-        takerWallet: (req.body.takerAddress ?? '').toLowerCase(),
+        takerWallet: (takerAddress ?? '').toLowerCase(),
         usdcAmount:  Number(_offerData.usdc_amount  ?? _offerData[3]  ?? 0),
         localAmount: Number(_offerData.local_amount ?? _offerData[5]  ?? 0),
         localCcy:    _offerData.local_currency ?? _offerData[4] ?? '',

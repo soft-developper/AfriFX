@@ -8,7 +8,7 @@
 import { db }               from '../db/client'
 import { sql }              from 'drizzle-orm'
 import { releasePlatform, cancelPlatform } from '../services/platformWallet'
-import { notifyTradeCompleted, notifyTradeAutoCancelled, notifyPaymentReceipt } from '../services/email/notifications'
+import { notifyTradeCompleted, notifyTradeAutoCancelled } from '../services/email/notifications'
 
 function parseRows(r: any): any[] {
   if (!r) return []
@@ -48,33 +48,8 @@ async function releaseOffer(offerId: string, label: string) {
           txHash:      hash,
         }).catch((err: any) => console.error('[Notify] trade_completed failed:', err.message))
 
-        // Send receipts to both parties
-        const now = Math.floor(Date.now() / 1000)
-        notifyPaymentReceipt({
-          recipientWallet: o.maker_address ?? o[1] ?? '',
-          recipientRole: 'receiver',
-          type: 'trade',
-          usdcAmount: Number(o.usdc_amount ?? o[3] ?? 0),
-          localAmount: Number(o.local_amount ?? o[5] ?? 0),
-          localCcy: o.local_currency ?? o[4] ?? '',
-          counterpartWallet: o.taker_address ?? o[2] ?? '',
-          reference: offerId.slice(0,16),
-          txHash: hash,
-          timestamp: now,
-        }).catch(() => {})
-
-        notifyPaymentReceipt({
-          recipientWallet: o.taker_address ?? o[2] ?? '',
-          recipientRole: 'sender',
-          type: 'trade',
-          usdcAmount: Number(o.usdc_amount ?? o[3] ?? 0),
-          localAmount: Number(o.local_amount ?? o[5] ?? 0),
-          localCcy: o.local_currency ?? o[4] ?? '',
-          counterpartWallet: o.maker_address ?? o[1] ?? '',
-          reference: offerId.slice(0,16),
-          txHash: hash,
-          timestamp: now,
-        }).catch(() => {})
+        // The receipt is now attached as a PDF to the completion email above,
+        // so we no longer send a separate receipt email per party.
       }
     } catch {}
 

@@ -9,15 +9,21 @@ if (!RESEND_KEY) {
 
 const resend = RESEND_KEY ? new Resend(RESEND_KEY) : null
 
-export interface SendEmailParams {
-  to:      string
-  subject: string
-  html:    string
+export interface EmailAttachment {
+  filename: string
+  content:  Buffer | string   // Buffer or base64 string
 }
 
-export async function sendEmail({ to, subject, html }: SendEmailParams) {
+export interface SendEmailParams {
+  to:           string
+  subject:      string
+  html:         string
+  attachments?: EmailAttachment[]
+}
+
+export async function sendEmail({ to, subject, html, attachments }: SendEmailParams) {
   if (!resend) {
-    console.log(`[Email DEV MODE] To: ${to} | Subject: ${subject}`)
+    console.log(`[Email DEV MODE] To: ${to} | Subject: ${subject}${attachments?.length ? ` | ${attachments.length} attachment(s)` : ''}`)
     return { id: 'dev-mode', success: true }
   }
 
@@ -27,6 +33,9 @@ export async function sendEmail({ to, subject, html }: SendEmailParams) {
       to:      [to],
       subject,
       html,
+      ...(attachments?.length
+        ? { attachments: attachments.map(a => ({ filename: a.filename, content: a.content })) }
+        : {}),
     })
     return { id: result.data?.id, success: true, error: result.error }
   } catch (err: any) {

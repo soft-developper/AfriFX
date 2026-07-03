@@ -2,6 +2,7 @@ import { db }     from '../../db/client'
 import { sql }    from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import { sendEmail } from './client'
+import { generateReceiptPdf } from './receipt-pdf'
 import {
   tradeAcceptedEmail,
   tradeCompletedEmail,
@@ -187,8 +188,31 @@ export async function notifyTradeCompleted(params: {
       recipientEmail: profile.email,
     })
 
+    // Generate a PDF receipt and attach it to the completion email so the
+    // user gets a single email with the receipt, rather than two separate ones.
+    let attachments: { filename: string; content: Buffer }[] | undefined
+    try {
+      const pdf = await generateReceiptPdf({
+        title:           'Trade Receipt',
+        recipientName:   getDisplayName(profile),
+        recipientRole:   role === 'maker' ? 'Seller' : 'Buyer',
+        counterpartName: getDisplayName(counterpart),
+        usdcAmount:      params.usdcAmount,
+        localAmount:     params.localAmount,
+        localCcy:        params.localCcy,
+        reference:       params.offerId.slice(0, 16),
+        txHash:          params.txHash,
+        timestamp:       Math.floor(Date.now() / 1000),
+        type:            'trade',
+      })
+      attachments = [{ filename: `afrifx-trade-receipt-${params.offerId.slice(0, 8)}.pdf`, content: pdf }]
+    } catch (err: any) {
+      console.error('[Notify] receipt PDF generation failed:', err.message)
+    }
+
     const result = await sendEmail({
       to: profile.email, subject: template.subject, html: template.html,
+      attachments,
     })
 
     if (result.success) await markSent(notifId, result.id ?? null)
@@ -284,20 +308,69 @@ export async function notifyInvoicePaid(params: {
     recipientEmail: profile.email,
   })
 
+  // Attach the receipt as a PDF (replaces the separate receipt email).
+  let attachments: { filename: string; content: Buffer }[] | undefined
+  try {
+    const payerProfile = await getProfile(params.payerAddress)
+    const pdf = await generateReceiptPdf({
+      title:           'Payment Receipt',
+      recipientName:   getDisplayName(profile),
+      recipientRole:   'Receiver',
+      counterpartName: getDisplayName(payerProfile),
+      usdcAmount:      params.usdcAmount,
+      localAmount:     params.localAmount,
+      localCcy:        params.localCcy,
+      reference:       params.invoiceRef,
+      txHash:          params.txHash,
+      timestamp:       Math.floor(Date.now() / 1000),
+      type:            'invoice',
+    })
+    attachments = [{ filename: `afrifx-invoice-receipt-${params.invoiceRef}.pdf`, content: pdf }]
+  } catch (err: any) {
+    console.error('[Notify] invoice receipt PDF failed:', err.message)
+  }
+
   const result = await sendEmail({
     to: profile.email, subject: template.subject, html: template.html,
+    attachments,
   })
 
   if (result.success) await markSent(notifId, result.id ?? null)
   else await markFailed(notifId, result.error ?? 'unknown')
+
+  // Also send the PAYER a PDF receipt (previously a separate text email).
+  try {
+    const payerProfile = await getProfile(params.payerAddress)
+    if (payerProfile?.email && Number(payerProfile.notify_receipts ?? 1) !== 0) {
+      const payerPdf = await generateReceiptPdf({
+        title:           'Payment Receipt',
+        recipientName:   getDisplayName(payerProfile),
+        recipientRole:   'Sender',
+        counterpartName: getDisplayName(profile),
+        usdcAmount:      params.usdcAmount,
+        localAmount:     params.localAmount,
+        localCcy:        params.localCcy,
+        reference:       params.invoiceRef,
+        txHash:          params.txHash,
+        timestamp:       Math.floor(Date.now() / 1000),
+        type:            'invoice',
+      })
+      await sendEmail({
+        to:      payerProfile.email,
+        subject: `Receipt — invoice ${params.invoiceRef} paid`,
+        html:    `<div style="font-family:sans-serif;line-height:1.5">
+          <p>Hi ${getDisplayName(payerProfile)},</p>
+          <p>Thanks for your payment of ${params.usdcAmount} USDC for invoice
+          <strong>${params.invoiceRef}</strong>. Your receipt is attached as a PDF.</p>
+          <p style="color:#6B5F49;font-size:13px">AfriFX · Stablecoin FX on Arc</p>
+        </div>`,
+        attachments: [{ filename: `afrifx-invoice-receipt-${params.invoiceRef}.pdf`, content: payerPdf }],
+      })
+    }
+  } catch (err: any) {
+    console.error('[Notify] payer receipt PDF failed:', err.message)
+  }
 }
-
-// ─────────────────────────────────────────────────────────────
-// Wave 2 notification functions
-// ─────────────────────────────────────────────────────────────
-
-
-// Rate limit check (returns true if allowed to send)
 async function checkRateLimit(key: string, minIntervalSeconds: number): Promise<boolean> {
   try {
     const rows = await db.run(sql`SELECT last_sent FROM email_rate_limits WHERE key = ${key} LIMIT 1`)

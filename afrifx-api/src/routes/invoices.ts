@@ -152,19 +152,9 @@ router.patch('/ref/:ref/pay', async (req, res) => {
             txHash:        txHash ?? '',
           }).catch((e: any) => console.error('[Notify] invoice_paid:', e.message))
 
-          // Send receipt to payer
-          notifyPaymentReceipt({
-            recipientWallet: payerAddress ?? '',
-            recipientRole:   'sender',
-            type:            'invoice',
-            usdcAmount:      Number(_inv.usdc_amount ?? _inv.amount ?? 0),
-            localAmount:     _inv.amount ? Number(_inv.amount) : undefined,
-            localCcy:        _inv.currency ?? undefined,
-            counterpartWallet: _inv.creator_address ?? '',
-            reference:       _inv.memo_ref ?? req.params.ref,
-            txHash:          txHash ?? '',
-            timestamp:       now,
-          }).catch(() => {})
+          // The payer's receipt is now sent as a PDF attachment by
+          // notifyInvoicePaid (to both creator and payer), so we no longer
+          // send a separate text receipt email here.
         }
       } catch (err: any) { console.error('[Notify] invoice hook error:', err.message) }
     } else {
