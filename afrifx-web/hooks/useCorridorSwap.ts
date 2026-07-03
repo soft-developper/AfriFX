@@ -63,6 +63,34 @@ export function useCorridorSwap() {
     })
   }
 
+  async function recordTx(body: any) {
+    await fetch(`${API_BASE}/transactions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).catch(console.error)
+  }
+
+  async function patchTxStatus(hash: string, status: 'settled' | 'failed') {
+    await fetch(`${API_BASE}/transactions/${hash}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    }).catch(console.error)
+  }
+
+  // Wait for the on-chain receipt and return whether it actually succeeded.
+  // A tx hash existing only means it was broadcast — it can still revert.
+  async function confirmedOnChain(hash: `0x${string}`): Promise<boolean> {
+    if (!publicClient) return false
+    try {
+      const receipt = await publicClient.waitForTransactionReceipt({ hash })
+      return receipt.status === 'success'
+    } catch {
+      return false
+    }
+  }
+
   async function execute(quote: CorridorQuote) {
     if (!address) throw new Error('Wallet not connected')
     const vault = CONTRACTS.AFRIFX_VAULT
@@ -96,17 +124,20 @@ export function useCorridorSwap() {
       setStep1Hash(hash1)
       setStep('step1-waiting')
 
-      await fetch(`${API_BASE}/transactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...quote.step1, walletAddress: address,
-          arcTxHash: hash1, memoId: memo1Id, reference: ref1,
-          corridorId: quote.corridorId, corridorStep: 1,
-        }),
-      }).catch(console.error)
+      await recordTx({
+        ...quote.step1, walletAddress: address,
+        arcTxHash: hash1, memoId: memo1Id, reference: ref1,
+        corridorId: quote.corridorId, corridorStep: 1,
+      })
 
-      await sleep(1500)
+      // Only proceed if step 1 actually settled on-chain.
+      const step1Ok = await confirmedOnChain(hash1)
+      await patchTxStatus(hash1, step1Ok ? 'settled' : 'failed')
+      if (!step1Ok) {
+        setError('Step 1 reverted on-chain — the corridor was not completed. No further transaction was sent.')
+        setStep('error')
+        return
+      }
       setStep('step1-done')
 
       // ── STEP 2: USDC → to ─────────────────────────────────
@@ -128,17 +159,19 @@ export function useCorridorSwap() {
       setStep2Hash(hash2)
       setStep('step2-waiting')
 
-      await fetch(`${API_BASE}/transactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...quote.step2, walletAddress: address,
-          arcTxHash: hash2, memoId: memo2Id, reference: ref2,
-          corridorId: quote.corridorId, corridorStep: 2,
-        }),
-      }).catch(console.error)
+      await recordTx({
+        ...quote.step2, walletAddress: address,
+        arcTxHash: hash2, memoId: memo2Id, reference: ref2,
+        corridorId: quote.corridorId, corridorStep: 2,
+      })
 
-      await sleep(1500)
+      const step2Ok = await confirmedOnChain(hash2)
+      await patchTxStatus(hash2, step2Ok ? 'settled' : 'failed')
+      if (!step2Ok) {
+        setError('Step 2 reverted on-chain. Step 1 settled, but the second leg did not complete.')
+        setStep('error')
+        return
+      }
       setStep('complete')
     } catch (err: any) {
       const msg = err?.shortMessage ?? err?.message ?? 'Failed'
@@ -160,5 +193,3 @@ export function useCorridorSwap() {
     isComplete: step === 'complete',
   }
 }
-
-function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)) }

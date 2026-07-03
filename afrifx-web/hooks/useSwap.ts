@@ -94,18 +94,21 @@ export function useSwap() {
         }),
       }).catch(console.error)
 
-      // Wait for on-chain confirmation then mark settled
+      // Wait for on-chain confirmation, then mark settled or failed
+      // based on the actual receipt status (a tx can broadcast then revert).
       if (publicClient) {
-        publicClient.waitForTransactionReceipt({ hash }).then(() => {
+        publicClient.waitForTransactionReceipt({ hash }).then(receipt => {
+          const settled = receipt.status === 'success'
           fetch(`${API_BASE}/transactions/${hash}`, {
             method:  'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ status: 'settled' }),
+            body:    JSON.stringify({ status: settled ? 'settled' : 'failed' }),
           }).catch(console.error)
-          setTxStatus('settled')
+          setTxStatus(settled ? 'settled' : 'failed')
+          if (!settled) setError('Transaction reverted on-chain')
         }).catch(() => {
-          // txSettler job will catch it in 2 minutes
-          setTxStatus('settled')
+          // Receipt lookup failed (e.g. timeout) — leave as pending; the
+          // txSettler job will reconcile it against the chain shortly.
         })
       }
 
