@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
-import { useAccount, useWriteContract } from 'wagmi'
+import { useAccount, useWriteContract, usePublicClient } from 'wagmi'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -10,6 +10,7 @@ import { CONTRACTS, USDC_DECIMALS } from '@/lib/contracts'
 import { USDC_ABI } from '@/lib/usdc'
 import { buildMemoId, buildMemoTransferArgs } from '@/lib/memo'
 import { MEMO_ADDRESS, MEMO_ABI } from '@/lib/memo'
+import { arcTestnet } from '@/lib/arc-chain'
 import { formatAmount } from '@/lib/utils'
 import { parseUnits } from 'viem'
 import {
@@ -23,6 +24,7 @@ export function PayrollExecuteContent() {
   const { data: batch }  = usePayrollBatch(id as string)
   const updateRecipient  = useUpdateRecipient()
   const { writeContractAsync } = useWriteContract()
+  const publicClient = usePublicClient({ chainId: arcTestnet.id })
 
   const [executing,    setExecuting]    = useState(false)
   const [currentIdx,   setCurrentIdx]   = useState(0)
@@ -79,12 +81,33 @@ export function PayrollExecuteContent() {
           })
         }
 
-        await updateRecipient.mutateAsync({
-          id:      recipient.id,
-          batchId: batch!.id,
-          status:  'sent',
-          txHash:  hash,
-        })
+        // Confirm on-chain before marking sent — a broadcast tx can revert.
+        let onChainOk = true
+        if (publicClient) {
+          try {
+            const receipt = await publicClient.waitForTransactionReceipt({ hash })
+            onChainOk = receipt.status === 'success'
+          } catch {
+            onChainOk = false
+          }
+        }
+
+        if (onChainOk) {
+          await updateRecipient.mutateAsync({
+            id:      recipient.id,
+            batchId: batch!.id,
+            status:  'sent',
+            txHash:  hash,
+          })
+        } else {
+          await updateRecipient.mutateAsync({
+            id:      recipient.id,
+            batchId: batch!.id,
+            status:  'failed',
+            txHash:  hash,
+          })
+          setErrorMsg(`Payment to ${recipient.name ?? recipient.wallet_address.slice(0,10)} reverted on-chain`)
+        }
       } catch (err: any) {
         const msg = err?.shortMessage ?? err?.message ?? 'Transaction failed'
         await updateRecipient.mutateAsync({

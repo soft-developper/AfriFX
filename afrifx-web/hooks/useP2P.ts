@@ -53,6 +53,9 @@ export function useP2P() {
   async function getOfferIdFromReceipt(hash: `0x${string}`): Promise<`0x${string}`> {
     if (!publicClient) throw new Error('No public client')
     const receipt = await publicClient.waitForTransactionReceipt({ hash })
+    if (receipt.status !== 'success') {
+      throw new Error('Offer creation reverted on-chain — no offer was created.')
+    }
     for (const log of receipt.logs) {
       try {
         const decoded = decodeEventLog({
@@ -63,6 +66,19 @@ export function useP2P() {
       } catch {}
     }
     throw new Error('OfferCreated event not found in receipt')
+  }
+
+  // Wait for the on-chain receipt and return whether it actually succeeded.
+  // A tx hash existing only means it was broadcast — it can still revert,
+  // in which case we must NOT record the action as done.
+  async function confirmedOnChain(hash: `0x${string}`): Promise<boolean> {
+    if (!publicClient) return false
+    try {
+      const receipt = await publicClient.waitForTransactionReceipt({ hash })
+      return receipt.status === 'success'
+    } catch {
+      return false
+    }
   }
 
   // ── Create offer ──────────────────────────────────────────
@@ -165,6 +181,10 @@ export function useP2P() {
       }
 
       setTxHash(hash)
+      if (!(await confirmedOnChain(hash))) {
+        setError('Transaction reverted on-chain — the offer was not accepted.')
+        throw new Error('accept reverted on-chain')
+      }
       const takerDeadline = Math.floor(Date.now() / 1000) + makerTimerSeconds
       await fetch(`${API}/offers/${offerId}`, {
         method: 'PATCH',
@@ -203,6 +223,10 @@ export function useP2P() {
       }
 
       setTxHash(hash)
+      if (!(await confirmedOnChain(hash))) {
+        setError('Transaction reverted on-chain — your confirmation was not recorded.')
+        throw new Error('takerConfirm reverted on-chain')
+      }
       const makerDeadline = Math.floor(Date.now() / 1000) + makerTimerSeconds
       await fetch(`${API}/offers/${offerId}`, {
         method: 'PATCH',
@@ -241,6 +265,10 @@ export function useP2P() {
       }
 
       setTxHash(hash)
+      if (!(await confirmedOnChain(hash))) {
+        setError('Transaction reverted on-chain — your confirmation was not recorded.')
+        throw new Error('makerConfirm reverted on-chain')
+      }
       await fetch(`${API}/offers/${offerId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -288,6 +316,10 @@ export function useP2P() {
         functionName: 'makerCancelOffer', args: [offerId],
       })
       setTxHash(hash)
+      if (!(await confirmedOnChain(hash))) {
+        setError('Transaction reverted on-chain — the offer was not cancelled.')
+        throw new Error('cancel reverted on-chain')
+      }
       await fetch(`${API}/offers/${offerId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
