@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useWalletReady } from '@/hooks/useWalletReady'
 import { isAddress, parseUnits } from 'viem'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +13,7 @@ import { Loader2, CheckCircle, Zap, AlertCircle } from 'lucide-react'
 
 export default function SendPage() {
   const { isConnected }        = useAccount()
+  const { ready: walletReady } = useWalletReady()
   const [to,     setTo]        = useState('')
   const [amount, setAmount]    = useState('')
   const { formatted: balance, rawBalance } = useUSDCBalance()
@@ -123,9 +125,11 @@ export default function SendPage() {
 
         {/* Send button — disabled when insufficient */}
         <Button className="w-full" size="lg" onClick={handleSend}
-          disabled={!isConnected || !valid || isPending || insufficientFunds}>
+          disabled={!isConnected || !walletReady || !valid || isPending || insufficientFunds}>
           {isPending
             ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</>
+            : !walletReady && isConnected
+            ? <><Loader2 className="h-4 w-4 animate-spin" /> Preparing wallet…</>
             : insufficientFunds
             ? 'Insufficient USDC balance'
             : 'Send USDC'
