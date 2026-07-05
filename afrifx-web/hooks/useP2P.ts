@@ -99,10 +99,21 @@ export function useP2P() {
       const useMemo  = await isMemoAvailable()
 
       // 1. Approve vault (must be direct — not memo-wrapped)
-      await writeContractAsync({
+      // Wait for it to be MINED before sending the next tx, otherwise the
+      // create tx grabs the same/stale nonce and the chain rejects it with
+      // "nonce too low". This matters most for the embedded (social-login)
+      // wallet, which signs both txs instantly in the background with no
+      // manual pause between them (unlike MetaMask's per-tx confirmation).
+      const approveHash = await writeContractAsync({
         address: CONTRACTS.USDC, abi: USDC_ABI,
         functionName: 'approve', args: [vault, usdcRaw],
       })
+      if (publicClient) {
+        const approveReceipt = await publicClient.waitForTransactionReceipt({ hash: approveHash })
+        if (approveReceipt.status !== 'success') {
+          throw new Error('USDC approval failed on-chain — the offer was not created.')
+        }
+      }
 
       let hash: `0x${string}`
 
