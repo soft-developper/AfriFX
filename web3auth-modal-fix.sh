@@ -1,3 +1,33 @@
+#!/bin/bash
+# ============================================================
+# AfriFX -- FIX: social login + wallets not showing in Connect modal
+#
+# The first Web3Auth wiring passed the connector via getDefaultConfig's
+# `connectors` option, which REPLACES RainbowKit's entire wallet list (so
+# MetaMask/WalletConnect disappeared) and still didn't render the social
+# option (RainbowKit's modal only renders RainbowKit "wallet" objects, not
+# raw wagmi connectors). That's why the modal looked empty.
+#
+# This fix:
+#   * lib/web3auth.ts -- exposes Web3Auth as a RainbowKit custom WALLET
+#     (Google/Email), using the v2 createConnector -> CreateConnectorFn
+#     contract, so it renders INSIDE the normal modal.
+#   * lib/wagmi.ts    -- starts from getDefaultWallets() (the real default
+#     list) and ADDS a "Social login" group, via the `wallets` option
+#     (which RainbowKit merges) instead of `connectors` (which overrides).
+#
+# Result: the Connect modal shows a "Social login -> Google / Email" group
+# ABOVE MetaMask/WalletConnect, all in one modal.
+#
+# Run from ~/AfriFX:  bash web3auth-modal-fix.sh
+# ============================================================
+set -e
+echo ""
+echo "Applying Web3Auth modal fix..."
+echo ""
+
+mkdir -p "afrifx-web/lib"
+cat > "afrifx-web/lib/web3auth.ts" << 'AFX_EOF'
 import { Web3Auth } from '@web3auth/modal'
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK, WALLET_ADAPTERS } from '@web3auth/base'
 import { EthereumPrivateKeyProvider } from '@web3auth/ethereum-provider'
@@ -100,3 +130,49 @@ export function web3AuthWallet(): Wallet {
 }
 
 export const hasWeb3Auth = !!clientId
+AFX_EOF
+echo "  afrifx-web/lib/web3auth.ts"
+
+mkdir -p "afrifx-web/lib"
+cat > "afrifx-web/lib/wagmi.ts" << 'AFX_EOF'
+import { getDefaultConfig, getDefaultWallets } from '@rainbow-me/rainbowkit'
+import { http } from 'wagmi'
+import { arcTestnet } from './arc-chain'
+import { web3AuthWallet, hasWeb3Auth } from './web3auth'
+
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? 'demo'
+
+// Start from RainbowKit's default wallet groups (MetaMask, WalletConnect, etc.)
+const { wallets: defaultWallets } = getDefaultWallets()
+
+// Add Web3Auth social login (Google + Email) as its own group at the top, so it
+// appears INSIDE the same Connect modal alongside the default wallets. Only
+// added when a client ID is configured.
+const wallets = hasWeb3Auth
+  ? [
+      { groupName: 'Social login', wallets: [web3AuthWallet] },
+      ...defaultWallets,
+    ]
+  : defaultWallets
+
+export const wagmiConfig = getDefaultConfig({
+  appName:    'AfriFX',
+  appIcon:    'https://afrifx.xyz/favicon.svg',
+  projectId,
+  wallets,
+  chains:     [arcTestnet],
+  transports: { [arcTestnet.id]: http(arcTestnet.rpcUrls.default.http[0]) },
+  ssr:        true,
+})
+AFX_EOF
+echo "  afrifx-web/lib/wagmi.ts"
+
+echo ""
+echo "Done. Now:"
+echo "  cd afrifx-web && npm run build"
+echo "  git add -A && git commit -m 'Fix: show Web3Auth social login + default wallets in Connect modal'"
+echo "  git push"
+echo ""
+echo "  Make sure NEXT_PUBLIC_WEB3AUTH_CLIENT_ID is set in .env.local AND Vercel."
+echo "  Then reload the deployed site and open Connect Wallet -- you should see"
+echo "  a 'Social login' group (Google / Email) above MetaMask/WalletConnect."
