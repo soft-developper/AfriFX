@@ -1,3 +1,24 @@
+#!/bin/bash
+# ============================================================
+# AfriFX -- FIX: Web3Auth 400 "Failed to fetch project configurations"
+#
+# Cause: the code requested the Web3Auth SAPPHIRE_MAINNET network, but your
+# dashboard project (and Client ID) are on SAPPHIRE_DEVNET. A Client ID is
+# bound to the network it was created on, so the mismatch made the config
+# call return 400 and blocked social login before it could start.
+#
+# Fix: default the network to Sapphire Devnet (matching your project), and
+# make it env-configurable for the future:
+#     NEXT_PUBLIC_WEB3AUTH_NETWORK=sapphire_mainnet   # only if you migrate
+#
+# Run from ~/AfriFX:  bash web3auth-network-fix.sh
+# ============================================================
+set -e
+echo ""
+echo "Fixing Web3Auth network (mainnet -> devnet to match your project)..."
+echo ""
+mkdir -p "afrifx-web/lib"
+cat > "afrifx-web/lib/web3auth.ts" << 'AFX_EOF'
 import { Web3Auth } from '@web3auth/modal'
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK, WALLET_ADAPTERS } from '@web3auth/base'
 import { EthereumPrivateKeyProvider } from '@web3auth/ethereum-provider'
@@ -110,3 +131,14 @@ export function web3AuthWallet(): Wallet {
 }
 
 export const hasWeb3Auth = !!clientId
+AFX_EOF
+echo "  afrifx-web/lib/web3auth.ts"
+echo ""
+echo "Done. Now:"
+echo "  cd afrifx-web && npm run build"
+echo "  git add -A && git commit -m 'Fix: match Web3Auth network to devnet project (fixes 400 config error)'"
+echo "  git push"
+echo ""
+echo "  (No env change needed -- it now defaults to sapphire_devnet, which"
+echo "   matches your dashboard project.) Reload the site, pick Google/Email,"
+echo "   and the login popup should now open instead of erroring."
