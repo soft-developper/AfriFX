@@ -1,4 +1,5 @@
 'use client'
+import { Reveal } from './Reveal'
 import {
   ArrowLeftRight, Globe, Send, Store, FileText, BarChart3,
   Building2, CreditCard, Wallet, LayoutDashboard, History, User, TrendingUp,
@@ -131,42 +132,45 @@ const GROUPS: Group[] = [
 export function LandingFeatures() {
   return (
     <section id="features" className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
-      <div className="mx-auto max-w-2xl text-center">
-        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-app-accent-text">Everything in AfriFX</span>
-        <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
-          One app for African <span className="afx-gradient-text">money movement</span>
-        </h2>
-        <p className="mt-4 text-app-muted">
-          From simple conversions to business payroll — here’s what you can do, and when you’d reach for it.
-        </p>
-      </div>
+      <Reveal>
+        <div className="mx-auto max-w-2xl text-center">
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-app-accent-text">Everything in AfriFX</span>
+          <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
+            One app for African <span className="afx-gradient-text">money movement</span>
+          </h2>
+          <p className="mt-4 text-app-muted">
+            From simple conversions to business payroll — here’s what you can do, and when you’d reach for it.
+          </p>
+        </div>
+      </Reveal>
 
       <div className="mt-16 space-y-16">
         {GROUPS.map((group) => (
           <div key={group.eyebrow}>
-            <div className="mb-6 flex items-baseline gap-3">
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-app-accent-text">{group.eyebrow}</span>
-              <span className="h-px flex-1 bg-app-border" />
-              <h3 className="text-lg font-semibold text-app-text">{group.title}</h3>
-            </div>
+            <Reveal>
+              <div className="mb-6 flex items-baseline gap-3">
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-app-accent-text">{group.eyebrow}</span>
+                <span className="h-px flex-1 bg-app-border" />
+                <h3 className="text-lg font-semibold text-app-text">{group.title}</h3>
+              </div>
+            </Reveal>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {group.features.map((f) => {
+              {group.features.map((f, i) => {
                 const Icon = f.icon
                 return (
-                  <div
-                    key={f.name}
-                    className="group rounded-2xl border border-app-border bg-app-surface p-5 transition-colors hover:border-app-accent/60"
-                  >
-                    <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-app-accent/12 text-app-accent-text transition-transform group-hover:scale-105">
-                      <Icon className="h-5 w-5" />
+                  <Reveal key={f.name} delay={i * 90}>
+                    <div className="group h-full rounded-2xl border border-app-border bg-app-surface p-5 transition-colors hover:border-app-accent/60">
+                      <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-app-accent/12 text-app-accent-text transition-transform group-hover:scale-105">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <h4 className="text-base font-semibold text-app-text">{f.name}</h4>
+                      <p className="mt-1.5 text-sm leading-relaxed text-app-muted">{f.overview}</p>
+                      <p className="mt-3 border-t border-app-border pt-3 text-xs leading-relaxed text-app-muted">
+                        <span className="font-medium text-app-accent-text">Use case · </span>{f.useCase}
+                      </p>
                     </div>
-                    <h4 className="text-base font-semibold text-app-text">{f.name}</h4>
-                    <p className="mt-1.5 text-sm leading-relaxed text-app-muted">{f.overview}</p>
-                    <p className="mt-3 border-t border-app-border pt-3 text-xs leading-relaxed text-app-muted">
-                      <span className="font-medium text-app-accent-text">Use case · </span>{f.useCase}
-                    </p>
-                  </div>
+                  </Reveal>
                 )
               })}
             </div>

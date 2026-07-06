@@ -3,6 +3,8 @@ import { AfriFXLogo } from '@/components/brand/AfriFXLogo'
 import { ArrowUpRight } from 'lucide-react'
 import { LandingRates } from '@/components/landing/LandingRates'
 import { LandingFeatures } from '@/components/landing/LandingFeatures'
+import { LandingHowItWorks } from '@/components/landing/LandingHowItWorks'
+import { ShieldCheck, Zap, Coins } from 'lucide-react'
 
 export const metadata = {
   title: 'AfriFX — Stablecoin FX & cross-border payments on Arc',
@@ -15,6 +17,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-app-bg text-app-text">
       <LandingHeader />
       <Hero />
+      <LandingHowItWorks />
       <LandingFeatures />
       <LandingFooter />
     </div>
@@ -80,6 +83,13 @@ function Hero() {
           >
             Explore features
           </Link>
+        </div>
+
+        {/* Trust row */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-app-muted">
+          <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-app-accent-text" /> Non-custodial</span>
+          <span className="inline-flex items-center gap-1.5"><Zap className="h-4 w-4 text-app-accent-text" /> Settled on Arc</span>
+          <span className="inline-flex items-center gap-1.5"><Coins className="h-4 w-4 text-app-accent-text" /> Fees in USDC</span>
         </div>
 
         <div className="mx-auto mt-16 max-w-3xl">
