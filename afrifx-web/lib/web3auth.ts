@@ -56,6 +56,10 @@ function buildWeb3Auth() {
 
   const authAdapter = new AuthAdapter({
     adapterSettings: { uxMode: 'popup' },
+    // Prompt Web3Auth's built-in recovery (MFA) setup during login so users
+    // can add a backup factor and recover their embedded wallet on another
+    // device. 'optional' shows it on each login but lets the user skip it.
+    loginSettings: { mfaLevel: 'optional' },
   })
   web3AuthInstance.configureAdapter(authAdapter)
 

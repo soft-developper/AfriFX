@@ -9,7 +9,6 @@ import { ClientOnly }        from '@/components/ui/client-only'
 import { ProfileAvatar }     from '@/components/profile/ProfileAvatar'
 import { Badge }             from '@/components/ui/badge'
 import { useTokens }         from '@/lib/tokens'
-import { RecoveryNudge }     from '@/components/wallet/RecoveryNudge'
 import {
   BarChart, Bar, AreaChart, Area,
   XAxis, YAxis, Tooltip,
@@ -91,7 +90,6 @@ function DashboardContent() {
 
   return (
     <div>
-      <RecoveryNudge />
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
