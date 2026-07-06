@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { AfriFXLogo } from '@/components/brand/AfriFXLogo'
 import { ArrowUpRight } from 'lucide-react'
 import { LandingRates } from '@/components/landing/LandingRates'
+import { LandingFeatures } from '@/components/landing/LandingFeatures'
 
 export const metadata = {
   title: 'AfriFX — Stablecoin FX & cross-border payments on Arc',
@@ -14,6 +15,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-app-bg text-app-text">
       <LandingHeader />
       <Hero />
+      <LandingFeatures />
       <LandingFooter />
     </div>
   )
