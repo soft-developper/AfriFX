@@ -16,7 +16,7 @@ export default function ConnectPage() {
   const router = useRouter()
 
   useEffect(() => {
-    if (isConnected) router.push('/convert')
+    if (isConnected) router.push('/dashboard')
   }, [isConnected, router])
 
   return (

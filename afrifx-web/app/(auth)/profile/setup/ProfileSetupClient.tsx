@@ -132,7 +132,7 @@ export function ProfileSetupClient() {
           <p className="mb-8 text-xs text-app-muted">
             You can update your profile anytime from the sidebar.
           </p>
-          <Button className="w-full" size="lg" onClick={() => router.push('/convert')}>
+          <Button className="w-full" size="lg" onClick={() => router.push('/dashboard')}>
             <Sparkles className="h-4 w-4" /> Enter AfriFX
           </Button>
         </div>

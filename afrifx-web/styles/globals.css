@@ -99,3 +99,33 @@ input[type='number']::-webkit-inner-spin-button {
 .light .text-amber-500  { color: #92400e !important; } /* amber-800 — passes on ivory */
 .light .text-red-400,
 .light .text-red-500    { color: #b91c1c !important; } /* red-700 — 5.76:1 on ivory */
+
+/*
+  Brand wordmark gradients (AfriFXLogo). "Afri" uses the warm gold-bronze
+  gradient; "FX" uses a brighter gold so the pair reads with a colorful accent
+  without leaving the brand palette. Works in both themes.
+*/
+.afx-gradient-text {
+  background: linear-gradient(120deg, #EAC15C 0%, #D9A441 45%, #B9822A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.afx-gradient-text-bright {
+  background: linear-gradient(120deg, #F5D77E 0%, #E9B84E 60%, #D9A441 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.light .afx-gradient-text {
+  background: linear-gradient(120deg, #B9822A 0%, #8A5E13 60%, #6E4A0F 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.light .afx-gradient-text-bright {
+  background: linear-gradient(120deg, #C48F2E 0%, #A9741B 60%, #8A5E13 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}

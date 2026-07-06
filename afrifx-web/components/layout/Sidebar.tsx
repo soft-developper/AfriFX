@@ -88,13 +88,6 @@ export function Sidebar() {
           </Link>
         </div>
       )}
-
-      <div className="mt-auto border-t border-app-border px-4 py-3">
-        <div className="flex gap-4 text-xs text-app-muted">
-          <Link href="/about" className="hover:text-app-text">About</Link>
-          <Link href="/contact" className="hover:text-app-text">Contact</Link>
-        </div>
-      </div>
     </aside>
   )
 }

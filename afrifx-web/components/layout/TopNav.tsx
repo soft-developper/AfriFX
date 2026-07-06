@@ -8,6 +8,7 @@ import { ProfileAvatar }  from '@/components/profile/ProfileAvatar'
 import { ClientOnly }     from '@/components/ui/client-only'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { ThemeToggle }     from '@/components/layout/ThemeToggle'
+import { AfriFXLogo }      from '@/components/brand/AfriFXLogo'
 
 // Custom ConnectButton that shows our profile avatar when connected
 function NavProfile() {
@@ -99,16 +100,12 @@ function NavProfile() {
 export function TopNav() {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-app-border px-4 md:px-6">
-      <Link href="/convert"
-        className="flex items-center gap-2 text-app-text font-semibold">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-app-accent/20">
-          <ArrowLeftRight className="h-4 w-4 text-app-accent-text" />
-        </div>
-        <span className="text-sm md:text-base">AfriFX</span>
+      <div className="flex items-center gap-2.5">
+        <AfriFXLogo size="sm" href="/dashboard" />
         <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-app-accent/10 px-2 py-0.5 text-[10px] font-medium text-app-accent-text">
           <Zap className="h-2.5 w-2.5" /> Arc Testnet
         </span>
-      </Link>
+      </div>
 
       <ClientOnly fallback={
         <div className="h-8 w-28 animate-pulse rounded-xl bg-app-border" />
