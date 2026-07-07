@@ -1,5 +1,6 @@
 'use client'
 import { useAccount }        from 'wagmi'
+import Link                  from 'next/link'
 import { useUSDCBalance }    from '@/hooks/useUSDCBalance'
 import { useFXRates }        from '@/hooks/useFXRate'
 import { useDashboardStats } from '@/hooks/useDashboardStats'
@@ -40,6 +41,13 @@ interface DashboardStats {
   recent:          RecentTx[]
 }
 
+function greeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 18) return 'Good afternoon'
+  return 'Good evening'
+}
+
 export default function DashboardPage() {
   return (
     <ClientOnly fallback={<DashboardSkeleton />}>
@@ -64,6 +72,7 @@ function DashboardContent() {
       sub:   'on Arc Testnet',
       icon:  Wallet,
       color: 'text-app-accent-text',
+      highlight: true,
     },
     {
       label: 'Volume (30d)',
@@ -71,6 +80,7 @@ function DashboardContent() {
       sub:   `${stats?.monthly.txCount ?? 0} conversions this month`,
       icon:  TrendingUp,
       color: 'text-emerald-400',
+      highlight: false,
     },
     {
       label: 'All-time volume',
@@ -78,6 +88,7 @@ function DashboardContent() {
       sub:   `${stats?.allTime.txCount ?? 0} total transactions`,
       icon:  TrendingUp,
       color: 'text-app-accent-text',
+      highlight: false,
     },
     {
       label: 'Completed trades',
@@ -85,6 +96,7 @@ function DashboardContent() {
       sub:   `${stats?.p2p?.activeTrades ?? 0} active · ${stats?.p2p?.openOffers ?? 0} open offers`,
       icon:  Store,
       color: 'text-emerald-400',
+      highlight: false,
     },
   ]
 
@@ -103,7 +115,7 @@ function DashboardContent() {
           )}
           <div>
             <h1 className="text-xl font-semibold text-app-text">
-              {profile ? profile.display_name : 'Dashboard'}
+              {profile ? `${greeting()}, ${profile.display_name}` : 'Dashboard'}
             </h1>
             <p className="text-xs text-app-accent-text">
               {profile ? `@${profile.username}` : address?.slice(0,10).concat('…') ?? '—'}
@@ -129,13 +141,24 @@ function DashboardContent() {
 
       {/* Stat cards */}
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {statCards.map(({ label, value, sub, icon: Icon, color }) => (
-          <div key={label} className="rounded-xl border border-app-border bg-app-surface p-4">
-            <div className="mb-2 flex items-center justify-between">
+        {statCards.map(({ label, value, sub, icon: Icon, color, highlight }) => (
+          <div
+            key={label}
+            className={`group rounded-2xl border p-4 transition-colors ${
+              highlight
+                ? 'border-app-accent/40 bg-app-accent/[0.07]'
+                : 'border-app-border bg-app-surface hover:border-app-accent/40'
+            }`}
+          >
+            <div className="mb-3 flex items-center justify-between">
               <p className="text-xs text-app-muted">{label}</p>
-              <Icon className={`h-3.5 w-3.5 ${color}`} />
+              <span className={`inline-flex h-8 w-8 items-center justify-center rounded-xl transition-transform group-hover:scale-105 ${
+                highlight ? 'bg-app-accent/20' : 'bg-app-accent/10'
+              }`}>
+                <Icon className={`h-4 w-4 ${color}`} />
+              </span>
             </div>
-            <p className="font-mono text-xl font-semibold text-app-text">
+            <p className={`font-mono font-semibold text-app-text ${highlight ? 'text-2xl' : 'text-xl'}`}>
               {isLoading && value === '—'
                 ? <span className="inline-block h-6 w-20 animate-pulse rounded bg-app-border" />
                 : value}
@@ -147,7 +170,7 @@ function DashboardContent() {
 
       {/* Row 1: Weekly volume + Top pairs */}
       <div className="mb-4 grid gap-4 grid-cols-1 lg:grid-cols-3">
-        <div className="lg:col-span-2 rounded-xl border border-app-border bg-app-surface p-5">
+        <div className="lg:col-span-2 rounded-2xl border border-app-border bg-app-surface p-5">
           <p className="mb-4 text-sm font-medium text-app-text">Weekly volume (USDC)</p>
           {isLoading ? (
             <div className="flex h-40 items-center justify-center">
@@ -175,7 +198,7 @@ function DashboardContent() {
           )}
         </div>
 
-        <div className="rounded-xl border border-app-border bg-app-surface p-5">
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5">
           <p className="mb-4 text-sm font-medium text-app-text">Top pairs</p>
           {isLoading ? (
             <div className="space-y-2">
@@ -200,7 +223,7 @@ function DashboardContent() {
       </div>
 
       {/* Row 2: Inflow / Outflow */}
-      <div className="mb-4 rounded-xl border border-app-border bg-app-surface p-5">
+      <div className="mb-4 rounded-2xl border border-app-border bg-app-surface p-5">
         <div className="mb-4 flex items-center justify-between">
           <p className="text-sm font-medium text-app-text">Inflow vs Outflow (14 days)</p>
           <div className="flex items-center gap-4 text-xs text-app-muted">
@@ -275,7 +298,7 @@ function DashboardContent() {
 
       {/* Row 3: Recent activity + Live rates */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        <div className="rounded-xl border border-app-border bg-app-surface p-5">
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5">
           <p className="mb-4 text-sm font-medium text-app-text">Recent activity</p>
           {isLoading ? (
             <div className="space-y-2">
@@ -314,11 +337,20 @@ function DashboardContent() {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-app-muted">No transactions yet</p>
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-app-border py-8 text-center">
+              <span className="mb-2 inline-flex h-10 w-10 items-center justify-center rounded-full bg-app-accent/10">
+                <ArrowLeftRight className="h-4 w-4 text-app-accent-text" />
+              </span>
+              <p className="text-sm text-app-text">No activity yet</p>
+              <p className="mt-0.5 text-xs text-app-muted">Your conversions and swaps will show up here.</p>
+              <Link href="/convert" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-app-accent px-3 py-1.5 text-xs font-medium text-app-on-accent hover:bg-app-accent-hover">
+                Make your first conversion
+              </Link>
+            </div>
           )}
         </div>
 
-        <div className="rounded-xl border border-app-border bg-app-surface p-5">
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5">
           <p className="mb-4 text-sm font-medium text-app-text">Live rates</p>
           <div className="space-y-2.5">
             {(rates ?? []).map(r => {
