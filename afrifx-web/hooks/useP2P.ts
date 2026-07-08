@@ -26,6 +26,11 @@ export interface CreateOfferParams {
   orderType:         OrderType
   limitRate?:        number
   makerTimerSeconds: number
+  paymentMethod:     'bank' | 'mobile_money'
+  accountName:       string
+  accountNumber:     string
+  bankName:          string
+  paymentNote?:      string
 }
 
 export function useP2P() {
@@ -158,6 +163,11 @@ export function useP2P() {
           makerTimerSeconds: params.makerTimerSeconds,
           arcTxHash:     hash,
           memoId,
+          paymentMethod: params.paymentMethod,
+          accountName:   params.accountName,
+          accountNumber: params.accountNumber,
+          bankName:      params.bankName,
+          paymentNote:   params.paymentNote ?? null,
         }),
       })
       return realOfferId

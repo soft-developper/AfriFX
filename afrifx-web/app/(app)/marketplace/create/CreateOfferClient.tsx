@@ -35,6 +35,14 @@ export function CreateOfferClient() {
   const [customTimer,   setCustomTimer]   = useState('')
   const [submitted,     setSubmitted]     = useState(false)
 
+  // Payout details — where the taker sends the local-currency payment.
+  const [paymentMethod, setPaymentMethod] = useState<'bank' | 'mobile_money'>('bank')
+  const [accountName,   setAccountName]   = useState('')
+  const [accountNumber, setAccountNumber] = useState('')
+  const [bankName,      setBankName]      = useState('')
+  const [paymentNote,   setPaymentNote]   = useState('')
+  const payoutComplete = accountName.trim() && accountNumber.trim() && bankName.trim()
+
   const { createOffer, isLoading, error } = useP2P()
   const { rate: fxRate } = useRate(`${localCurrency}/USDC`)
   const marketRate = fxRate?.rate ?? 0
@@ -62,7 +70,7 @@ export function CreateOfferClient() {
   const rateVsMarket = orderType === 'limit' ? limitOffset : 0
 
   async function handleCreate() {
-    if (!usdcAmount || localAmount <= 0 || timerSeconds < 300 || insufficientUsdc) return
+    if (!usdcAmount || localAmount <= 0 || timerSeconds < 300 || insufficientUsdc || !payoutComplete) return
     try {
       await createOffer({
         usdcAmount:        parseFloat(usdcAmount),
@@ -71,6 +79,11 @@ export function CreateOfferClient() {
         orderType,
         limitRate:         orderType === 'limit' ? effectiveRate : undefined,
         makerTimerSeconds: timerSeconds,
+        paymentMethod,
+        accountName:       accountName.trim(),
+        accountNumber:     accountNumber.trim(),
+        bankName:          bankName.trim(),
+        paymentNote:       paymentNote.trim() || undefined,
       })
       setSubmitted(true)
       setTimeout(() => router.push('/marketplace'), 2500)
@@ -238,6 +251,45 @@ export function CreateOfferClient() {
           </p>
         </div>
 
+        {/* Payout details — where the taker sends the money */}
+        <div className="rounded-xl border border-app-border bg-app-surface p-4">
+          <label className="text-xs font-medium uppercase tracking-wider text-app-muted">
+            Your payout details
+          </label>
+          <p className="mt-1 mb-3 text-xs text-app-muted">
+            Where should the taker send your {localCurrency}? Shown to a taker only after they accept.
+          </p>
+
+          {/* Method toggle */}
+          <div className="mb-3 flex gap-2">
+            {(['bank', 'mobile_money'] as const).map((m) => (
+              <button key={m} onClick={() => setPaymentMethod(m)}
+                className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition-colors
+                  ${paymentMethod === m ? 'bg-app-accent text-app-on-accent' : 'border border-app-border text-app-muted hover:text-app-text'}`}>
+                {m === 'bank' ? 'Bank account' : 'Mobile money'}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-2.5">
+            <Input placeholder="Account holder name" value={accountName}
+              onChange={(e) => setAccountName(e.target.value)} />
+            <Input
+              placeholder={paymentMethod === 'bank' ? 'Account number' : 'Phone number'}
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)} />
+            <Input
+              placeholder={paymentMethod === 'bank' ? 'Bank name' : 'Provider (e.g. M-Pesa, MTN)'}
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value)} />
+            <Input placeholder="Note / reference (optional)" value={paymentNote}
+              onChange={(e) => setPaymentNote(e.target.value)} />
+          </div>
+          {!payoutComplete && (accountName || accountNumber || bankName) && (
+            <p className="mt-2 text-xs text-amber-500">Fill in name, number, and bank/provider to continue.</p>
+          )}
+        </div>
+
         {/* Summary */}
         {usdcAmount && localAmount > 0 && timerSeconds > 0 && (
           <div className="rounded-xl border border-app-border bg-app-surface p-4 text-xs">
@@ -288,13 +340,15 @@ export function CreateOfferClient() {
           <Button className="w-full" size="lg" onClick={handleCreate}
             disabled={
               isLoading || !usdcAmount || localAmount <= 0 || timerSeconds < 300 ||
-              insufficientUsdc ||
+              insufficientUsdc || !payoutComplete ||
               (timerOption === 0 && (!customTimer || parseInt(customTimer) < 5))
             }>
             {isLoading
               ? 'Locking USDC in escrow…'
               : insufficientUsdc
               ? 'Insufficient USDC balance'
+              : !payoutComplete
+              ? 'Add your payout details'
               : `Create ${orderType} order — ${usdcAmount || '0'} USDC`}
           </Button>
         )}

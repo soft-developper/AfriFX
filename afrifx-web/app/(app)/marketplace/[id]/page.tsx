@@ -31,6 +31,11 @@ interface OfferExtended extends P2POffer {
   dispute_id?:          string | null
   maker_timer_seconds?: number
   order_type?:          string
+  payment_method?:      string
+  account_name?:        string
+  account_number?:      string
+  bank_name?:           string
+  payment_note?:        string
 }
 
 function normalizeOffer(row: unknown): OfferExtended | null {
@@ -92,7 +97,10 @@ export default function OfferDetailPage() {
 
   const load = useCallback(async () => {
     try {
-      const res  = await fetch(`${API}/offers/${params.id}`)
+      const url  = address
+        ? `${API}/offers/${params.id}?wallet=${address}`
+        : `${API}/offers/${params.id}`
+      const res  = await fetch(url)
       if (res.status === 404) {
         if (!justAccepted) setNotFound(true)
         return
@@ -110,7 +118,7 @@ export default function OfferDetailPage() {
     } finally {
       setLoading(false)
     }
-  }, [params.id, justAccepted])
+  }, [params.id, justAccepted, address])
 
   useEffect(() => { load() }, [load])
 
@@ -360,6 +368,36 @@ export default function OfferDetailPage() {
               </div>
             ))}
           </div>
+
+          {/* Maker payout details — shown to involved parties once accepted */}
+          {isInvolved && offerStatus !== 'open' && offer.account_number && (
+            <div className="mb-4 rounded-lg border border-app-accent/40 bg-app-accent/[0.06] p-4">
+              <p className="mb-1 text-sm font-medium text-app-text">
+                {isTaker ? `Send ${Number(offer.local_amount).toLocaleString()} ${offer.local_currency} to:` : 'Your payout details (shown to taker)'}
+              </p>
+              <p className="mb-3 text-xs text-app-muted">
+                {offer.payment_method === 'mobile_money' ? 'Mobile money' : 'Bank transfer'}
+              </p>
+              <div className="space-y-2 text-sm">
+                {[
+                  ['Account name', offer.account_name],
+                  [offer.payment_method === 'mobile_money' ? 'Phone number' : 'Account number', offer.account_number],
+                  [offer.payment_method === 'mobile_money' ? 'Provider' : 'Bank', offer.bank_name],
+                  ...(offer.payment_note ? [['Note', offer.payment_note]] : []),
+                ].map(([label, val]) => (
+                  <div key={label as string} className="flex items-start justify-between gap-3">
+                    <span className="text-xs text-app-muted">{label}</span>
+                    <span className="text-right font-medium text-app-text">{val}</span>
+                  </div>
+                ))}
+              </div>
+              {isTaker && (
+                <p className="mt-3 border-t border-app-border pt-3 text-xs text-app-muted">
+                  Send the exact amount, then confirm below. Only confirm after you have completed the transfer.
+                </p>
+              )}
+            </div>
+          )}
 
           <ClientOnly>
             <div className="space-y-3">

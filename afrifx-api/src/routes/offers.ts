@@ -6,6 +6,20 @@ import { randomUUID } from 'crypto'
 
 const router = Router()
 
+// Payout detail fields (maker's bank / mobile-money info). These are private:
+// only the maker and the accepted taker may see them.
+const PAYOUT_FIELDS = ['payment_method', 'account_name', 'account_number', 'bank_name', 'payment_note']
+
+// Strip payout details from an offer row (object form). Rows can come back as
+// arrays or objects depending on the driver; we normalize to object elsewhere,
+// so this handles the object shape used by the JSON responses.
+function redactPayout(offer: any) {
+  if (!offer || Array.isArray(offer)) return offer
+  const clean = { ...offer }
+  for (const f of PAYOUT_FIELDS) delete clean[f]
+  return clean
+}
+
 // GET /offers — only OPEN offers visible to everyone
 router.get('/', async (req, res) => {
   const currency = req.query.currency as string | undefined
@@ -20,7 +34,9 @@ router.get('/', async (req, res) => {
     )
     const offers = Array.isArray((rows as any).rows)
       ? (rows as any).rows : Array.isArray(rows) ? rows : []
-    res.json(offers)
+    // Never expose payout details on the PUBLIC list — only the accepted
+    // taker (and the maker) should see them, via GET /offers/:id.
+    res.json(offers.map(redactPayout))
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
@@ -41,8 +57,10 @@ router.get('/my', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// GET /offers/:id — returns offer but frontend enforces access control
+// GET /offers/:id?wallet=0x… — payout details returned ONLY to the maker
+// or the accepted taker; redacted for anyone else.
 router.get('/:id', async (req, res) => {
+  const requester = (req.query.wallet as string | undefined)?.toLowerCase()
   try {
     const rows = await db.run(
       sql`SELECT * FROM p2p_offers WHERE id = ${req.params.id} LIMIT 1`
@@ -50,7 +68,13 @@ router.get('/:id', async (req, res) => {
     const offers = Array.isArray((rows as any).rows)
       ? (rows as any).rows : Array.isArray(rows) ? rows : []
     if (!offers.length) return res.status(404).json({ error: 'Not found' })
-    res.json(offers[0])
+
+    const offer = offers[0]
+    const maker = (offer.maker_address ?? '').toLowerCase()
+    const taker = (offer.taker_address ?? '').toLowerCase()
+    const authorized = requester && (requester === maker || requester === taker)
+
+    res.json(authorized ? offer : redactPayout(offer))
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
@@ -59,20 +83,30 @@ router.post('/', async (req, res) => {
   const {
     id, makerAddress, usdcAmount, localCurrency, localAmount,
     rateOffered, orderType, limitRate, makerTimerSeconds, arcTxHash,
+    paymentMethod, accountName, accountNumber, bankName, paymentNote,
   } = req.body
   const now      = Math.floor(Date.now() / 1000)
   const PERPETUAL = 9999999999
+
+  // Payout details are required so the taker knows where to send the money.
+  if (!accountName || !accountNumber || !bankName) {
+    return res.status(400).json({ error: 'Payout details (account name, number, and bank/provider) are required' })
+  }
+
   try {
     await db.run(
       sql`INSERT OR IGNORE INTO p2p_offers
           (id, maker_address, usdc_amount, local_currency, local_amount,
            rate_offered, order_type, limit_rate, maker_timer_seconds,
-           arc_tx_hash, expires_at, created_at, updated_at)
+           arc_tx_hash, payment_method, account_name, account_number,
+           bank_name, payment_note, expires_at, created_at, updated_at)
           VALUES
           (${id}, ${makerAddress.toLowerCase()}, ${usdcAmount},
            ${localCurrency}, ${localAmount}, ${rateOffered},
            ${orderType ?? 'market'}, ${limitRate ?? null},
            ${makerTimerSeconds ?? 1800}, ${arcTxHash ?? null},
+           ${paymentMethod ?? 'bank'}, ${accountName}, ${accountNumber},
+           ${bankName}, ${paymentNote ?? null},
            ${PERPETUAL}, ${now}, ${now})`
     )
     res.status(201).json({ id })
