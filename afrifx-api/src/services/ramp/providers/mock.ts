@@ -1,0 +1,89 @@
+// ============================================================
+// Mock fiat ramp provider — a fully working fake for testing the orchestrator
+// state machine end-to-end with NO real API keys. Mirrors the SHAPES HoneyCoin
+// returns (see HONEYCOIN_INTEGRATION_NOTES.md) so swapping in the real one
+// later changes nothing in the core.
+//
+// Behaviour is deterministic + controllable via the idempotency key suffix so
+// tests can force outcomes:
+//   key ending in ':fail_onramp'  -> onramp reports failed
+//   key ending in ':fail_payout'  -> payout reports failed
+// Otherwise everything succeeds.
+// ============================================================
+
+import type {
+  FiatRampProvider, ChainKey, RampQuote, PayoutRecipient,
+  OnrampResult, PayoutResult, NormalizedWebhook,
+} from '../types'
+import { randomUUID } from 'crypto'
+
+export class MockProvider implements FiatRampProvider {
+  readonly key = 'mock'
+
+  async supportedChains(): Promise<ChainKey[]> {
+    // Mirror HoneyCoin: no Arc, settles on major EVM chains.
+    return ['eth', 'arb', 'base', 'matic', 'bsc', 'optimism']
+  }
+
+  async createOnramp(params: {
+    idempotencyKey: string; senderAmount: number; senderCurrency: string
+    receiverChain: ChainKey; receiverAddress: string
+    method: 'bank' | 'mobile_money'; charge: Record<string, string>; email?: string
+  }): Promise<OnrampResult> {
+    return {
+      providerRef: `mock_on_${randomUUID().slice(0, 8)}`,
+      payInstructions: { note: 'MOCK: pretend the customer paid via ' + params.method },
+    }
+  }
+
+  async getPayoutQuote(params: {
+    usdcAmount: number; destCurrency: string; country: string
+  }): Promise<RampQuote> {
+    // A plausible fake rate; e.g. 1 USDC ~ 130 KES / 1600 NGN, else 1.
+    const table: Record<string, number> = { KES: 130, NGN: 1600, GHS: 15, ZAR: 18, UGX: 3700 }
+    const rate = table[params.destCurrency] ?? 1
+    return {
+      quoteId:   `mock_q_${randomUUID().slice(0, 8)}`,
+      rate,
+      expiresAt: Math.floor(Date.now() / 1000) + 3600, // 1h window, like HoneyCoin
+      usdcAmount: params.usdcAmount,
+      destAmount: +(params.usdcAmount * rate).toFixed(2),
+    }
+  }
+
+  async createPayout(params: {
+    idempotencyKey: string; usdcAmount: number; chain: ChainKey; recipient: PayoutRecipient
+  }): Promise<PayoutResult> {
+    return {
+      providerRef:    `mock_off_${randomUUID().slice(0, 8)}`,
+      depositAddress: '0x000000000000000000000000000000000000dEaD',
+      depositChain:   params.chain,
+      expectedAmount: params.usdcAmount, // exact-amount, like HoneyCoin
+    }
+  }
+
+  parseWebhook(body: unknown, _headers: Record<string, string>): NormalizedWebhook {
+    const b = (body ?? {}) as any
+    const data = b.data ?? {}
+    const legMap: Record<string, 'onramp' | 'offramp' | 'payout'> = {
+      onramp: 'onramp', offramp: 'offramp', withdrawal: 'payout',
+    }
+    return {
+      providerRef:       data.transactionId,
+      externalReference: data.externalReference,
+      leg:    legMap[data.type] ?? 'payout',
+      status: data.status === 'successful' ? 'done'
+            : data.status === 'failed'     ? 'failed' : 'pending',
+      detail: data,
+    }
+  }
+
+  async getStatus(ref: { idempotencyKey?: string; providerRef?: string }):
+    Promise<{ status: 'pending' | 'done' | 'failed'; detail?: unknown }> {
+    const key = ref.idempotencyKey ?? ''
+    if (key.endsWith(':fail_onramp') || key.endsWith(':fail_payout')) {
+      return { status: 'failed', detail: { mock: true } }
+    }
+    return { status: 'done', detail: { mock: true } }
+  }
+}
