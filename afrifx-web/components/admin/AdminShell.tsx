@@ -38,8 +38,10 @@ const NAV = [
   { href: '/admin/sub-admins', icon: Shield,          label: 'Sub-admins', perm: 'manage_admins'    },
   { href: '/admin/content',    icon: FileText,        label: 'Site content', perm: 'manage_content' },
   { href: '/admin/messages',   icon: Mail,            label: 'Messages',   perm: 'view_messages'    },
-  { href: '/admin/broadcasts', icon: Megaphone,       label: 'Broadcasts', perm: 'manage_admins'    },
-  { href: '/admin/maintenance', icon: Wrench,         label: 'Maintenance', perm: 'manage_admins'   },
+  { href: '/admin/broadcasts', icon: Megaphone,       label: 'Broadcasts', perm: 'send_broadcasts'  },
+  // Maintenance is SUPER ADMIN ONLY -- taking the platform offline is too
+  // dangerous to delegate, so it is not a grantable permission at all.
+  { href: '/admin/maintenance', icon: Wrench,         label: 'Maintenance', perm: 'manage_admins', superOnly: true },
   { href: '/admin/analytics',  icon: BarChart3,       label: 'Analytics',  perm: 'view_analytics'   },
   { href: '/admin/audit',      icon: ScrollText,      label: 'Audit log',  perm: 'view_audit_log'   },
 ]
@@ -144,7 +146,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     if (first) { window.location.replace(first.path); return null }
   }
 
-  const visibleNav = NAV.filter(item => hasPermission(item.perm))
+  const visibleNav = NAV.filter(item =>
+    (item as any).superOnly
+      ? admin.role === 'super_admin'
+      : hasPermission(item.perm))
 
   async function handleLogout() {
     setDrawerOpen(false)

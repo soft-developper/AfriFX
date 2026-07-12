@@ -3,15 +3,17 @@
 //
 // GET  /maintenance/status   PUBLIC — the app reads this to show banners /
 //                            disable sections. No auth (needed before login).
-// GET  /maintenance          admin — full state for the dashboard
-// PUT  /maintenance/:section admin — take a section (or 'platform') down / up
+// GET  /maintenance          SUPER ADMIN ONLY — full state for the dashboard
+// PUT  /maintenance/:section SUPER ADMIN ONLY — take a section down / up
+//
+// Maintenance is deliberately NOT a grantable permission: taking the platform
+// offline is too dangerous to delegate. Only the super admin can do it.
 // ============================================================
 
 import { Router } from 'express'
 import { db } from '../db/client'
 import { sql } from 'drizzle-orm'
-import { requireAdmin, requirePermission, logAction } from '../lib/adminAuth'
-import { PERMISSIONS } from '../lib/permissions'
+import { requireAdmin, requireSuperAdmin, logAction } from '../lib/adminAuth'
 import {
   SECTIONS, getMaintenance, invalidateMaintenanceCache,
   DEFAULT_MESSAGE, type Section,
@@ -42,7 +44,7 @@ router.get('/status', async (_req, res) => {
 router.use(requireAdmin)
 
 // Full state (including sections that are UP), for the dashboard toggles.
-router.get('/', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (_req, res) => {
+router.get('/', requireSuperAdmin, async (_req, res) => {
   try {
     const rows = await getMaintenance(true)
     const bySection = new Map(rows.map(r => [r.section, r]))
@@ -64,7 +66,7 @@ router.get('/', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (_req, res) 
 })
 
 // Toggle a section (or 'platform') offline / back online.
-router.put('/:section', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (req: any, res) => {
+router.put('/:section', requireSuperAdmin, async (req: any, res) => {
   const admin   = req.admin
   const section = req.params.section as Section
   const { enabled, message, eta } = req.body

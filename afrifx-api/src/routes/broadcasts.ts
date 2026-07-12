@@ -119,7 +119,7 @@ async function resolveAudience(
 }
 
 // ── GET /broadcasts/audience/:audience — preview the recipient count ────────
-router.get('/audience/:audience', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (req, res) => {
+router.get('/audience/:audience', requirePermission(PERMISSIONS.SEND_BROADCASTS), async (req, res) => {
   try {
     const detail = req.query.filter ? { filter: req.query.filter } : {}
     const { recipients, internal } = await resolveAudience(req.params.audience, detail)
@@ -134,7 +134,7 @@ router.get('/audience/:audience', requirePermission(PERMISSIONS.MANAGE_ADMINS), 
 })
 
 // ── GET /broadcasts/users — list users (for "selected" audience picker) ─────
-router.get('/users', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (_req, res) => {
+router.get('/users', requirePermission(PERMISSIONS.SEND_BROADCASTS), async (_req, res) => {
   try {
     const rows = parseRows(await db.run(sql`
       SELECT wallet_address, username, display_name, email, notify_broadcasts
@@ -151,7 +151,7 @@ router.get('/users', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (_req, 
 })
 
 // ── POST /broadcasts — send ────────────────────────────────────────────────
-router.post('/', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (req: any, res) => {
+router.post('/', requirePermission(PERMISSIONS.SEND_BROADCASTS), async (req: any, res) => {
   const admin = req.admin
   const { audience, detail, subject, body } = req.body
 
@@ -245,7 +245,7 @@ router.post('/', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (req: any, 
 })
 
 // ── GET /broadcasts — history ──────────────────────────────────────────────
-router.get('/', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (_req, res) => {
+router.get('/', requirePermission(PERMISSIONS.SEND_BROADCASTS), async (_req, res) => {
   try {
     const rows = parseRows(await db.run(sql`
       SELECT * FROM admin_broadcasts ORDER BY created_at DESC LIMIT 50`))

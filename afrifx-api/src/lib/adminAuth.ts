@@ -83,6 +83,22 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
   }
 }
 
+// Middleware: require SUPER ADMIN specifically. For capabilities that must
+// never be delegable to a sub-admin — e.g. maintenance mode, which can take
+// the whole platform offline. Deliberately NOT a permission, so it can't be
+// granted by mistake.
+export function requireSuperAdmin(req: Request, res: Response, next: NextFunction) {
+  const admin = (req as any).admin as AdminPayload
+  if (!admin) return res.status(401).json({ error: 'Not authenticated' })
+  if (admin.role !== 'super_admin') {
+    return res.status(403).json({
+      error: 'Only the super admin can do this.',
+      superAdminOnly: true,
+    })
+  }
+  next()
+}
+
 // Middleware factory: require a specific permission
 export function requirePermission(permission: string) {
   return (req: Request, res: Response, next: NextFunction) => {

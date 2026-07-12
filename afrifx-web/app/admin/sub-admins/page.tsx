@@ -185,6 +185,9 @@ export default function AdminSubAdmins() {
                 <div>
                   <p className="text-xs font-medium text-app-text">{permMeta[perm]?.label ?? perm}</p>
                   <p className="text-[10px] text-app-muted">{permMeta[perm]?.description}</p>
+                  {permMeta[perm]?.note && (
+                    <p className="mt-0.5 text-[10px] text-amber-500">{permMeta[perm].note}</p>
+                  )}
                 </div>
               </button>
             ))}
