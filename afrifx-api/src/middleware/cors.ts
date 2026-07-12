@@ -8,6 +8,9 @@ export const corsMiddleware = cors({
     'https://afrifx.vercel.app',
     process.env.FRONTEND_URL ?? '',
   ].filter(Boolean),
-  methods:        ['GET', 'POST', 'PATCH', 'DELETE'],
+  // PUT was missing, which made the browser's preflight reject
+  // PUT /maintenance/:section before it ever reached the API.
+  // OPTIONS is listed explicitly since preflight relies on it.
+  methods:        ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 })
