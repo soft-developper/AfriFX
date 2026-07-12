@@ -214,6 +214,14 @@ router.patch('/:id/resolve', async (req, res) => {
       WHERE id = ${req.params.id}
     `)
 
+    // Count this resolution against the resolver's active duty session (for the
+    // session log the general admin reviews). No-op if they aren't on duty
+    // (e.g. super admin, or a sub-admin finishing a dispute after their window).
+    await db.run(sql`
+      UPDATE admin_duty_sessions
+      SET disputes_resolved = COALESCE(disputes_resolved, 0) + 1, updated_at = ${now}
+      WHERE admin_name = ${resolvedBy} AND status = 'on_duty'`)
+
     // Update offer based on resolution
     if (resolution === 'release_to_taker') {
       // Mark maker_confirmed so p2pReleaseWatcher picks it up
@@ -242,6 +250,8 @@ export default router
 // ── Dispute Assignment ─────────────────────────────────────
 
 // POST /disputes/:id/accept — admin accepts to handle dispute
+// GATED: only a sub-admin who is ON DUTY (inside their scheduled working hours
+// AND has clicked "resume duty") may accept. Super admins bypass the gate.
 router.post('/:id/accept', async (req, res) => {
   const { adminId, adminName } = req.body
   if (!adminId || !adminName) {
@@ -249,6 +259,23 @@ router.post('/:id/accept', async (req, res) => {
   }
   const now = Math.floor(Date.now() / 1000)
   try {
+    // ── Duty gate ──────────────────────────────────────────
+    const roleRows = await db.run(
+      sql`SELECT role FROM admins WHERE id = ${adminId} LIMIT 1`)
+    const rr   = parseRows(roleRows)[0]
+    const role = rr ? (Array.isArray(rr) ? rr[0] : rr.role) : null
+
+    if (role !== 'super_admin') {
+      const { isOnDuty } = await import('../lib/duty')
+      const duty = await isOnDuty(adminId)
+      if (!duty.onDuty) {
+        return res.status(403).json({
+          error: duty.reason ?? 'You must be on duty to accept a dispute',
+          code:  'not_on_duty',
+        })
+      }
+    }
+
     // Check not already assigned
     const existing = await db.run(sql`
       SELECT id FROM dispute_assignments WHERE dispute_id = ${req.params.id} LIMIT 1
@@ -263,6 +290,12 @@ router.post('/:id/accept', async (req, res) => {
       INSERT INTO dispute_assignments (id, dispute_id, admin_id, admin_name, accepted_at)
       VALUES (${id}, ${req.params.id}, ${adminId}, ${adminName}, ${now})
     `)
+
+    // Count this acceptance against the admin's current duty session (for the log).
+    await db.run(sql`
+      UPDATE admin_duty_sessions
+      SET disputes_accepted = COALESCE(disputes_accepted, 0) + 1, updated_at = ${now}
+      WHERE admin_id = ${adminId} AND status = 'on_duty'`)
 
     // Update dispute status to 'in_review'
     await db.run(sql`

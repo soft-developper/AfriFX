@@ -194,13 +194,29 @@ router.get('/admins', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (_req,
 // POST /admin/manage/admins — create sub-admin
 router.post('/admins', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (req, res) => {
   const admin = (req as any).admin
-  const { username, email, password, walletAddress, permissions } = req.body
+  const {
+    username, email, password, walletAddress, permissions,
+    dutyStartMin, dutyEndMin, dutyDays, dutyDates,
+  } = req.body
 
   if (!username || !email || !password) {
     return res.status(400).json({ error: 'username, email, password and wallet address required' })
   }
   if (password.length < 8) {
     return res.status(400).json({ error: 'Password must be at least 8 characters' })
+  }
+
+  // Working hours (the sub-admin's dispute duty session). Optional at invite —
+  // if any duty field is supplied, the whole window must be valid (max 6h).
+  const wantsDuty = dutyStartMin != null || dutyEndMin != null ||
+                    (dutyDays?.length) || (dutyDates?.length)
+  if (wantsDuty) {
+    const { validateWindow } = await import('../lib/duty')
+    const err = validateWindow({
+      startMin: dutyStartMin, endMin: dutyEndMin,
+      days: dutyDays ?? [], dates: dutyDates ?? [],
+    })
+    if (err) return res.status(400).json({ error: err })
   }
 
   try {
@@ -224,16 +240,21 @@ router.post('/admins', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (req,
     await db.run(
       sql`INSERT INTO admins
           (id, username, email, password_hash, wallet_address,
-           role, permissions, status, created_by, created_at, updated_at)
+           role, permissions, status, created_by, created_at, updated_at,
+           duty_start_min, duty_end_min, duty_days, duty_dates)
           VALUES
           (${id}, ${username.toLowerCase()}, ${email.toLowerCase()},
            ${hash}, ${walletAddress?.toLowerCase() ?? null},
            'sub_admin', ${JSON.stringify(validPerms)},
-           'active', ${admin.id}, ${now}, ${now})`
+           'active', ${admin.id}, ${now}, ${now},
+           ${wantsDuty ? dutyStartMin : null}, ${wantsDuty ? dutyEndMin : null},
+           ${wantsDuty ? (dutyDays ?? []).join(',') : null},
+           ${wantsDuty ? (dutyDates ?? []).join(',') : null})`
     )
 
     await logAction(admin.id, admin.username, 'create_sub_admin', 'admin', id,
-      `Created sub-admin '${username}' with ${validPerms.length} permissions`, req.ip)
+      `Created sub-admin '${username}' with ${validPerms.length} permissions` +
+      (wantsDuty ? ` and a duty window` : ''), req.ip)
 
     res.status(201).json({ id, username, permissions: validPerms })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
@@ -518,6 +539,49 @@ router.post('/users/:address/unsuspend', requirePermission(PERMISSIONS.SUSPEND_U
     await logAction(admin.id, admin.username, 'unsuspend_user', 'user', addr,
       'Unsuspended user', req.ip)
     res.json({ success: true })
+  } catch (err: any) { res.status(500).json({ error: err.message }) }
+})
+
+// ══════════════════════════════════════════════════════════
+// DISPUTE DUTY SESSIONS
+// ══════════════════════════════════════════════════════════
+
+// GET /duty/status — the calling admin's current duty state (for their dashboard)
+router.get('/duty/status', async (req: any, res) => {
+  try {
+    const { dutyStatus } = await import('../lib/duty')
+    const admin = req.admin
+    if (!admin) return res.status(401).json({ error: 'Not authenticated' })
+    const st = await dutyStatus(admin.id)
+    res.json({ ...st, role: admin.role })
+  } catch (err: any) { res.status(500).json({ error: err.message }) }
+})
+
+// POST /duty/resume — sub-admin clicks "resume duty" to go on duty
+router.post('/duty/resume', async (req: any, res) => {
+  try {
+    const { resumeDuty } = await import('../lib/duty')
+    const admin = req.admin
+    if (!admin) return res.status(401).json({ error: 'Not authenticated' })
+    const r = await resumeDuty(admin.id, admin.username)
+    if (!r.ok) return res.status(400).json({ error: r.error })
+    await logAction(admin.id, admin.username, 'resume_duty', 'duty', admin.id,
+      'Resumed duty for scheduled session')
+    res.json({ success: true, windowEnd: r.windowEnd })
+  } catch (err: any) { res.status(500).json({ error: err.message }) }
+})
+
+// GET /duty/sessions — session logs for the general admin to review.
+// Most recent first; optionally filter by ?admin=<id>.
+router.get('/duty/sessions', requirePermission(PERMISSIONS.VIEW_AUDIT_LOG), async (req, res) => {
+  const adminFilter = req.query.admin as string | undefined
+  try {
+    const rows = adminFilter
+      ? await db.run(sql`SELECT * FROM admin_duty_sessions WHERE admin_id = ${adminFilter}
+                         ORDER BY window_start DESC LIMIT 100`)
+      : await db.run(sql`SELECT * FROM admin_duty_sessions
+                         ORDER BY window_start DESC LIMIT 100`)
+    res.json(parseRows(rows))
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 

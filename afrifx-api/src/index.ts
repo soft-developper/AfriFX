@@ -29,6 +29,7 @@ import { startInvoiceReminders }  from './jobs/invoiceReminders'
 import { startP2PReleaseWatcher } from './jobs/p2pReleaseWatcher'
 import { startTreasuryChecker }   from './jobs/treasuryChecker'
 import { startTxSettler }         from './jobs/txSettler'
+import { startDutyScheduler }     from './jobs/dutyScheduler'
 import { seedSuperAdmin }         from './lib/seedAdmin'
 
 const app  = express()
@@ -73,4 +74,5 @@ startAdminAuditSummary()
   setInterval(() => cleanExpiredSessions().catch(() => {}), 3600_000)
   startTreasuryChecker()
   startTxSettler()
+  startDutyScheduler()
 })
