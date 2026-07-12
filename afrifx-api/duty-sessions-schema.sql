@@ -49,3 +49,11 @@ CREATE TABLE IF NOT EXISTS admin_duty_sessions (
 CREATE INDEX IF NOT EXISTS idx_duty_admin   ON admin_duty_sessions (admin_id);
 CREATE INDEX IF NOT EXISTS idx_duty_status  ON admin_duty_sessions (status);
 CREATE INDEX IF NOT EXISTS idx_duty_window  ON admin_duty_sessions (window_start, window_end);
+
+-- Working hours are chosen by the general admin at INVITE time, so they must
+-- ride along on the invitation and be copied onto the admin record when the
+-- sub-admin accepts and sets their password.
+ALTER TABLE admin_invitations ADD COLUMN duty_start_min INTEGER;
+ALTER TABLE admin_invitations ADD COLUMN duty_end_min   INTEGER;
+ALTER TABLE admin_invitations ADD COLUMN duty_days      TEXT;
+ALTER TABLE admin_invitations ADD COLUMN duty_dates     TEXT;

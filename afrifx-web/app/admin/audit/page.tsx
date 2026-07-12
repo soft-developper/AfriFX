@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { adminFetch } from '@/hooks/useAdminAuth'
 import { Loader2, ScrollText, ChevronDown, ChevronRight, Shield, User } from 'lucide-react'
+import { DutySessionLogs } from '@/components/admin/DutySessionLogs'
 
 const ACTION_COLOR: Record<string, string> = {
   login:              'text-app-muted',
@@ -30,6 +31,7 @@ export default function AdminAudit() {
   const [total, setTotal]     = useState(0)
   const [loading, setLoading] = useState(true)
   const [open, setOpen]       = useState<Record<string, boolean>>({})
+  const [tab, setTab]         = useState<'actions' | 'sessions'>('actions')
 
   useEffect(() => {
     adminFetch('/admin/manage/audit/grouped')
@@ -51,14 +53,33 @@ export default function AdminAudit() {
 
   return (
     <AdminShell>
-      <div className="mb-6 flex items-baseline justify-between">
+      <div className="mb-4 flex items-baseline justify-between">
         <h1 className="text-xl font-semibold text-app-text">Audit log</h1>
-        {!loading && (
+        {!loading && tab === 'actions' && (
           <span className="text-xs text-app-muted">
             {total} action{total === 1 ? '' : 's'} across {groups.length} account{groups.length === 1 ? '' : 's'}
           </span>
         )}
       </div>
+
+      {/* Tabs: admin actions vs duty session logs */}
+      <div className="mb-6 flex gap-1 border-b border-app-border">
+        {([
+          ['actions',  'Admin actions'],
+          ['sessions', 'Duty sessions'],
+        ] as const).map(([key, label]) => (
+          <button key={key} onClick={() => setTab(key)}
+            className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
+              tab === key
+                ? 'border-app-accent text-app-text'
+                : 'border-transparent text-app-muted hover:text-app-text'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'sessions' ? <DutySessionLogs /> : (
+      <>
 
       {loading ? (
         <div className="flex h-40 items-center justify-center">
@@ -162,6 +183,8 @@ export default function AdminAudit() {
             )
           })}
         </div>
+      )}
+      </>
       )}
     </AdminShell>
   )

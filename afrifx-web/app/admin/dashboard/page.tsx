@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { AdminShell } from '@/components/admin/AdminShell'
+import { DutyBanner } from '@/components/admin/DutyBanner'
 import { adminFetch } from '@/hooks/useAdminAuth'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
@@ -26,6 +27,7 @@ export default function AdminDashboard() {
 
   return (
     <AdminShell>
+      <DutyBanner />
       <h1 className="mb-6 text-xl font-semibold text-app-text">Platform Overview</h1>
 
       {loading ? (

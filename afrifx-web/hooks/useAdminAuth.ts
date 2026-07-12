@@ -131,12 +131,16 @@ export function useAdminAuth() {
   }
 
   // ── Invitations ───────────────────────────────────────────
-  async function invite(email: string, permissions: string[]) {
+  async function invite(
+    email: string,
+    permissions: string[],
+    duty?: { dutyStartMin: number; dutyEndMin: number; dutyDays: number[]; dutyDates: string[] },
+  ) {
     const token = getToken()
     const res   = await fetch(`${API}/admin-auth/invite`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ email, permissions }),
+      body: JSON.stringify({ email, permissions, ...(duty ?? {}) }),
     })
     const data = await res.json()
     return res.ok ? { success: true, message: data.message } : { success: false, error: data.error ?? 'Invite failed' }

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { DutyHoursPicker, type DutyValue } from '@/components/admin/DutyHoursPicker'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { adminFetch, useAdminAuth } from '@/hooks/useAdminAuth'
 import { Button } from '@/components/ui/button'
@@ -22,6 +23,7 @@ export default function AdminSubAdmins() {
   // Invite form state
   const [inviteEmail, setInviteEmail] = useState('')
   const [selectedPerms, setSelectedPerms] = useState<string[]>([])
+  const [duty, setDuty] = useState<DutyValue | null>(null)
   const [inviteError,   setInviteError]   = useState<string|null>(null)
   const [inviteSuccess, setInviteSuccess] = useState<string|null>(null)
 
@@ -49,10 +51,10 @@ export default function AdminSubAdmins() {
     setInviteError(null); setInviteSuccess(null)
     setBusy('create')
     try {
-      const result = await invite(inviteEmail, selectedPerms)
+      const result = await invite(inviteEmail, selectedPerms, duty ?? undefined)
       if (result.success) {
         setInviteSuccess(result.message ?? `Invitation sent to ${inviteEmail}`)
-        setInviteEmail(''); setSelectedPerms([])
+        setInviteEmail(''); setSelectedPerms([]); setDuty(null)
       } else {
         setInviteError((result as any).error ?? 'Could not send invitation')
       }
@@ -185,6 +187,10 @@ export default function AdminSubAdmins() {
                 </div>
               </button>
             ))}
+          </div>
+
+          <div className="mb-4">
+            <DutyHoursPicker value={duty} onChange={setDuty} />
           </div>
 
           <div className="flex gap-2">

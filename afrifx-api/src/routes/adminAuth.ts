@@ -334,8 +334,26 @@ router.post('/invite', requireAdmin, async (req: any, res) => {
     return res.status(403).json({ error: 'Only super admins can invite' })
   }
 
-  const { email, permissions } = req.body
+  const { email, permissions, dutyStartMin, dutyEndMin, dutyDays, dutyDates } = req.body
   if (!email || !permissions) return res.status(400).json({ error: 'email and permissions required' })
+
+  // Working hours (the sub-admin's dispute duty session). Required if the
+  // sub-admin will handle disputes; validated to max 6 hours.
+  const wantsDuty = dutyStartMin != null || dutyEndMin != null ||
+                    (dutyDays?.length) || (dutyDates?.length)
+  let duty: { startMin: number; endMin: number; days: number[]; dates: string[] } | undefined
+  if (wantsDuty) {
+    const { validateWindow } = await import('../lib/duty')
+    const err = validateWindow({
+      startMin: dutyStartMin, endMin: dutyEndMin,
+      days: dutyDays ?? [], dates: dutyDates ?? [],
+    })
+    if (err) return res.status(400).json({ error: err })
+    duty = {
+      startMin: dutyStartMin, endMin: dutyEndMin,
+      days: dutyDays ?? [], dates: dutyDates ?? [],
+    }
+  }
 
   try {
     // Check if email already exists
@@ -344,7 +362,7 @@ router.post('/invite', requireAdmin, async (req: any, res) => {
       return res.status(400).json({ error: 'An admin with this email already exists' })
     }
 
-    const token = await createInvitation(email, req.admin.id, JSON.stringify(permissions))
+    const token = await createInvitation(email, req.admin.id, JSON.stringify(permissions), duty)
     const APP_URL = process.env.APP_URL ?? 'https://afrifx.xyz'
 
     await sendEmail({
@@ -391,9 +409,17 @@ router.post('/accept-invite', async (req, res) => {
     const hash        = await hashPassword(password)
     const id          = randomUUID()
 
+    // Carry the working hours chosen by the general admin at invite time.
+    const dStart = inv.duty_start_min ?? null
+    const dEnd   = inv.duty_end_min   ?? null
+    const dDays  = inv.duty_days      ?? null
+    const dDates = inv.duty_dates     ?? null
+
     await db.run(sql`
-      INSERT INTO admins (id, username, email, password_hash, role, permissions, is_active, setup_completed, created_at, updated_at)
-      VALUES (${id}, ${username}, ${email}, ${hash}, 'sub_admin', ${permissions}, 1, 1, ${now}, ${now})
+      INSERT INTO admins (id, username, email, password_hash, role, permissions, is_active, setup_completed, created_at, updated_at,
+                          duty_start_min, duty_end_min, duty_days, duty_dates)
+      VALUES (${id}, ${username}, ${email}, ${hash}, 'sub_admin', ${permissions}, 1, 1, ${now}, ${now},
+              ${dStart}, ${dEnd}, ${dDays}, ${dDates})
     `)
 
     // Mark invitation as accepted

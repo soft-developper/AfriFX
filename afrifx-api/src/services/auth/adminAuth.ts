@@ -168,15 +168,24 @@ export function generateRecoveryCodes(): string[] {
 }
 
 // ── Invitations ─────────────────────────────────────────────
-export async function createInvitation(email: string, invitedBy: string, permissions: string): Promise<string> {
+export async function createInvitation(
+  email: string, invitedBy: string, permissions: string,
+  duty?: { startMin: number; endMin: number; days: number[]; dates: string[] },
+): Promise<string> {
   const id    = randomUUID()
   const token = randomBytes(32).toString('hex')
   const now   = Math.floor(Date.now() / 1000)
   const expiresAt = now + (48 * 3600) // 48 hours
 
   await db.run(sql`
-    INSERT INTO admin_invitations (id, email, invited_by, permissions, token, expires_at, created_at)
-    VALUES (${id}, ${email}, ${invitedBy}, ${permissions}, ${token}, ${expiresAt}, ${now})
+    INSERT INTO admin_invitations
+      (id, email, invited_by, permissions, token, expires_at, created_at,
+       duty_start_min, duty_end_min, duty_days, duty_dates)
+    VALUES
+      (${id}, ${email}, ${invitedBy}, ${permissions}, ${token}, ${expiresAt}, ${now},
+       ${duty?.startMin ?? null}, ${duty?.endMin ?? null},
+       ${duty ? (duty.days ?? []).join(',') : null},
+       ${duty ? (duty.dates ?? []).join(',') : null})
   `)
 
   return token
