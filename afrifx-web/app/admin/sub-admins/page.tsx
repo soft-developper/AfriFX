@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { DutyHoursPicker, type DutyValue } from '@/components/admin/DutyHoursPicker'
+import { DutyOverview } from '@/components/admin/DutyOverview'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { adminFetch, useAdminAuth } from '@/hooks/useAdminAuth'
 import { Button } from '@/components/ui/button'
@@ -213,6 +214,15 @@ export default function AdminSubAdmins() {
           )}
         </div>
       )}
+
+      {/* Working-hour sessions — live status for every sub-admin */}
+      <div className="mb-6">
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="text-sm font-medium text-app-text">Working-hour sessions</h2>
+          <span className="text-xs text-app-muted">Times shown in UTC · updates live</span>
+        </div>
+        <DutyOverview />
+      </div>
 
       {/* Admins list */}
       {loading ? (

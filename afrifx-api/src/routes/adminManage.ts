@@ -549,11 +549,20 @@ router.post('/users/:address/unsuspend', requirePermission(PERMISSIONS.SUSPEND_U
 // GET /duty/status — the calling admin's current duty state (for their dashboard)
 router.get('/duty/status', async (req: any, res) => {
   try {
-    const { dutyStatus } = await import('../lib/duty')
+    const { dutyStatus, getAdminWindow } = await import('../lib/duty')
     const admin = req.admin
     if (!admin) return res.status(401).json({ error: 'Not authenticated' })
     const st = await dutyStatus(admin.id)
-    res.json({ ...st, role: admin.role })
+    // Include the schedule itself so the UI can show "Mon–Fri · 09:00–15:00 UTC".
+    const w  = await getAdminWindow(admin.id)
+    res.json({
+      ...st,
+      role: admin.role,
+      startMin: w?.startMin ?? null,
+      endMin:   w?.endMin   ?? null,
+      days:     w?.days     ?? [],
+      dates:    w?.dates    ?? [],
+    })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
@@ -582,6 +591,57 @@ router.get('/duty/sessions', requirePermission(PERMISSIONS.VIEW_AUDIT_LOG), asyn
       : await db.run(sql`SELECT * FROM admin_duty_sessions
                          ORDER BY window_start DESC LIMIT 100`)
     res.json(parseRows(rows))
+  } catch (err: any) { res.status(500).json({ error: err.message }) }
+})
+
+// GET /duty/overview — every sub-admin's schedule + LIVE status, for the
+// general admin's sub-admins page. Returns enough for the UI to render a
+// ticking countdown without re-deriving the schedule itself.
+router.get('/duty/overview', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (_req, res) => {
+  try {
+    const { getAdminWindow, windowAt, nextWindowStart } = await import('../lib/duty')
+    const now = Math.floor(Date.now() / 1000)
+
+    const rows = await db.run(sql`
+      SELECT id, username, email, status
+      FROM admins WHERE role = 'sub_admin' ORDER BY username ASC`)
+
+    const out = []
+    for (const r of parseRows(rows)) {
+      const id       = Array.isArray(r) ? r[0] : r.id
+      const username = Array.isArray(r) ? r[1] : r.username
+      const email    = Array.isArray(r) ? r[2] : r.email
+      const acct     = Array.isArray(r) ? r[3] : r.status
+
+      const w = await getAdminWindow(id)
+      if (!w) {
+        out.push({ id, username, email, accountStatus: acct, hasWindow: false })
+        continue
+      }
+
+      const win = windowAt(w, now)
+      let onDuty = false
+      if (win) {
+        const s = parseRows(await db.run(sql`
+          SELECT status FROM admin_duty_sessions
+          WHERE admin_id = ${id} AND window_start = ${win.start} LIMIT 1`))
+        const st = s.length ? (Array.isArray(s[0]) ? s[0][0] : s[0].status) : null
+        onDuty = st === 'on_duty'
+      }
+
+      out.push({
+        id, username, email, accountStatus: acct,
+        hasWindow: true,
+        startMin: w.startMin, endMin: w.endMin,
+        days: w.days, dates: w.dates,
+        inWindow:    !!win,
+        onDuty,
+        windowStart: win?.start ?? null,
+        windowEnd:   win?.end   ?? null,
+        nextStart:   win ? null : (nextWindowStart(w, now) ?? null),
+      })
+    }
+    res.json(out)
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
