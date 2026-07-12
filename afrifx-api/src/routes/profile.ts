@@ -4,6 +4,29 @@ import { sql }    from 'drizzle-orm'
 
 const router = Router()
 
+// ── Broadcast unsubscribe (PUBLIC — reached from an email link, no login) ───
+// Honours the opt-out we promise in every broadcast footer. Only affects
+// ANNOUNCEMENTS; the user still receives essential alerts about their own
+// trades, disputes and invoices.
+router.post('/unsubscribe/:token', async (req, res) => {
+  try {
+    const rows = await db.run(sql`
+      SELECT wallet_address, username FROM profiles
+      WHERE unsubscribe_token = ${req.params.token} LIMIT 1`)
+    const r = Array.isArray((rows as any).rows) ? (rows as any).rows : (Array.isArray(rows) ? rows : [])
+    if (!r.length) return res.status(404).json({ error: 'This unsubscribe link is not valid.' })
+
+    await db.run(sql`
+      UPDATE profiles SET notify_broadcasts = 0
+      WHERE unsubscribe_token = ${req.params.token}`)
+
+    res.json({
+      success: true,
+      message: 'You have been unsubscribed from AfriFX announcements. You will still receive essential alerts about your own trades and disputes.',
+    })
+  } catch (err: any) { res.status(500).json({ error: err.message }) }
+})
+
 const RESERVED = [
   'admin','afrifx','support','help','root','system','platform',
   'api','www','app','mail','dev','test','null','undefined',

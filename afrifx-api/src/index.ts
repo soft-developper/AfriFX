@@ -21,6 +21,7 @@ import paymentsRouter              from './routes/payments'
 import { cleanExpiredSessions } from './services/auth/adminAuth'
 import adminAuthRouter            from './routes/adminAuth'
 import adminManageRouter          from './routes/adminManage'
+import broadcastsRouter           from './routes/broadcasts'
 import contentRouter              from './routes/content'
 import { startRatePoller }        from './jobs/ratePoller'
 import { startEventListener }     from './services/eventListener'
@@ -58,6 +59,7 @@ app.use('/payments',       paymentsRouter)
 app.use('/content',        contentRouter)
 app.use('/admin-auth',     adminAuthRouter)
 app.use('/admin/manage',   adminManageRouter)
+app.use('/admin/broadcasts', broadcastsRouter)
 
 app.use(errorHandler)
 
