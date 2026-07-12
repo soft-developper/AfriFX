@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { DutyBanner } from '@/components/admin/DutyBanner'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAdminAuth } from '@/hooks/useAdminAuth'
@@ -207,7 +208,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         />
       </aside>
 
-      <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+      <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        {/* Duty banner shows on EVERY admin page — a dispute-only sub-admin may
+            never land on /admin/dashboard (they lack view_dashboard and get
+            redirected), so the Resume duty control has to live in the shell. */}
+        <DutyBanner />
+        {children}
+      </main>
     </div>
   )
 }
