@@ -1,7 +1,8 @@
+import { SectionGuard } from '@/components/layout/SectionGuard'
 import { ClientOnly } from '@/components/ui/client-only'
 import { TreasuryContent } from './TreasuryContent'
 
-export default function TreasuryPage() {
+function TreasuryPageInner() {
   return (
     <ClientOnly fallback={
       <div className="space-y-4">
@@ -14,5 +15,13 @@ export default function TreasuryPage() {
     }>
       <TreasuryContent />
     </ClientOnly>
+  )
+}
+
+export default function TreasuryPage() {
+  return (
+    <SectionGuard section="treasury">
+      <TreasuryPageInner />
+    </SectionGuard>
   )
 }

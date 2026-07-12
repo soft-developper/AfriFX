@@ -1,3 +1,4 @@
+import { SectionGuard } from '@/components/layout/SectionGuard'
 import { CorridorCard } from '@/components/corridor/CorridorCard'
 import { ClientOnly } from '@/components/ui/client-only'
 
@@ -17,7 +18,7 @@ function CorridorSkeleton() {
   )
 }
 
-export default function CorridorPage() {
+function CorridorPageInner() {
   return (
     <div>
       <div className="mb-6">
@@ -50,5 +51,13 @@ export default function CorridorPage() {
         <CorridorCard />
       </ClientOnly>
     </div>
+  )
+}
+
+export default function CorridorPage() {
+  return (
+    <SectionGuard section="corridor">
+      <CorridorPageInner />
+    </SectionGuard>
   )
 }

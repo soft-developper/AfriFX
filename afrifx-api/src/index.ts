@@ -22,6 +22,8 @@ import { cleanExpiredSessions } from './services/auth/adminAuth'
 import adminAuthRouter            from './routes/adminAuth'
 import adminManageRouter          from './routes/adminManage'
 import broadcastsRouter           from './routes/broadcasts'
+import maintenanceRouter          from './routes/maintenance'
+import { maintenanceGuard }       from './lib/maintenance'
 import contentRouter              from './routes/content'
 import { startRatePoller }        from './jobs/ratePoller'
 import { startEventListener }     from './services/eventListener'
@@ -44,22 +46,23 @@ app.use(rateLimitMiddleware)
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: Date.now() }))
 
 app.use('/rates',          ratesRouter)
-app.use('/transactions',   transactionsRouter)
+app.use('/transactions',   maintenanceGuard('convert'),     transactionsRouter)
 app.use('/user',           userRouter)
-app.use('/offers',         offersRouter)
+app.use('/offers',         maintenanceGuard('marketplace'), offersRouter)
 app.use('/profile',        profileRouter)
 app.use('/chat',           chatRouter)
-app.use('/wallet',         walletRouter)
-app.use('/treasury',       treasuryRouter)
-app.use('/payroll',        payrollRouter)
+app.use('/wallet',         maintenanceGuard('send'),        walletRouter)
+app.use('/treasury',       maintenanceGuard('treasury'),    treasuryRouter)
+app.use('/payroll',        maintenanceGuard('payroll'),     payrollRouter)
 app.use('/notifications', notificationsRouter)
 app.use('/disputes',       disputesRouter)
-app.use('/invoices',       invoicesRouter)
-app.use('/payments',       paymentsRouter)
+app.use('/invoices',       maintenanceGuard('invoices'),    invoicesRouter)
+app.use('/payments',       maintenanceGuard('invoices'),    paymentsRouter)
 app.use('/content',        contentRouter)
 app.use('/admin-auth',     adminAuthRouter)
 app.use('/admin/manage',   adminManageRouter)
 app.use('/admin/broadcasts', broadcastsRouter)
+app.use('/maintenance',    maintenanceRouter)
 
 app.use(errorHandler)
 

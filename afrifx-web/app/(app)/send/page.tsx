@@ -1,4 +1,5 @@
 'use client'
+import { SectionGuard } from '@/components/layout/SectionGuard'
 import { useState } from 'react'
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { useWalletReady } from '@/hooks/useWalletReady'
@@ -11,7 +12,7 @@ import { USDC_ABI } from '@/lib/usdc'
 import { useUSDCBalance } from '@/hooks/useUSDCBalance'
 import { Loader2, CheckCircle, Zap, AlertCircle } from 'lucide-react'
 
-export default function SendPage() {
+function SendPageInner() {
   const { isConnected }        = useAccount()
   const { ready: walletReady } = useWalletReady()
   const [to,     setTo]        = useState('')
@@ -145,5 +146,13 @@ export default function SendPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function SendPage() {
+  return (
+    <SectionGuard section="send">
+      <SendPageInner />
+    </SectionGuard>
   )
 }

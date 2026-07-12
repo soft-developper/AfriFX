@@ -1,3 +1,4 @@
+import { SectionGuard } from '@/components/layout/SectionGuard'
 import { SwapCard } from '@/components/swap/SwapCard'
 import { ClientOnly } from '@/components/ui/client-only'
 
@@ -16,7 +17,7 @@ function SwapSkeleton() {
   )
 }
 
-export default function ConvertPage() {
+function ConvertPageInner() {
   return (
     <div>
       <div className="mb-6">
@@ -29,5 +30,13 @@ export default function ConvertPage() {
         <SwapCard />
       </ClientOnly>
     </div>
+  )
+}
+
+export default function ConvertPage() {
+  return (
+    <SectionGuard section="convert">
+      <ConvertPageInner />
+    </SectionGuard>
   )
 }

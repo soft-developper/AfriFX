@@ -1,4 +1,5 @@
 'use client'
+import { SectionGuard } from '@/components/layout/SectionGuard'
 import { useEffect, useState } from 'react'
 import { useAccount, usePublicClient } from 'wagmi'
 import Link from 'next/link'
@@ -55,7 +56,7 @@ type AcceptState =
   | { phase: 'updating_db'; offerId: string }
   | { phase: 'done';        offerId: string }
 
-export default function MarketplacePage() {
+function MarketplacePageInner() {
   const { address }                    = useAccount()
   const router                         = useRouter()
   const publicClient                   = usePublicClient({ chainId: arcTestnet.id })
@@ -315,5 +316,13 @@ export default function MarketplacePage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function MarketplacePage() {
+  return (
+    <SectionGuard section="marketplace">
+      <MarketplacePageInner />
+    </SectionGuard>
   )
 }

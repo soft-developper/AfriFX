@@ -1,4 +1,5 @@
 'use client'
+import { SectionGuard } from '@/components/layout/SectionGuard'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useAccount } from 'wagmi'
@@ -22,7 +23,7 @@ const STATUS_BADGE: Record<string, any> = {
   cancelled: 'danger',
 }
 
-export default function InvoicesPage() {
+function InvoicesPageInner() {
   return (
     <ClientOnly fallback={<div className="h-64 animate-pulse rounded-xl bg-app-surface" />}>
       <InvoicesContent />
@@ -180,5 +181,13 @@ function InvoicesContent() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function InvoicesPage() {
+  return (
+    <SectionGuard section="invoices">
+      <InvoicesPageInner />
+    </SectionGuard>
   )
 }
