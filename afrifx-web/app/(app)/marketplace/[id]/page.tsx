@@ -198,9 +198,11 @@ export default function OfferDetailPage() {
   const showTakerTimer = offerStatus === 'accepted' && !offer.taker_confirmed && !!offer.taker_deadline
   const showMakerTimer = offerStatus === 'accepted' && !!offer.taker_confirmed && !offer.maker_confirmed && !!offer.maker_deadline
 
+  // Chat is for coordinating an ACTIVE trade. Once the platform has released
+  // the USDC to the taker the trade is settled, so the chat is removed — there
+  // is nothing left to coordinate, and the page reflows to two columns.
   const showChat = isInvolved && (
     offerStatus === 'accepted' ||
-    offerStatus === 'released' ||
     justAccepted
   ) && !!offer.taker_address
 
