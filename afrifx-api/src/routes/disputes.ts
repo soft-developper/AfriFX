@@ -8,18 +8,21 @@ import { uploadBuffer } from '../lib/cloudinary'
 
 const router = Router()
 
-// Multer — hold the file in memory, then stream it to Cloudinary
+// Multer — hold the file in memory, then stream it to Cloudinary.
+// PDF ONLY: dispute evidence must be a bank-issued PDF (receipt / statement).
+// Images are rejected because they're trivially edited and can't be trusted as
+// proof of payment or of an account balance. This is the authoritative check —
+// the client also validates, but that alone is bypassable.
 const upload = multer({
   storage: multer.memoryStorage(),
   limits:  { fileSize: 10 * 1024 * 1024 }, // 10 MB
   fileFilter: (_req, file, cb) => {
-    const allowed = [
-      'image/jpeg', 'image/png', 'image/webp', 'image/gif',
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ]
-    cb(null, allowed.includes(file.mimetype))
+    const isPdf = file.mimetype === 'application/pdf' &&
+                  file.originalname.toLowerCase().endsWith('.pdf')
+    if (!isPdf) {
+      return cb(new Error('Only PDF files are accepted as dispute evidence'))
+    }
+    cb(null, true)
   },
 })
 
@@ -396,7 +399,21 @@ router.post('/:id/messages', async (req, res) => {
 // POST /disputes/:id/messages/document — upload a supporting document
 // Accepts multipart form-data (field name "file"), stores it on Cloudinary,
 // and records the resulting URL as an admin-only dispute message.
-router.post('/:id/messages/document', upload.single('file'), async (req, res) => {
+router.post('/:id/messages/document', (req, res, next) => {
+  // Wrap multer so a rejected file (non-PDF, too large) returns a clear 400
+  // rather than an opaque 500.
+  upload.single('file')(req, res, (err: any) => {
+    if (err) {
+      const msg = /only pdf/i.test(err.message ?? '')
+        ? 'Only PDF files are accepted. Please upload the bank-issued PDF receipt or statement.'
+        : (err.code === 'LIMIT_FILE_SIZE'
+            ? 'File is too large (max 10 MB).'
+            : 'Upload rejected. Please try a bank-issued PDF.')
+      return res.status(400).json({ error: msg })
+    }
+    next()
+  })
+}, async (req, res) => {
   const { senderId, senderType, senderName } = req.body
   if (!senderId) return res.status(400).json({ error: 'senderId required' })
   if (!req.file) return res.status(400).json({ error: 'No file provided' })

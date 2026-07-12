@@ -1,16 +1,17 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
-import { Send, FileText, Upload, Loader2 } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { Send, Upload, Loader2, FileText, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useProfileByAddress } from '@/hooks/useProfile'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 
 interface Message {
   id:          string
   sender_id:   string
-  sender_type: 'maker' | 'taker' | 'admin'
+  sender_type: 'maker' | 'taker' | 'admin' | 'system'
   sender_name: string | null
-  content:     string | null
+  content:     string
   is_document: number
   doc_url:     string | null
   doc_name:    string | null
@@ -23,8 +24,20 @@ interface Props {
   senderId:    string
   senderType:  'maker' | 'taker' | 'admin'
   senderName:  string
-  viewerType?: 'admin' | 'user'
+  viewerType?: 'user' | 'admin'
   title?:      string
+}
+
+/*
+  Shows a sender's @username resolved from their wallet profile — the same way
+  the marketplace chat does — instead of a raw wallet address.
+*/
+function SenderName({
+  address, fallback,
+}: { address: string; fallback: string }) {
+  const { data: profile } = useProfileByAddress(address)
+  if (profile?.username) return <>@{profile.username}</>
+  return <>{fallback}</>
 }
 
 export function DisputeChat({
@@ -36,22 +49,29 @@ export function DisputeChat({
   const [sending,   setSending]   = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [downloading, setDownloading] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileRef   = useRef<HTMLInputElement>(null)
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       const res  = await fetch(`${API}/disputes/${disputeId}/messages?viewerType=${viewerType}`)
+      if (!res.ok) return                      // keep what we have on a bad response
       const data = await res.json()
-      setMessages(Array.isArray(data) ? data : [])
-    } catch {}
-  }
+      // Only replace the thread when we actually got a valid array. Previously a
+      // transient failure set messages to [] and the chat visibly "went offline"
+      // for a poll cycle before repopulating.
+      if (Array.isArray(data)) setMessages(data)
+    } catch {
+      // Network blip — keep the existing messages on screen.
+    }
+  }, [disputeId, viewerType])
 
   useEffect(() => {
     load()
     const interval = setInterval(load, 5000)
     return () => clearInterval(interval)
-  }, [disputeId])
+  }, [load])
 
   async function sendMessage() {
     if (!text.trim() || sending) return
@@ -60,12 +80,8 @@ export function DisputeChat({
       await fetch(`${API}/disputes/${disputeId}/messages`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          senderId:   senderId,
-          senderType: senderType,
-          senderName: senderName,
-          content:    text.trim(),
-          adminOnly:  0,
+        body: JSON.stringify({
+          senderId, senderType, senderName, content: text.trim(),
         }),
       })
       setText('')
@@ -74,11 +90,20 @@ export function DisputeChat({
   }
 
   async function uploadDocument(file: File) {
-    setUploading(true)
     setUploadError(null)
+
+    // PDF only. Bank receipts and statements are issued as PDFs; images are too
+    // easily edited to be trusted as proof, so they're rejected outright.
+    const isPdf = file.type === 'application/pdf' ||
+                  file.name.toLowerCase().endsWith('.pdf')
+    if (!isPdf) {
+      setUploadError('Only PDF files are accepted. Please upload the bank-issued PDF receipt or statement.')
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
+
+    setUploading(true)
     try {
-      // Send the actual file as multipart form-data; the backend streams
-      // it to Cloudinary and records the returned URL.
       const formData = new FormData()
       formData.append('file',       file)
       formData.append('senderId',   senderId)
@@ -87,7 +112,7 @@ export function DisputeChat({
 
       const res = await fetch(`${API}/disputes/${disputeId}/messages/document`, {
         method: 'POST',
-        body:   formData, // no Content-Type header — the browser sets the multipart boundary
+        body:   formData,
       })
       if (res.ok) {
         await load()
@@ -97,7 +122,44 @@ export function DisputeChat({
       }
     } catch {
       setUploadError('Upload failed. Please check your connection and try again.')
-    } finally { setUploading(false) }
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  /*
+    Download the document with its original filename and .pdf extension, rather
+    than opening a new tab where the browser/CDN may serve it without a proper
+    name or type. We fetch the blob and trigger a real download.
+  */
+  async function downloadDoc(url: string, name: string | null, msgId: string) {
+    setDownloading(msgId)
+    try {
+      const res  = await fetch(url)
+      const blob = await res.blob()
+      // Force the PDF type so the browser saves it correctly.
+      const pdfBlob = blob.type === 'application/pdf'
+        ? blob
+        : new Blob([blob], { type: 'application/pdf' })
+
+      let filename = name ?? 'dispute-document'
+      if (!filename.toLowerCase().endsWith('.pdf')) filename += '.pdf'
+
+      const href = URL.createObjectURL(pdfBlob)
+      const a = document.createElement('a')
+      a.href = href
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(href)
+    } catch {
+      // Fall back to opening it if the direct download is blocked (e.g. CORS).
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } finally {
+      setDownloading(null)
+    }
   }
 
   function getBubbleStyle(msg: Message) {
@@ -107,11 +169,20 @@ export function DisputeChat({
     return 'bg-app-bg border-app-border'
   }
 
-  function getSenderLabel(msg: Message) {
-    if (msg.sender_id === senderId) return 'You'
-    if (msg.sender_type === 'admin') return `⚖️ Admin${msg.sender_name ? ` (${msg.sender_name})` : ''}`
-    if (msg.sender_type === 'maker') return msg.sender_name ?? `Seller${msg.sender_name ? ` (${msg.sender_name})` : ''}`
-    return msg.sender_name ?? 'Buyer'
+  function renderSenderLabel(msg: Message) {
+    if (msg.sender_id === senderId) return <>You</>
+    if (msg.sender_type === 'admin') {
+      return <>⚖️ Admin{msg.sender_name ? ` (${msg.sender_name})` : ''}</>
+    }
+    // Maker/taker: resolve their @username from their wallet profile, falling
+    // back to the stored name, then a role label — never a raw wallet address.
+    const roleFallback = msg.sender_type === 'maker' ? 'Seller' : 'Buyer'
+    return (
+      <SenderName
+        address={msg.sender_id}
+        fallback={msg.sender_name ?? roleFallback}
+      />
+    )
   }
 
   return (
@@ -122,7 +193,7 @@ export function DisputeChat({
         <p className="text-xs text-app-muted">
           {viewerType === 'admin'
             ? 'All parties — messages sent here are visible to maker and taker'
-            : 'Communicate with the assigned admin · Upload bank statements below'}
+            : 'Communicate with the assigned admin · Upload bank PDFs below'}
         </p>
       </div>
 
@@ -136,7 +207,7 @@ export function DisputeChat({
           messages.map(msg => (
             <div key={msg.id} className={`max-w-[80%] rounded-xl border p-3 text-xs ${getBubbleStyle(msg)}`}>
               <p className={`mb-1 font-medium ${msg.sender_type === 'admin' ? 'text-amber-400' : 'text-app-accent-text'}`}>
-                {getSenderLabel(msg)}
+                {renderSenderLabel(msg)}
                 {msg.admin_only === 1 && (
                   <span className="ml-2 rounded bg-amber-900/30 px-1 py-0.5 text-[10px] text-amber-400">
                     Admin only
@@ -145,11 +216,18 @@ export function DisputeChat({
               </p>
               {msg.is_document === 1 ? (
                 <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-app-accent-text" />
-                  <span className="text-app-text">{msg.doc_name ?? 'Document'}</span>
+                  <FileText className="h-4 w-4 shrink-0 text-app-accent-text" />
+                  <span className="truncate text-app-text">{msg.doc_name ?? 'Document'}</span>
                   {msg.doc_url && (
-                    <a href={msg.doc_url} target="_blank" rel="noopener noreferrer"
-                      className="text-app-accent-text hover:underline">View</a>
+                    <button
+                      onClick={() => downloadDoc(msg.doc_url!, msg.doc_name, msg.id)}
+                      disabled={downloading === msg.id}
+                      className="ml-auto inline-flex shrink-0 items-center gap-1 text-app-accent-text hover:underline disabled:opacity-60">
+                      {downloading === msg.id
+                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        : <Download className="h-3.5 w-3.5" />}
+                      Download
+                    </button>
                   )}
                 </div>
               ) : (
@@ -179,12 +257,12 @@ export function DisputeChat({
           </Button>
         </div>
 
-        {/* Document upload — only for users (maker/taker), not admin */}
+        {/* Document upload — PDF only, and only for users (maker/taker) */}
         {viewerType !== 'admin' && (
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <input ref={fileRef} type="file" className="hidden"
-                accept=".pdf,.png,.jpg,.jpeg,.webp"
+                accept="application/pdf,.pdf"
                 onChange={e => e.target.files?.[0] && uploadDocument(e.target.files[0])} />
               <button onClick={() => fileRef.current?.click()} disabled={uploading}
                 className="flex items-center gap-1.5 rounded-lg border border-app-border px-3 py-1.5 text-xs text-app-muted hover:text-app-text transition-colors disabled:opacity-50">
@@ -192,9 +270,12 @@ export function DisputeChat({
                   ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   : <Upload className="h-3.5 w-3.5" />
                 }
-                Upload supporting document (PDF or image — admin will review)
+                Upload bank PDF (receipt or statement)
               </button>
             </div>
+            <p className="text-[10px] text-app-muted">
+              PDF only — bank-issued receipts and statements. Images aren't accepted as proof.
+            </p>
             {uploadError && (
               <p className="text-xs text-red-400">{uploadError}</p>
             )}

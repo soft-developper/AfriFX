@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Scale, Loader2 } from 'lucide-react'
 import { DisputeChat } from './DisputeChat'
+import { useProfileByAddress } from '@/hooks/useProfile'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 
@@ -19,6 +20,10 @@ interface Props {
 }
 
 export function DisputeStatus({ disputeId, offerId, userAddress, userRole, username }: Props) {
+  // Resolve the viewer's own @username so messages they send carry it, rather
+  // than a truncated wallet address.
+  const { data: myProfile } = useProfileByAddress(userAddress)
+  const resolvedName = username ?? myProfile?.username ?? userAddress.slice(0, 8)
   const [assignment, setAssignment] = useState<Assignment | null>(null)
   const [loading,    setLoading]    = useState(true)
 
@@ -91,7 +96,7 @@ export function DisputeStatus({ disputeId, offerId, userAddress, userRole, usern
           disputeId={disputeId}
           senderId={userAddress}
           senderType={userRole}
-          senderName={username ?? userAddress.slice(0,8)}
+          senderName={resolvedName}
           viewerType="user"
           title={`Chat with Admin ${assignment.admin_name}`}
         />
