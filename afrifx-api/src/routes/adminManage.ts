@@ -645,6 +645,94 @@ router.get('/duty/overview', requirePermission(PERMISSIONS.MANAGE_ADMINS), async
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
+// PATCH /admins/:id/duty — set, change, or CLEAR a sub-admin's working hours.
+// Send { clear: true } to remove their hours (they can then no longer accept
+// disputes). Otherwise send the window; it's validated (max 6h) as at invite.
+// The sub-admin is emailed whenever their hours change.
+router.patch('/admins/:id/duty', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (req, res) => {
+  const actor = (req as any).admin
+  const { clear, dutyStartMin, dutyEndMin, dutyDays, dutyDates } = req.body
+  const now = Math.floor(Date.now() / 1000)
+
+  try {
+    const rows = parseRows(await db.run(sql`
+      SELECT id, username, email, role FROM admins WHERE id = ${req.params.id} LIMIT 1`))
+    const t = rows[0]
+    if (!t) return res.status(404).json({ error: 'Admin not found' })
+
+    const target = {
+      id:       Array.isArray(t) ? t[0] : t.id,
+      username: Array.isArray(t) ? t[1] : t.username,
+      email:    Array.isArray(t) ? t[2] : t.email,
+      role:     Array.isArray(t) ? t[3] : t.role,
+    }
+    if (target.role === 'super_admin') {
+      return res.status(400).json({ error: 'Super admins are not on the duty rota' })
+    }
+
+    const { sendEmail } = await import('../services/email/client')
+
+    // ── Clear hours ────────────────────────────────────────
+    if (clear) {
+      await db.run(sql`
+        UPDATE admins
+        SET duty_start_min = NULL, duty_end_min = NULL,
+            duty_days = NULL, duty_dates = NULL, updated_at = ${now}
+        WHERE id = ${target.id}`)
+
+      await logAction(actor.id, actor.username, 'update_duty_hours', 'admin', target.id,
+        `Cleared working hours for '${target.username}'`, req.ip)
+
+      sendEmail({
+        to: target.email,
+        subject: 'Your AfriFX duty hours have been removed',
+        html: `<p>Hi ${target.username},</p>
+               <p>Your dispute duty hours have been removed by an administrator.
+                  You will not be able to accept new disputes until hours are
+                  assigned again.</p>
+               <p>— AfriFX</p>`,
+      }).catch((e: any) => console.error('[Duty] email failed:', e?.message))
+
+      return res.json({ success: true, cleared: true })
+    }
+
+    // ── Set / change hours ─────────────────────────────────
+    const { validateWindow, formatWindowText } = await import('../lib/duty')
+    const err = validateWindow({
+      startMin: dutyStartMin, endMin: dutyEndMin,
+      days: dutyDays ?? [], dates: dutyDates ?? [],
+    })
+    if (err) return res.status(400).json({ error: err })
+
+    await db.run(sql`
+      UPDATE admins
+      SET duty_start_min = ${dutyStartMin}, duty_end_min = ${dutyEndMin},
+          duty_days  = ${(dutyDays ?? []).join(',')},
+          duty_dates = ${(dutyDates ?? []).join(',')},
+          updated_at = ${now}
+      WHERE id = ${target.id}`)
+
+    const text = formatWindowText(dutyStartMin, dutyEndMin, dutyDays ?? [], dutyDates ?? [])
+
+    await logAction(actor.id, actor.username, 'update_duty_hours', 'admin', target.id,
+      `Set working hours for '${target.username}': ${text}`, req.ip)
+
+    sendEmail({
+      to: target.email,
+      subject: 'Your AfriFX duty hours have been updated',
+      html: `<p>Hi ${target.username},</p>
+             <p>Your dispute duty hours have been updated by an administrator.</p>
+             <p><strong>New schedule:</strong> ${text}</p>
+             <p>You'll get a reminder shortly before each session begins. Remember to
+                click <strong>Resume duty</strong> on your dashboard to start accepting
+                disputes.</p>
+             <p>— AfriFX</p>`,
+    }).catch((e: any) => console.error('[Duty] email failed:', e?.message))
+
+    res.json({ success: true, schedule: text })
+  } catch (err: any) { res.status(500).json({ error: err.message }) }
+})
+
 // ══════════════════════════════════════════════════════════
 // AUDIT LOG VIEWER
 // ══════════════════════════════════════════════════════════

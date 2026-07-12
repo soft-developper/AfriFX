@@ -191,3 +191,20 @@ export function nextWindowStart(w: DutyWindow, from: number): number | null {
 }
 
 export { parseRows as _parseRows }
+
+// Human-readable schedule, for emails and the audit log.
+// e.g. "Mon-Fri · 09:00-15:00 UTC (6h)"
+const DAY_LABEL = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+export function formatWindowText(
+  startMin: number, endMin: number, days: number[], dates: string[] = [],
+): string {
+  const hhmm = (m: number) =>
+    `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+  const span = ((endMin - startMin) / 60).toFixed(1).replace(/\.0$/, '')
+  const order = [1, 2, 3, 4, 5, 6, 0]
+  const sorted = order.filter(d => days?.includes(d))
+  const dayPart = sorted.length
+    ? sorted.map(d => DAY_LABEL[d]).join(', ')
+    : (dates?.length ? `${dates.length} specific date${dates.length === 1 ? '' : 's'}` : '—')
+  return `${dayPart} · ${hhmm(startMin)}-${hhmm(endMin)} UTC (${span}h)`
+}
