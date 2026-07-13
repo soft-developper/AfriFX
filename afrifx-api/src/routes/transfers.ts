@@ -27,14 +27,29 @@ const PAYOUT_CHAIN = (process.env.RAMP_PAYOUT_CHAIN ?? 'base') as ChainKey
 const DEFAULT_PROVIDER = process.env.RAMP_PROVIDER ?? 'flutterwave'
 
 // ── Diagnostic: is a real provider actually wired up? ──────
-router.get('/health', (_req, res) => {
-  res.json({
+router.get('/health', async (_req, res) => {
+  const out: any = {
     providers: listProviders(),
     flutterwaveConfigured: flutterwaveConfigured(),
     defaultProvider: DEFAULT_PROVIDER,
     payoutChain: PAYOUT_CHAIN,
     env: process.env.FLUTTERWAVE_ENV ?? 'sandbox',
-  })
+    // The on-ramp credits USDC into this wallet; the off-ramp spends from it.
+    walletIdSet: !!process.env.FLUTTERWAVE_WALLET_ID,
+    webhookSecretSet: !!process.env.FLUTTERWAVE_WEBHOOK_SECRET_HASH,
+  }
+
+  // Best-effort balance — a dry wallet is the most likely payout failure.
+  try {
+    const p: any = getProvider(DEFAULT_PROVIDER)
+    if (typeof p.walletBalance === 'function') {
+      out.usdcBalance = await p.walletBalance('USDC')
+    }
+  } catch (err: any) {
+    out.balanceError = err?.message
+  }
+
+  res.json(out)
 })
 
 // ── Start a transfer ───────────────────────────────────────
