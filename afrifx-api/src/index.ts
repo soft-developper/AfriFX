@@ -23,6 +23,8 @@ import adminAuthRouter            from './routes/adminAuth'
 import adminManageRouter          from './routes/adminManage'
 import broadcastsRouter           from './routes/broadcasts'
 import maintenanceRouter          from './routes/maintenance'
+import transfersRouter, { webhookRouter } from './routes/transfers'
+import { startTransferReconciler } from './services/ramp/reconciler'
 import { maintenanceGuard }       from './lib/maintenance'
 import contentRouter              from './routes/content'
 import { startRatePoller }        from './jobs/ratePoller'
@@ -40,7 +42,13 @@ const PORT = Number(process.env.PORT ?? 4000)
 
 app.use(corsMiddleware)
 
-app.use(express.json())
+// Capture the RAW body so webhook HMAC signatures can be verified against the
+// exact bytes the provider signed. Re-stringifying the parsed object is NOT
+// safe: key order, spacing and unicode escaping can all differ, which would
+// make valid signatures fail to match.
+app.use(express.json({
+  verify: (req: any, _res, buf) => { req.rawBody = buf.toString('utf8') },
+}))
 app.use(rateLimitMiddleware)
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: Date.now() }))
@@ -63,6 +71,8 @@ app.use('/admin-auth',     adminAuthRouter)
 app.use('/admin/manage',   adminManageRouter)
 app.use('/admin/broadcasts', broadcastsRouter)
 app.use('/maintenance',    maintenanceRouter)
+app.use('/transfers',      transfersRouter)
+app.use('/webhooks',       webhookRouter)
 
 app.use(errorHandler)
 
@@ -80,4 +90,5 @@ startAdminAuditSummary()
   startTreasuryChecker()
   startTxSettler()
   startDutyScheduler()
+  startTransferReconciler()
 })
