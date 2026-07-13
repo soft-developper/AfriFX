@@ -90,6 +90,7 @@ export interface FiatRampProvider {
   createPayout(params: {
     idempotencyKey: string
     usdcAmount:     number
+    destCurrency:   string       // fiat the recipient receives, e.g. 'KES'
     chain:          ChainKey
     recipient:      PayoutRecipient
   }): Promise<PayoutResult>

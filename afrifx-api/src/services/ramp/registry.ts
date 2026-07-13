@@ -6,6 +6,8 @@
 
 import type { FiatRampProvider } from './types'
 import { MockProvider } from './providers/mock'
+import { FlutterwaveProvider } from './providers/flutterwave'
+import { flutterwaveConfigured } from './providers/flutterwave-auth'
 
 const registry = new Map<string, FiatRampProvider>()
 
@@ -23,6 +25,15 @@ export function listProviders(): string[] {
   return [...registry.keys()]
 }
 
-// Register the mock by default so the state machine is testable with no keys.
-// Real providers (honeycoin, yellowcard) are registered from here once built.
+// The mock is always available so the state machine is testable with no keys.
 registerProvider(new MockProvider())
+
+// Flutterwave registers only when credentials are present, so a missing .env
+// can never take the app down — it just means no live provider is available.
+if (flutterwaveConfigured()) {
+  registerProvider(new FlutterwaveProvider())
+  console.log('[Ramp] ✅ Flutterwave provider registered' +
+    (process.env.FLUTTERWAVE_ENV === 'production' ? ' (PRODUCTION)' : ' (sandbox)'))
+} else {
+  console.log('[Ramp] Flutterwave not configured — mock provider only')
+}

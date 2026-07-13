@@ -52,7 +52,8 @@ export class MockProvider implements FiatRampProvider {
   }
 
   async createPayout(params: {
-    idempotencyKey: string; usdcAmount: number; chain: ChainKey; recipient: PayoutRecipient
+    idempotencyKey: string; usdcAmount: number; destCurrency: string
+    chain: ChainKey; recipient: PayoutRecipient
   }): Promise<PayoutResult> {
     return {
       providerRef:    `mock_off_${randomUUID().slice(0, 8)}`,

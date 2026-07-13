@@ -152,8 +152,9 @@ async function execOfframp(t: any, legId: string, idemKey: string) {
   }
   const res = await provider.createPayout({
     idempotencyKey: idemKey,
-    usdcAmount: t.usdc_amount ?? t[7] ?? 0,
-    chain:      (t.payout_chain ?? t[16] ?? 'base') as ChainKey,
+    usdcAmount:   t.usdc_amount ?? t[7] ?? 0,
+    destCurrency: t.dest_currency ?? t[5],
+    chain:        (t.payout_chain ?? t[16] ?? 'base') as ChainKey,
     recipient,
   })
   await updateLeg(legId, { provider_ref: res.providerRef,
