@@ -154,7 +154,7 @@ router.get('/meta/banks', async (req, res) => {
 })
 
 router.post('/meta/resolve-account', async (req, res) => {
-  const { accountNumber, bankCode } = req.body
+  const { accountNumber, bankCode, currency } = req.body
   if (!accountNumber || !bankCode) {
     return res.status(400).json({ error: 'accountNumber and bankCode are required' })
   }
@@ -163,7 +163,8 @@ router.post('/meta/resolve-account', async (req, res) => {
     if (typeof p.resolveBankAccount !== 'function') {
       return res.status(501).json({ error: 'This provider cannot resolve accounts' })
     }
-    res.json(await p.resolveBankAccount(accountNumber, bankCode))
+    // Flutterwave v4 requires the account currency (NGN, GHS, KES…).
+    res.json(await p.resolveBankAccount(accountNumber, bankCode, currency ?? 'NGN'))
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
