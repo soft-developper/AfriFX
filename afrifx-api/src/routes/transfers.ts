@@ -164,7 +164,10 @@ router.post('/meta/resolve-account', async (req, res) => {
       return res.status(501).json({ error: 'This provider cannot resolve accounts' })
     }
     // Flutterwave v4 requires the account currency (NGN, GHS, KES…).
-    res.json(await p.resolveBankAccount(accountNumber, bankCode, currency ?? 'NGN'))
+    const result = await p.resolveBankAccount(accountNumber, bankCode, currency ?? 'NGN')
+    // Never answer with an empty body — an empty 200 is indistinguishable from
+    // a silent failure, which is exactly what bit us here.
+    res.json(result ?? { empty: true, note: 'Provider returned no data' })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 

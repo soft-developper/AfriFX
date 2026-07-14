@@ -384,7 +384,11 @@ export class FlutterwaveProvider implements FiatRampProvider {
         },
       },
     })
-    return d?.data ?? null
+    // Return the WHOLE envelope, not just `data`. A previous version returned
+    // `d?.data ?? null`, which silently produced an EMPTY response when the
+    // account details sat elsewhere in the payload — indistinguishable from a
+    // failure. Better to surface exactly what the provider sent.
+    return d ?? null
   }
 
   /*
