@@ -30,15 +30,15 @@ export async function uploadBuffer(
     mimeType.startsWith('image/') ? 'image' :
     mimeType.startsWith('video/') ? 'video' : 'document'
 
-  // Convert buffer to base64 data URI — avoids upload_stream signing issues
+  // Convert buffer to base64 data URI avoids upload_stream signing issues
   const base64    = buffer.toString('base64')
   const dataUri   = `data:${mimeType};base64,${base64}`
 
-  // Use upload() with only folder — minimal params = minimal signature surface
+  // Use upload() with only folder minimal params = minimal signature surface
   const result = await cloudinary.uploader.upload(dataUri, {
     folder:        `afrifx/chat/${offerId}`,
     resource_type: resourceType as any,
-    // No public_id — let Cloudinary auto-generate it
+    // No public_id let Cloudinary auto-generate it
     // This keeps the string-to-sign as: folder=...&timestamp=...
   })
 

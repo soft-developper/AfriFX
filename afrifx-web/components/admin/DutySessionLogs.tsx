@@ -25,10 +25,10 @@ const STATUS: Record<string, { label: string; cls: string; icon: any }> = {
 }
 
 const fmt = (ts?: number | null) =>
-  ts ? new Date(ts * 1000).toLocaleString() : '—'
+  ts ? new Date(ts * 1000).toLocaleString() : '-'
 
 /*
-  Session logs — how each sub-admin worked their shift. Shown to the general
+  Session logs, how each sub-admin worked their shift. Shown to the general
   admin so they can confirm whether people resumed duty, what they handled,
   and who missed their session.
 */

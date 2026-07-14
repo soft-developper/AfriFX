@@ -42,7 +42,7 @@ export function normalizeAdmin(row: any) {
 }
 
 // Middleware: require a valid admin session (shared with /admin-auth/*
-// — issued by services/auth/adminAuth.createSession, backed by admin_sessions)
+// issued by services/auth/adminAuth.createSession, backed by admin_sessions)
 export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
   const auth  = req.headers.authorization
   const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null
@@ -66,11 +66,11 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
       if (!admin.suspended_until || admin.suspended_until > now) {
         return res.status(403).json({ error: 'Account suspended' })
       }
-      // Suspension expired — reactivate
+      // Suspension expired reactivate
       await db.run(sql`UPDATE admins SET status = 'active', suspended_until = NULL WHERE id = ${admin.id}`)
     }
 
-    // Attach to request — refresh permissions from DB (in case they changed)
+    // Attach to request refresh permissions from DB (in case they changed)
     ;(req as any).admin = {
       id:          admin.id,
       username:    admin.username,
@@ -84,7 +84,7 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
 }
 
 // Middleware: require SUPER ADMIN specifically. For capabilities that must
-// never be delegable to a sub-admin — e.g. maintenance mode, which can take
+// never be delegable to a sub-admin e.g. maintenance mode, which can take
 // the whole platform offline. Deliberately NOT a permission, so it can't be
 // granted by mistake.
 export function requireSuperAdmin(req: Request, res: Response, next: NextFunction) {

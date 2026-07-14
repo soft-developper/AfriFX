@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 
 /*
-  Some UI needs colors as JavaScript strings rather than Tailwind classes —
+  Some UI needs colors as JavaScript strings rather than Tailwind classes
   Recharts configs, inline style props, avatar fallbacks, etc. Those can't use
   utility classes, so they read the same semantic tokens from CSS variables
   here. This keeps charts and inline styles in sync with the active theme

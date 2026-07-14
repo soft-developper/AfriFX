@@ -1,5 +1,5 @@
 -- ============================================================
--- AfriFX Phase D — site content tables
+-- AfriFX Phase D site content tables
 -- Run ONCE against your Turso DB:
 --   turso db shell <your-db-name> < phaseD-schema.sql
 -- (or paste the statements into: turso db shell <your-db-name>)
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS contact_messages (
 -- the admin edits them. INSERT OR IGNORE keeps existing rows untouched.
 INSERT OR IGNORE INTO site_content (key, value, updated_at) VALUES
   ('about',
-   '[{"heading":"About AfriFX","body":"AfriFX is a decentralized foreign-exchange and cross-border payments platform built on the Arc blockchain, making it fast and affordable to move value across Africa using stablecoins."},{"heading":"Our mission","body":"To give everyone access to instant, low-cost currency exchange and cross-border payments — without the delays and fees of traditional banking."},{"heading":"How it works","body":"Convert between USDC and local currencies directly, or trade peer-to-peer on our marketplace. Every transaction settles on Arc in under a second, with fees paid in USDC."}]',
+   '[{"heading":"About AfriFX","body":"AfriFX is a decentralized foreign-exchange and cross-border payments platform built on the Arc blockchain, making it fast and affordable to move value across Africa using stablecoins."},{"heading":"Our mission","body":"To give everyone access to instant, low-cost currency exchange and cross-border payments without the delays and fees of traditional banking."},{"heading":"How it works","body":"Convert between USDC and local currencies directly, or trade peer-to-peer on our marketplace. Every transaction settles on Arc in under a second, with fees paid in USDC."}]',
    strftime('%s','now')),
   ('contact',
    '{"email":"support@afrifx.xyz","phone":"","address":"","supportHours":"Monday to Friday, 9am – 5pm WAT","twitter":"https://x.com/afrifx","telegram":"","discord":""}',

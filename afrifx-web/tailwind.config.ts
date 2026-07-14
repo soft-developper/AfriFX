@@ -10,7 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Semantic tokens — driven by CSS variables (see globals.css).
+        // Semantic tokens driven by CSS variables (see globals.css).
         // Support opacity modifiers via the <alpha-value> placeholder.
         app: {
           bg:            'rgb(var(--app-bg) / <alpha-value>)',

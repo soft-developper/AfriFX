@@ -1,8 +1,8 @@
 // ============================================================
-// Orchestrator engine — the durable state machine that advances a transfer
+// Orchestrator engine the durable state machine that advances a transfer
 // one leg at a time. Core invariant (design §5): never start leg N+1 until
 // leg N is 'done'. Confirmation is always ground-truth (provider status /
-// on-chain), never optimistic — the same lesson baked into txSettler.
+// on-chain), never optimistic the same lesson baked into txSettler.
 //
 // This engine is provider-agnostic: it calls the FiatRampProvider interface
 // and the CCTP module, both of which run against the mock by default, so the

@@ -76,7 +76,7 @@ function DashboardContent() {
     },
     {
       label: 'Volume (30d)',
-      value: stats ? `$${formatAmount(stats.monthly.volume)}` : '—',
+      value: stats ? `$${formatAmount(stats.monthly.volume)}` : '-',
       sub:   `${stats?.monthly.txCount ?? 0} conversions this month`,
       icon:  TrendingUp,
       color: 'text-emerald-400',
@@ -84,7 +84,7 @@ function DashboardContent() {
     },
     {
       label: 'All-time volume',
-      value: stats ? `$${formatAmount(stats.allTime.totalVolume)}` : '—',
+      value: stats ? `$${formatAmount(stats.allTime.totalVolume)}` : '-',
       sub:   `${stats?.allTime.txCount ?? 0} total transactions`,
       icon:  TrendingUp,
       color: 'text-app-accent-text',
@@ -92,7 +92,7 @@ function DashboardContent() {
     },
     {
       label: 'Completed trades',
-      value: stats ? String(stats.p2p?.completedTrades ?? 0) : '—',
+      value: stats ? String(stats.p2p?.completedTrades ?? 0) : '-',
       sub:   `${stats?.p2p?.activeTrades ?? 0} active · ${stats?.p2p?.openOffers ?? 0} open offers`,
       icon:  Store,
       color: 'text-emerald-400',
@@ -118,7 +118,7 @@ function DashboardContent() {
               {profile ? `${greeting()}, ${profile.display_name}` : 'Dashboard'}
             </h1>
             <p className="text-xs text-app-accent-text">
-              {profile ? `@${profile.username}` : address?.slice(0,10).concat('…') ?? '—'}
+              {profile ? `@${profile.username}` : address?.slice(0,10).concat('…') ?? '-'}
             </p>
           </div>
         </div>
@@ -159,7 +159,7 @@ function DashboardContent() {
               </span>
             </div>
             <p className={`font-mono font-semibold text-app-text ${highlight ? 'text-2xl' : 'text-xl'}`}>
-              {isLoading && value === '—'
+              {isLoading && value === '-'
                 ? <span className="inline-block h-6 w-20 animate-pulse rounded bg-app-border" />
                 : value}
             </p>

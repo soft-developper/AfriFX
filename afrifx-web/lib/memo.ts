@@ -3,10 +3,10 @@
 // Source: https://docs.arc.io/arc/concepts/transaction-memos
 //
 // Key rules (from official docs):
-//  1. Call Memo.memo() directly from an EOA — never from a contract
+//  1. Call Memo.memo() directly from an EOA never from a contract
 //  2. CallFrom precompile preserves original EOA as msg.sender in target
 //  3. If inner call reverts, entire transaction reverts
-//  4. memoId is bytes32, indexed — queryable on-chain by memoId
+//  4. memoId is bytes32, indexed queryable on-chain by memoId
 
 import {
   encodeFunctionData,

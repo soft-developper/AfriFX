@@ -11,7 +11,7 @@ function parseRows(r: any): any[] {
 }
 
 export function startAdminAuditSummary() {
-  console.log('[AuditSummary] Started — sends weekly to super admins')
+  console.log('[AuditSummary] Started, sends weekly to super admins')
 
   const sendSummary = async () => {
     const now     = Math.floor(Date.now() / 1000)

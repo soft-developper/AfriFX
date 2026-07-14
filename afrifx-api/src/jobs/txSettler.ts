@@ -1,7 +1,7 @@
 // Reconciles pending transactions against the chain.
 //
 // Previously this marked ANY pending tx with a hash as 'settled' after
-// 2 minutes, without checking the chain — so a tx that reverted on-chain
+// 2 minutes, without checking the chain so a tx that reverted on-chain
 // was still shown as successful. It now fetches each pending tx's receipt
 // and sets 'settled' only when the receipt status is 'success', otherwise
 // 'failed'. This catches cases where:
@@ -33,7 +33,7 @@ function parseRows(r: any): any[] {
 }
 
 export function startTxSettler() {
-  console.log('[TxSettler] ✅ Started — reconciling pending txs against the chain every 2 minutes')
+  console.log('[TxSettler] ✅ Started, reconciling pending txs against the chain every 2 minutes')
   cron.schedule('*/2 * * * *', settle)
   setTimeout(settle, 10_000) // also run shortly after boot
 }
@@ -64,7 +64,7 @@ async function settle() {
         const receipt = await arcClient.getTransactionReceipt({ hash: hash as `0x${string}` })
         status = receipt.status === 'success' ? 'settled' : 'failed'
       } catch {
-        // Receipt not found yet (still propagating) — leave pending; a later
+        // Receipt not found yet (still propagating) leave pending; a later
         // run will pick it up. Don't guess a status.
         stillPending++
         continue
@@ -79,7 +79,7 @@ async function settle() {
     }
 
     if (settled || failed) {
-      console.log(`[TxSettler] Reconciled — settled: ${settled}, failed: ${failed}, still pending: ${stillPending}`)
+      console.log(`[TxSettler] Reconciled, settled: ${settled}, failed: ${failed}, still pending: ${stillPending}`)
     }
   } catch (err: any) {
     console.error('[TxSettler] Error:', err.message)

@@ -1,5 +1,5 @@
 'use client'
-// Thin wrapper — kept for backwards compatibility
+// Thin wrapper kept for backwards compatibility
 // TopNav now uses RainbowKit ConnectButton.Custom directly
 import { useConnectModal } from '@rainbow-me/rainbowkit'
 

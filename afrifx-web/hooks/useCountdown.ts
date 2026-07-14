@@ -36,7 +36,7 @@ export function useCountdown(
   const seconds = secondsLeft % 60
 
   const formatted = !deadlineUnix
-    ? '—'
+    ? '-'
     : secondsLeft === 0
     ? 'Expired'
     : hours > 0

@@ -18,7 +18,7 @@ export async function seedSuperAdmin() {
   const wallet   = process.env.ADMIN_WALLET
 
   if (!username || !email || !password) {
-    console.warn('[SeedAdmin] ADMIN_USERNAME / ADMIN_EMAIL / ADMIN_PASSWORD not set — skipping seed')
+    console.warn('[SeedAdmin] ADMIN_USERNAME / ADMIN_EMAIL / ADMIN_PASSWORD not set, skipping seed')
     return
   }
 
@@ -28,7 +28,7 @@ export async function seedSuperAdmin() {
       sql`SELECT id FROM admins WHERE role = 'super_admin' LIMIT 1`
     )
     if (parseRows(existing).length) {
-      console.log('[SeedAdmin] Super admin already exists — skipping seed')
+      console.log('[SeedAdmin] Super admin already exists, skipping seed')
       return
     }
 

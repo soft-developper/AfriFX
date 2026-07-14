@@ -1,6 +1,6 @@
 import { ethers } from 'hardhat'
 
-// Arc Testnet USDC address — 6 decimals ERC-20 interface
+// Arc Testnet USDC address 6 decimals ERC-20 interface
 const USDC_ADDRESS = '0x3600000000000000000000000000000000000000'
 
 async function main() {

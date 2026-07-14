@@ -30,14 +30,14 @@ export function TimerBanner({ deadline, totalSeconds, phase, isMine }: TimerBann
   const urgencyLabel = isExpired
     ? 'Time expired'
     : isDanger
-    ? 'Urgent — act now'
+    ? 'Urgent, act now'
     : isWarning
     ? 'Running low'
     : 'Time remaining'
 
   return (
     <div className={`w-full rounded-xl border px-5 py-4 ${scheme.bg} ${scheme.border}`}>
-      {/* Top row — label + urgency */}
+      {/* Top row label + urgency */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {isExpired || isDanger
@@ -55,7 +55,7 @@ export function TimerBanner({ deadline, totalSeconds, phase, isMine }: TimerBann
         {formatted}
       </div>
 
-      {/* Progress bar — depletes left to right */}
+      {/* Progress bar depletes left to right */}
       <div className="h-2 w-full overflow-hidden rounded-full bg-app-border">
         <div
           className={`h-full rounded-full transition-all duration-1000 ${scheme.bar}`}

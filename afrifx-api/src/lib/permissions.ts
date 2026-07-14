@@ -2,7 +2,7 @@
 //
 // NOTE: some capabilities are deliberately NOT permissions, because they are
 // SUPER-ADMIN ONLY and must never be delegable:
-//   * Maintenance mode (taking the platform or a section offline) — too
+//   * Maintenance mode (taking the platform or a section offline) too
 //     dangerous to grant; the super admin alone controls it.
 export const PERMISSIONS = {
   VIEW_DASHBOARD:    'view_dashboard',
@@ -27,14 +27,14 @@ export const ALL_PERMISSIONS = Object.values(PERMISSIONS)
 export const PERMISSION_META: Record<string, { label: string; description: string; note?: string }> = {
   view_dashboard:   { label: 'View Dashboard',    description: 'Access the admin overview and stats' },
   manage_offers:    { label: 'Manage Offers',     description: 'Force release or cancel P2P offers' },
-  resolve_disputes: { label: 'Resolve Disputes',  description: 'Settle disputes — release or refund USDC' },
+  resolve_disputes: { label: 'Resolve Disputes',  description: 'Settle disputes, release or refund USDC' },
   manage_users:     { label: 'Manage Users',      description: 'Edit profiles, issue warnings' },
   suspend_users:    { label: 'Suspend Users',     description: 'Suspend or ban user accounts' },
   view_analytics:   { label: 'View Analytics',    description: 'See platform-wide analytics and charts' },
   manage_treasury:  {
     label: 'Manage Treasury',
     description: 'View and manage platform fees',
-    note: 'Not active yet — the treasury dashboard ships with the mainnet contract.',
+    note: 'Not active yet, the treasury dashboard ships with the mainnet contract.',
   },
   manage_admins:    { label: 'Manage Admins',     description: 'Add, edit, suspend sub-admins; set their duty hours' },
   manage_content:   { label: 'Manage Content',    description: 'Edit the About and Contact pages' },

@@ -167,7 +167,7 @@ export default function AdminAudit() {
                                 </span>
                               </td>
                               <td className="max-w-md truncate px-4 py-2.5 text-xs text-app-muted">
-                                {log.details ?? '—'}
+                                {log.details ?? '-'}
                               </td>
                               <td className="whitespace-nowrap px-4 py-2.5 text-xs text-app-muted">
                                 {new Date(Number(log.created_at) * 1000).toLocaleString()}

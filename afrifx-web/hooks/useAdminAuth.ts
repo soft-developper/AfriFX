@@ -67,7 +67,7 @@ export function useAdminAuth() {
     const data = await res.json()
     if (!res.ok) return { success: false, error: data.error ?? 'Setup failed' }
 
-    // Setup doesn't return the admin object — fetch it via /verify
+    // Setup doesn't return the admin object fetch it via /verify
     const meRes = await fetch(`${API}/admin-auth/verify`, {
       headers: { Authorization: `Bearer ${data.token}` },
     })

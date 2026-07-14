@@ -1,5 +1,5 @@
 // ============================================================
-// Webhook handling — a provider webhook (normalized via provider.parseWebhook)
+// Webhook handling a provider webhook (normalized via provider.parseWebhook)
 // flips the matching leg to done/failed, then advances the transfer. This is
 // the PRIMARY confirmation signal (design §5/§6); the tick loop is the backstop.
 // ============================================================

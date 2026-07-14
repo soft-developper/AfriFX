@@ -1,5 +1,5 @@
 // ============================================================
-// Cross-border transfers — the public face of the payout orchestrator.
+// Cross-border transfers the public face of the payout orchestrator.
 //
 //   POST /transfers            start a transfer (fiat-in or usdc-in)
 //   GET  /transfers?wallet=    the sender's transfers
@@ -39,7 +39,7 @@ router.get('/health', async (_req, res) => {
     webhookSecretSet: !!process.env.FLUTTERWAVE_WEBHOOK_SECRET_HASH,
   }
 
-  // Best-effort balance — a dry wallet is the most likely payout failure.
+  // Best-effort balance a dry wallet is the most likely payout failure.
   try {
     const p: any = getProvider(DEFAULT_PROVIDER)
     if (typeof p.walletBalance === 'function') {
@@ -63,7 +63,7 @@ router.post('/', async (req, res) => {
     provider,
   } = req.body
 
-  // Validate hard — this moves real money.
+  // Validate hard this moves real money.
   if (!senderAddress)    return res.status(400).json({ error: 'senderAddress is required' })
   if (!['fiat_in', 'usdc_in'].includes(senderMode)) {
     return res.status(400).json({ error: "senderMode must be 'fiat_in' or 'usdc_in'" })
@@ -165,7 +165,7 @@ router.post('/meta/resolve-account', async (req, res) => {
     }
     // Flutterwave v4 requires the account currency (NGN, GHS, KES…).
     const result = await p.resolveBankAccount(accountNumber, bankCode, currency ?? 'NGN')
-    // Never answer with an empty body — an empty 200 is indistinguishable from
+    // Never answer with an empty body an empty 200 is indistinguishable from
     // a silent failure, which is exactly what bit us here.
     res.json(result ?? { empty: true, note: 'Provider returned no data' })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
@@ -174,20 +174,20 @@ router.post('/meta/resolve-account', async (req, res) => {
 export default router
 
 // ══════════════════════════════════════════════════════════
-// Webhook router — mounted separately at /webhooks
+// Webhook router mounted separately at /webhooks
 // ══════════════════════════════════════════════════════════
 export const webhookRouter = Router()
 
 webhookRouter.post('/flutterwave', async (req: any, res) => {
   try {
-    // Verify against the RAW body bytes the provider actually signed — see the
+    // Verify against the RAW body bytes the provider actually signed see the
     // express.json({ verify }) hook in index.ts. Falling back to the parsed
     // body only if rawBody is somehow unavailable.
     const payload = req.rawBody ?? req.body
 
     // parseWebhook VERIFIES the HMAC signature and throws if it's forged.
     // We answer 200 even on a handled failure so the provider doesn't retry
-    // forever, but a BAD SIGNATURE gets a 401 — that's an attack, not an event.
+    // forever, but a BAD SIGNATURE gets a 401 that's an attack, not an event.
     const out = await handleProviderWebhook(
       'flutterwave',
       payload,
@@ -196,7 +196,7 @@ webhookRouter.post('/flutterwave', async (req: any, res) => {
     res.status(200).json({ received: true, ...out })
   } catch (err: any) {
     if (/signature/i.test(err?.message ?? '')) {
-      console.warn('[Webhook] REJECTED Flutterwave webhook — bad signature')
+      console.warn('[Webhook] REJECTED Flutterwave webhook, bad signature')
       return res.status(401).json({ error: 'Invalid signature' })
     }
     console.error('[Webhook] Flutterwave error:', err?.message)

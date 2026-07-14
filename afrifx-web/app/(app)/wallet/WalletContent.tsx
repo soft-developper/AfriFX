@@ -46,7 +46,7 @@ export function WalletContent() {
     KES: '#9333EA', ZAR: '#0891B2', EGP: '#C2410C',
   }
 
-  // Local currency slices — USD equivalent (localAmount / rate = usdcBalance)
+  // Local currency slices USD equivalent (localAmount / rate = usdcBalance)
   const localSlices = (data?.localEquiv ?? [])
     .map(({ currency, amount, rate }) => ({
       name:  currency,
@@ -107,7 +107,7 @@ export function WalletContent() {
                 {profile?.display_name ?? 'Wallet'}
               </p>
               <p className="font-mono text-[10px] text-app-muted">
-                {address ?? '—'}
+                {address ?? '-'}
               </p>
             </div>
             <button onClick={copyAddress} className="ml-auto shrink-0 text-app-muted hover:text-app-text">
@@ -297,7 +297,7 @@ export function WalletContent() {
                   {label}
                 </div>
                 <span className={`font-mono text-sm font-semibold ${color}`}>
-                  {isLoading ? '—' : value}
+                  {isLoading ? '-' : value}
                 </span>
               </div>
             ))}

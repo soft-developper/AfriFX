@@ -16,7 +16,7 @@ export function useNow(intervalMs = 1000) {
   return now
 }
 
-// "2h 14m 09s" — drops the hours segment when zero.
+// "2h 14m 09s" drops the hours segment when zero.
 export function countdown(seconds: number): string {
   if (seconds <= 0) return '0s'
   const h = Math.floor(seconds / 3600)
@@ -38,10 +38,10 @@ const DAY_LABEL = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 // [1,2,3,4,5] -> "Mon–Fri" (collapses runs), else "Mon, Wed, Fri"
 export function formatDays(days: number[]): string {
-  if (!days?.length) return '—'
+  if (!days?.length) return '-'
   const order = [1, 2, 3, 4, 5, 6, 0] // Mon-first
   const sorted = order.filter(d => days.includes(d))
-  if (!sorted.length) return '—'
+  if (!sorted.length) return '-'
   if (sorted.length === 1) return DAY_LABEL[sorted[0]]
 
   // Collapse contiguous runs in Mon-first order.
@@ -67,6 +67,6 @@ export function formatDays(days: number[]): string {
 // "Mon–Fri · 09:00–15:00 UTC (6h)"
 export function formatWindow(startMin: number, endMin: number, days: number[], dates: string[] = []): string {
   const span = ((endMin - startMin) / 60).toFixed(1).replace(/\.0$/, '')
-  const dayPart = days?.length ? formatDays(days) : (dates?.length ? `${dates.length} date${dates.length === 1 ? '' : 's'}` : '—')
+  const dayPart = days?.length ? formatDays(days) : (dates?.length ? `${dates.length} date${dates.length === 1 ? '' : 's'}` : '-')
   return `${dayPart} · ${hhmm(startMin)}–${hhmm(endMin)} UTC (${span}h)`
 }

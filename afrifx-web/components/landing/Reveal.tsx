@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 /*
   Reveals children with a gentle fade + rise the first time they scroll into
   view. Uses IntersectionObserver (no library), and fully respects
-  prefers-reduced-motion — in that case content is shown immediately with no
+  prefers-reduced-motion, in that case content is shown immediately with no
   transform. `delay` staggers siblings (ms).
 */
 export function Reveal({

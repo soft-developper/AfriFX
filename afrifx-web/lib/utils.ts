@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function shortenAddress(address: string | null | undefined): string {
-  if (!address) return '—'
+  if (!address) return '-'
   return `${address.slice(0, 6)}…${address.slice(-4)}`
 }
 

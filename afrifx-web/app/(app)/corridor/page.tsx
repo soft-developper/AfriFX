@@ -2,7 +2,7 @@ import { SectionGuard } from '@/components/layout/SectionGuard'
 import { CorridorCard } from '@/components/corridor/CorridorCard'
 import { ClientOnly } from '@/components/ui/client-only'
 
-export const metadata = { title: 'Corridor — AfriFX' }
+export const metadata = { title: 'Corridor, AfriFX' }
 
 function CorridorSkeleton() {
   return (

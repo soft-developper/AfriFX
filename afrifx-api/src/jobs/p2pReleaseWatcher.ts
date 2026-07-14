@@ -1,5 +1,5 @@
 // ============================================================
-// P2P Release Watcher — 4 jobs:
+// P2P Release Watcher 4 jobs:
 // Job1: release when both confirmed (every 15s)
 // Job2: auto-cancel when taker timer expires + taker NOT confirmed (every 60s)
 // Job3: auto-release to taker after 24h when maker goes silent (every 5min)
@@ -63,7 +63,7 @@ async function releaseOffer(offerId: string, label: string) {
 async function cancelOffer(offerId: string, label: string) {
   console.log(`[P2PWatcher] ${label}: cancelling ${offerId.slice(0,18)}…`)
   try {
-    const hash = await cancelPlatform(offerId as `0x${string}`, 'Taker timer expired — auto cancelled')
+    const hash = await cancelPlatform(offerId as `0x${string}`, 'Taker timer expired, auto cancelled')
     const now  = Math.floor(Date.now() / 1000)
     await db.run(sql`
       UPDATE p2p_offers SET
@@ -99,7 +99,7 @@ async function cancelOffer(offerId: string, label: string) {
 
 export function startP2PReleaseWatcher() {
   if (!process.env.PLATFORM_WALLET_PRIVATE_KEY) {
-    console.warn('[P2PWatcher] PLATFORM_WALLET_PRIVATE_KEY not set — auto-release disabled')
+    console.warn('[P2PWatcher] PLATFORM_WALLET_PRIVATE_KEY not set, auto-release disabled')
     return
   }
 
@@ -178,5 +178,5 @@ export function startP2PReleaseWatcher() {
     } catch (err: any) { console.error('[P2PWatcher] Job4 error:', err.message) }
   }, 5 * 60_000)
 
-  console.log('[P2PWatcher] started — Job1:15s | Job2:60s | Job3:5min | Job4:5min')
+  console.log('[P2PWatcher] started, Job1:15s | Job2:60s | Job3:5min | Job4:5min')
 }

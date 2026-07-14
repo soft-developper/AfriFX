@@ -295,7 +295,7 @@ export default function AdminBroadcasts() {
                   )}
                   {count.internal && (
                     <p className="mt-2 text-xs text-app-muted">
-                      Internal staff mail — no opt-out, no unsubscribe link.
+                      Internal staff mail, no opt-out, no unsubscribe link.
                     </p>
                   )}
                 </>
@@ -319,7 +319,7 @@ export default function AdminBroadcasts() {
                   {body || <span className="text-app-muted">Your message appears here…</span>}
                 </p>
                 <p className="mt-3 border-t border-app-border pt-2 text-app-muted">
-                  — {admin?.username ?? 'You'}<br />
+                 , {admin?.username ?? 'You'}<br />
                   <span className="text-[10px]">Administrator, AfriFX</span>
                 </p>
               </div>

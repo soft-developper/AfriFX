@@ -59,7 +59,7 @@ export function useP2P() {
     if (!publicClient) throw new Error('No public client')
     const receipt = await publicClient.waitForTransactionReceipt({ hash })
     if (receipt.status !== 'success') {
-      throw new Error('Offer creation reverted on-chain — no offer was created.')
+      throw new Error('Offer creation reverted on-chain, no offer was created.')
     }
     for (const log of receipt.logs) {
       try {
@@ -74,7 +74,7 @@ export function useP2P() {
   }
 
   // Wait for the on-chain receipt and return whether it actually succeeded.
-  // A tx hash existing only means it was broadcast — it can still revert,
+  // A tx hash existing only means it was broadcast it can still revert,
   // in which case we must NOT record the action as done.
   async function confirmedOnChain(hash: `0x${string}`): Promise<boolean> {
     if (!publicClient) return false
@@ -88,7 +88,7 @@ export function useP2P() {
 
   // ── Create offer ──────────────────────────────────────────
   // Note: approve() cannot be memo-wrapped (no state change to forward)
-  // createP2POffer() IS memo-wrapped — vault sees user as msg.sender via CallFrom
+  // createP2POffer() IS memo-wrapped vault sees user as msg.sender via CallFrom
   async function createOffer(params: CreateOfferParams) {
     if (!address) throw new Error('Wallet not connected')
     const vault = CONTRACTS.AFRIFX_VAULT
@@ -103,7 +103,7 @@ export function useP2P() {
       const ref      = buildReference()
       const useMemo  = await isMemoAvailable()
 
-      // 1. Approve vault (must be direct — not memo-wrapped)
+      // 1. Approve vault (must be direct not memo-wrapped)
       // Wait for it to be MINED before sending the next tx, otherwise the
       // create tx grabs the same/stale nonce and the chain rejects it with
       // "nonce too low". This matters most for the embedded (social-login)
@@ -116,14 +116,14 @@ export function useP2P() {
       if (publicClient) {
         const approveReceipt = await publicClient.waitForTransactionReceipt({ hash: approveHash })
         if (approveReceipt.status !== 'success') {
-          throw new Error('USDC approval failed on-chain — the offer was not created.')
+          throw new Error('USDC approval failed on-chain, the offer was not created.')
         }
       }
 
       let hash: `0x${string}`
 
       if (useMemo) {
-        // 2. createP2POffer via Memo — vault sees user as msg.sender
+        // 2. createP2POffer via Memo vault sees user as msg.sender
         const createData = encodeFunctionData({
           abi:          VAULT_P2P_ABI,
           functionName: 'createP2POffer',
@@ -203,7 +203,7 @@ export function useP2P() {
 
       setTxHash(hash)
       if (!(await confirmedOnChain(hash))) {
-        setError('Transaction reverted on-chain — the offer was not accepted.')
+        setError('Transaction reverted on-chain, the offer was not accepted.')
         throw new Error('accept reverted on-chain')
       }
       const takerDeadline = Math.floor(Date.now() / 1000) + makerTimerSeconds
@@ -245,7 +245,7 @@ export function useP2P() {
 
       setTxHash(hash)
       if (!(await confirmedOnChain(hash))) {
-        setError('Transaction reverted on-chain — your confirmation was not recorded.')
+        setError('Transaction reverted on-chain, your confirmation was not recorded.')
         throw new Error('takerConfirm reverted on-chain')
       }
       const makerDeadline = Math.floor(Date.now() / 1000) + makerTimerSeconds
@@ -287,7 +287,7 @@ export function useP2P() {
 
       setTxHash(hash)
       if (!(await confirmedOnChain(hash))) {
-        setError('Transaction reverted on-chain — your confirmation was not recorded.')
+        setError('Transaction reverted on-chain, your confirmation was not recorded.')
         throw new Error('makerConfirm reverted on-chain')
       }
       await fetch(`${API}/offers/${offerId}`, {
@@ -338,7 +338,7 @@ export function useP2P() {
       })
       setTxHash(hash)
       if (!(await confirmedOnChain(hash))) {
-        setError('Transaction reverted on-chain — the offer was not cancelled.')
+        setError('Transaction reverted on-chain, the offer was not cancelled.')
         throw new Error('cancel reverted on-chain')
       }
       await fetch(`${API}/offers/${offerId}`, {

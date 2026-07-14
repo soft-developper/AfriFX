@@ -128,7 +128,7 @@ function PayContent() {
       setTxHash(hash)
       setStatus('confirming')
 
-      // Check on-chain status — NEVER skip this
+      // Check on-chain status NEVER skip this
       let receiptStatus: 'success' | 'reverted' = 'success'
       if (publicClient) {
         const receipt = await publicClient.waitForTransactionReceipt({ hash })
@@ -203,7 +203,7 @@ function PayContent() {
           </Badge>
         </div>
 
-        {/* Amount — show original + USDC equivalent */}
+        {/* Amount show original + USDC equivalent */}
         <div className="mb-5 rounded-xl bg-app-bg p-5 text-center">
           <p className="text-xs text-app-muted">Amount due</p>
           <p className="mt-1 font-mono text-4xl font-bold text-app-text">
@@ -211,7 +211,7 @@ function PayContent() {
           </p>
           <p className="text-sm text-app-accent-text">{invoice.currency}</p>
 
-          {/* USDC conversion — shown when invoice is in local currency */}
+          {/* USDC conversion shown when invoice is in local currency */}
           {isLocalCcy && (
             <div className="mt-3 flex items-center justify-center gap-2">
               <span className="text-xs text-app-muted">You will pay</span>
@@ -242,7 +242,7 @@ function PayContent() {
         <div className="mb-5 space-y-2 text-xs">
           {[
             ['From',        invoice.creator_address.slice(0,12) + '…'],
-            ['Description', invoice.description ?? '—'],
+            ['Description', invoice.description ?? '-'],
             ['Due',         invoice.due_date
               ? new Date(invoice.due_date * 1000).toLocaleDateString()
               : 'No deadline'],
@@ -352,12 +352,12 @@ function PayContent() {
 
         ) : isCreator ? (
           <div className="rounded-xl bg-amber-900/20 p-4 text-center text-xs text-amber-400">
-            You created this invoice — share this link with your payer
+            You created this invoice, share this link with your payer
           </div>
 
         ) : wrongPayer ? (
           <div className="rounded-xl bg-red-900/20 p-4 text-center text-xs text-red-400">
-            This invoice is addressed to a specific wallet — connected wallet doesn't match
+            This invoice is addressed to a specific wallet, connected wallet doesn't match
           </div>
 
         ) : !isConnected ? (

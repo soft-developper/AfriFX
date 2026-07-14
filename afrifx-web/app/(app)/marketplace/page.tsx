@@ -105,9 +105,9 @@ function MarketplacePageInner() {
           takerAddress:  address,
           timerSeconds:  timerSecs,
         }),
-      }).catch(() => {}) // Non-fatal — watcher will catch it
+      }).catch(() => {}) // Non-fatal, watcher will catch it
 
-      // Step 4: DB is updated — safe to redirect now
+      // Step 4: DB is updated safe to redirect now
       setAcceptState({ phase: 'done', offerId: offer.id })
 
       // Small delay so user sees the success state
@@ -271,7 +271,7 @@ function MarketplacePageInner() {
                     <span className="text-xs text-app-muted">
                       1 USDC = {Number(offer.rate_offered) > 0
                         ? (1 / Number(offer.rate_offered)).toFixed(2)
-                        : '—'} {offer.local_currency}
+                        : '-'} {offer.local_currency}
                     </span>
                     <span className="text-xs text-app-muted">·</span>
                     <span className="flex items-center gap-1 text-xs text-app-muted">

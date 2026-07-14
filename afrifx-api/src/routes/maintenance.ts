@@ -1,10 +1,10 @@
 // ============================================================
-// Maintenance mode — admin toggles + a public status endpoint.
+// Maintenance mode admin toggles + a public status endpoint.
 //
-// GET  /maintenance/status   PUBLIC — the app reads this to show banners /
+// GET  /maintenance/status   PUBLIC the app reads this to show banners /
 //                            disable sections. No auth (needed before login).
-// GET  /maintenance          SUPER ADMIN ONLY — full state for the dashboard
-// PUT  /maintenance/:section SUPER ADMIN ONLY — take a section down / up
+// GET  /maintenance          SUPER ADMIN ONLY full state for the dashboard
+// PUT  /maintenance/:section SUPER ADMIN ONLY take a section down / up
 //
 // Maintenance is deliberately NOT a grantable permission: taking the platform
 // offline is too dangerous to delegate. Only the super admin can do it.
@@ -35,7 +35,7 @@ router.get('/status', async (_req, res) => {
       defaultMessage: DEFAULT_MESSAGE,
     })
   } catch (err: any) {
-    // Never let a maintenance lookup break the app — fail open.
+    // Never let a maintenance lookup break the app fail open.
     res.json({ platformDown: false, platform: null, sections: [], defaultMessage: DEFAULT_MESSAGE })
   }
 })

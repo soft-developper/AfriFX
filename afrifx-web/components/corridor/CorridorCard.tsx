@@ -113,7 +113,7 @@ export function CorridorCard() {
     'idle':          '',
     'step1-pending': 'Confirm Step 1 in MetaMask…',
     'step1-waiting': 'Step 1 settling on Arc…',
-    'step1-done':    'Step 1 complete — preparing Step 2…',
+    'step1-done':    'Step 1 complete, preparing Step 2…',
     'step2-pending': 'Confirm Step 2 in MetaMask…',
     'step2-waiting': 'Step 2 settling on Arc…',
     'complete':      'Corridor swap complete!',
@@ -130,7 +130,7 @@ export function CorridorCard() {
         <Badge variant="arc" className="ml-auto">2-step · via USDC</Badge>
       </div>
 
-      {/* USDC balance + Max — the corridor spends USDC from the wallet */}
+      {/* USDC balance + Max the corridor spends USDC from the wallet */}
       {isConnected && (
         <div className="mb-2 flex items-center justify-between text-xs">
           <span className="text-app-muted">Available balance</span>
@@ -155,7 +155,7 @@ export function CorridorCard() {
       {insufficientUsdc && (
         <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-red-900/20 px-3 py-2 text-xs text-red-400">
           <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-          Needs ~{usdcNeeded.toFixed(2)} USDC — you only have {usdcBalance} USDC
+          Needs ~{usdcNeeded.toFixed(2)} USDC, you only have {usdcBalance} USDC
         </div>
       )}
       {!insufficientUsdc && quote && usdcNeeded > 0 && (

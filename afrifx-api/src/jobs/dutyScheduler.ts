@@ -1,5 +1,5 @@
 // ============================================================
-// Duty scheduler — runs every minute and does two jobs:
+// Duty scheduler runs every minute and does two jobs:
 //
 //  1) REMINDER: ~3 minutes before a sub-admin's session opens, email them that
 //     it's their turn to work. Sent once per window (duty_notified_at guards).
@@ -9,7 +9,7 @@
 //     general admin reviews. Sessions never resumed are marked 'missed'.
 //
 // Note: a sub-admin whose window ends mid-dispute keeps that dispute (they can
-// finish it) — the gate only blocks ACCEPTING new ones, which isOnDuty() does.
+// finish it) the gate only blocks ACCEPTING new ones, which isOnDuty() does.
 // ============================================================
 
 import cron from 'node-cron'
@@ -22,7 +22,7 @@ import { getAdminWindow, windowAt, nextWindowStart, _parseRows as parseRows } fr
 const val = (row: any, key: string, i: number) => Array.isArray(row) ? row[i] : row[key]
 
 export function startDutyScheduler() {
-  console.log('[DutyScheduler] ✅ Started — duty reminders + session close, every minute')
+  console.log('[DutyScheduler] ✅ Started, duty reminders + session close, every minute')
   cron.schedule('* * * * *', tick)
   setTimeout(tick, 10_000)
 }
@@ -78,7 +78,7 @@ async function sendUpcomingReminders(now: number) {
              <strong>Ends:</strong> ${endsAt}</p>
           <p>Open your admin dashboard and click <strong>Resume duty</strong> to go
              on duty. You can only accept new disputes while on duty.</p>
-          <p>— AfriFX</p>`,
+          <p>AfriFX</p>`,
       })
       await db.run(sql`
         UPDATE admins SET duty_notified_at = ${now} WHERE id = ${id}`)

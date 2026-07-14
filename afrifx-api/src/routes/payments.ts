@@ -36,7 +36,7 @@ function genRef(): string {
   return `PAY-${date}-${rand}`
 }
 
-// GET /payments?wallet=0x — sent + received
+// GET /payments?wallet=0x sent + received
 router.get('/', async (req, res) => {
   const wallet = (req.query.wallet as string)?.toLowerCase()
   const type   = req.query.type as string // 'sent' | 'received' | undefined
@@ -53,7 +53,7 @@ router.get('/', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /payments — record a payment
+// POST /payments record a payment
 router.post('/', async (req, res) => {
   const {
     senderAddress, recipientAddress, amount,
@@ -142,7 +142,7 @@ router.patch('/:id/settle', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// GET /payments/report?wallet=0x&from=ts&to=ts — settlement report data
+// GET /payments/report?wallet=0x&from=ts&to=ts settlement report data
 router.get('/report', async (req, res) => {
   const wallet  = (req.query.wallet as string)?.toLowerCase()
   const fromTs  = Number(req.query.from ?? 0)

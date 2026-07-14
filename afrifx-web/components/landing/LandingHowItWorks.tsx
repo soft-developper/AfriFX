@@ -7,7 +7,7 @@ const STEPS = [
     n: '01',
     icon: Wallet,
     title: 'Connect or sign in',
-    body: 'Use MetaMask, or sign in with Google or email to get a secure embedded wallet — no seed phrase needed.',
+    body: 'Use MetaMask, or sign in with Google or email to get a secure embedded wallet, no seed phrase needed.',
   },
   {
     n: '02',
@@ -19,7 +19,7 @@ const STEPS = [
     n: '03',
     icon: Send,
     title: 'Send across borders',
-    body: 'Move value to any wallet, pay an invoice, or trade peer-to-peer — every step confirmed on-chain.',
+    body: 'Move value to any wallet, pay an invoice, or trade peer-to-peer, every step confirmed on-chain.',
   },
 ]
 

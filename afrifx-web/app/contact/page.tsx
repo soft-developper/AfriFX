@@ -19,7 +19,7 @@ async function getContact(): Promise<Contact> {
 }
 
 export const metadata = {
-  title: 'Contact — AfriFX',
+  title: 'Contact, AfriFX',
   description: 'Get in touch with the AfriFX team.',
 }
 
@@ -45,7 +45,7 @@ export default async function ContactPage() {
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-12 sm:py-16">
         <h1 className="mb-3 text-3xl font-bold sm:text-4xl">Contact us</h1>
         <p className="mb-10 max-w-2xl text-app-muted">
-          Questions, feedback, or partnership enquiries — we'd love to hear from you.
+          Questions, feedback, or partnership enquiries, we'd love to hear from you.
         </p>
 
         <div className="grid gap-8 lg:grid-cols-2">

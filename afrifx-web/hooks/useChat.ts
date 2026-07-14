@@ -33,7 +33,7 @@ function normalizeMessage(raw: any): ChatMessage {
     ...m,
     read_maker: Number(m.read_maker  ?? 0),
     read_taker: Number(m.read_taker  ?? 0),
-    // Coerce created_at — Turso may return string or float
+    // Coerce created_at Turso may return string or float
     created_at: typeof m.created_at === 'string'
       ? parseInt(m.created_at, 10)
       : Number(m.created_at ?? 0),
@@ -78,7 +78,7 @@ export function useChat(offerId: string | null) {
       }
 
       if (data.role) setRole(data.role)
-    } catch { /* network blip — ignore */ }
+    } catch { /* network blip, ignore */ }
   }, [offerId, address])
 
   const fetchTyping = useCallback(async () => {

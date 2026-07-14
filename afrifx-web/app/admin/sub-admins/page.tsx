@@ -218,7 +218,7 @@ export default function AdminSubAdmins() {
         </div>
       )}
 
-      {/* Working-hour sessions — live status for every sub-admin */}
+      {/* Working-hour sessions live status for every sub-admin */}
       <div className="mb-6">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-sm font-medium text-app-text">Working-hour sessions</h2>

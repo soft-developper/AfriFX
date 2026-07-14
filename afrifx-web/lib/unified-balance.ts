@@ -1,4 +1,4 @@
-// Circle App Kit — Unified Balance (Phase 2+)
+// Circle App Kit Unified Balance (Phase 2+)
 // Enables USDC bridging from Ethereum/Base → Arc in one UX step.
 // Docs: https://docs.arc.io/app-kit/unified-balance
 

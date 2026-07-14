@@ -3,7 +3,7 @@ import { useSectionDown, useMaintenance, MaintenanceGate } from '@/hooks/useMain
 
 /*
   Wrap a feature page. If its section (or the whole platform) is under
-  maintenance, the user sees the maintenance state INSTEAD of the feature —
+  maintenance, the user sees the maintenance state INSTEAD of the feature
   so they can't start something that the API would reject anyway.
 
   Admins aren't gated in the app UI; the API lets them through, and they use

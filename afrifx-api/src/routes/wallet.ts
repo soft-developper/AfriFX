@@ -73,7 +73,7 @@ router.get('/:address', async (req, res) => {
     // ── Rates from memory (always fresh) ─────────────────
     // open.er-api.com returns LOCAL units per 1 USD
     // e.g. NGN/USDC rate = 1372 means 1 USDC = 1372 NGN
-    // NO inversion needed — use rate directly
+    // NO inversion needed use rate directly
     const memRates = getCachedRates()
     const rates: Record<string, number> = {}
     for (const r of memRates) {
@@ -81,7 +81,7 @@ router.get('/:address', async (req, res) => {
     }
 
     // ── Local currency equivalents ────────────────────────
-    // rate is already "local per USDC" — multiply directly
+    // rate is already "local per USDC" multiply directly
     const localEquiv = [
       { currency: 'NGN', flag: '🇳🇬', pair: 'NGN/USDC' },
       { currency: 'GHS', flag: '🇬🇭', pair: 'GHS/USDC' },

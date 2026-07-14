@@ -20,7 +20,7 @@ function redactPayout(offer: any) {
   return clean
 }
 
-// GET /offers — only OPEN offers visible to everyone
+// GET /offers only OPEN offers visible to everyone
 router.get('/', async (req, res) => {
   const currency = req.query.currency as string | undefined
   const type     = req.query.type     as string | undefined
@@ -34,13 +34,13 @@ router.get('/', async (req, res) => {
     )
     const offers = Array.isArray((rows as any).rows)
       ? (rows as any).rows : Array.isArray(rows) ? rows : []
-    // Never expose payout details on the PUBLIC list — only the accepted
+    // Never expose payout details on the PUBLIC list only the accepted
     // taker (and the maker) should see them, via GET /offers/:id.
     res.json(offers.map(redactPayout))
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// GET /offers/my?wallet=0x… — maker + taker see ALL their offers
+// GET /offers/my?wallet=0x… maker + taker see ALL their offers
 router.get('/my', async (req, res) => {
   const wallet = (req.query.wallet as string)?.toLowerCase()
   if (!wallet) return res.status(400).json({ error: 'wallet required' })
@@ -57,7 +57,7 @@ router.get('/my', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// GET /offers/:id?wallet=0x… — payout details returned ONLY to the maker
+// GET /offers/:id?wallet=0x… payout details returned ONLY to the maker
 // or the accepted taker; redacted for anyone else.
 router.get('/:id', async (req, res) => {
   const requester = (req.query.wallet as string | undefined)?.toLowerCase()
@@ -78,7 +78,7 @@ router.get('/:id', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /offers — create new offer
+// POST /offers create new offer
 router.post('/', async (req, res) => {
   const {
     id, makerAddress, usdcAmount, localCurrency, localAmount,
@@ -142,7 +142,7 @@ router.patch('/:id', async (req, res) => {
     // Fetch offer data for email notification
     const _offerRows = await db.run(sql`SELECT * FROM p2p_offers WHERE id = ${req.params.id} LIMIT 1`)
     const _offerData = Array.isArray((_offerRows as any).rows) ? (_offerRows as any).rows[0] : (_offerRows as any)[0]
-    // Fire the "trade accepted" email ONLY on the actual accept transition —
+    // Fire the "trade accepted" email ONLY on the actual accept transition
     // i.e. when the taker accepts (status -> 'accepted' with a takerAddress).
     // Other PATCHes (takerConfirmed / makerConfirmed / release, etc.) hit this
     // same endpoint and must NOT re-trigger the email (that caused duplicate
@@ -210,7 +210,7 @@ router.get('/:id/dispute', async (req, res) => {
 })
 
 
-// PATCH /offers/:id/accept — called by taker after tx confirms
+// PATCH /offers/:id/accept called by taker after tx confirms
 // Forces DB update so detail page loads correctly
 router.patch('/:id/accept', async (req, res) => {
   const { takerAddress, timerSeconds = 1800 } = req.body

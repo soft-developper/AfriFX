@@ -8,7 +8,7 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
 
-  // Avoid hydration mismatch — render a neutral placeholder until mounted
+  // Avoid hydration mismatch render a neutral placeholder until mounted
   if (!mounted) {
     return <div className={`h-9 w-9 rounded-lg bg-app-border/50 ${className}`} />
   }

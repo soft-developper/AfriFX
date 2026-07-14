@@ -46,7 +46,7 @@ router.get('/rules', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /treasury/rules — create rule
+// POST /treasury/rules create rule
 router.post('/rules', async (req, res) => {
   const {
     walletAddress, name,
@@ -76,7 +76,7 @@ router.post('/rules', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// PATCH /treasury/rules/:id — toggle status / update
+// PATCH /treasury/rules/:id toggle status / update
 router.patch('/rules/:id', async (req, res) => {
   const { status, lastTriggered } = req.body
   const now = Math.floor(Date.now() / 1000)

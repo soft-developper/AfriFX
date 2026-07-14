@@ -1,9 +1,9 @@
 -- ============================================================
--- Maintenance mode — take the platform, or one section of it, offline
+-- Maintenance mode take the platform, or one section of it, offline
 -- from the admin dashboard. No code change, no redeploy.
 --
 -- Run EACH statement individually (a "table already exists" or "duplicate
--- column" error is harmless — just move to the next):
+-- column" error is harmless just move to the next):
 --
 --   turso db shell <db> "CREATE TABLE IF NOT EXISTS maintenance_state (...);"
 --

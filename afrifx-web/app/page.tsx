@@ -7,9 +7,9 @@ import { LandingHowItWorks } from '@/components/landing/LandingHowItWorks'
 import { ShieldCheck, Zap, Coins } from 'lucide-react'
 
 export const metadata = {
-  title: 'AfriFX — Stablecoin FX & cross-border payments on Arc',
+  title: 'AfriFX, Stablecoin FX & cross-border payments on Arc',
   description:
-    'Convert between USDC and African currencies, send across borders, and trade peer-to-peer — settled on the Arc blockchain in under a second.',
+    'Convert between USDC and African currencies, send across borders, and trade peer-to-peer, settled on the Arc blockchain in under a second.',
 }
 
 export default function LandingPage() {
@@ -66,7 +66,7 @@ function Hero() {
 
         <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-app-muted sm:text-lg">
           AfriFX is a decentralized FX and cross-border payments platform. Convert between USDC
-          and African currencies, send across borders, and trade peer-to-peer — all on the Arc
+          and African currencies, send across borders, and trade peer-to-peer, all on the Arc
           blockchain, with fees paid in USDC.
         </p>
 

@@ -25,7 +25,7 @@ export function UserDisplay({
   const { data: profile, isLoading } = useProfileByAddress(address)
 
   if (!address) {
-    return <span className="text-xs text-app-muted">{fallback ?? '—'}</span>
+    return <span className="text-xs text-app-muted">{fallback ?? '-'}</span>
   }
 
   if (isLoading) {

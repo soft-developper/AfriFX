@@ -4,7 +4,7 @@
 -- Run:  turso db shell <your-db-name> < afrifx-api/p2p-bank-details-schema.sql
 --
 -- SQLite/libSQL has no "ADD COLUMN IF NOT EXISTS", so if a column already
--- exists the statement errors harmlessly — run them individually if needed.
+-- exists the statement errors harmlessly run them individually if needed.
 
 ALTER TABLE p2p_offers ADD COLUMN payment_method   TEXT DEFAULT 'bank';   -- 'bank' | 'mobile_money'
 ALTER TABLE p2p_offers ADD COLUMN account_name     TEXT;                  -- account holder / recipient name

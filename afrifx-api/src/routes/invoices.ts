@@ -31,7 +31,7 @@ function genRef(prefix: string): string {
   return `${prefix}-${date}-${rand}`
 }
 
-// GET /invoices?wallet=0x — invoices created by or addressed to wallet
+// GET /invoices?wallet=0x invoices created by or addressed to wallet
 router.get('/', async (req, res) => {
   const wallet = (req.query.wallet as string)?.toLowerCase()
   if (!wallet) return res.status(400).json({ error: 'wallet required' })
@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// GET /invoices/ref/:ref — by memo ref (for payment page)
+// GET /invoices/ref/:ref by memo ref (for payment page)
 router.get('/ref/:ref', async (req, res) => {
   try {
     const rows = await db.run(
@@ -70,7 +70,7 @@ router.get('/:id', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /invoices — create invoice
+// POST /invoices create invoice
 router.post('/', async (req, res) => {
   const { walletAddress, amount, currency = 'USDC', description, notes, dueDate, payerAddress } = req.body
   if (!walletAddress || !amount) return res.status(400).json({ error: 'walletAddress and amount required' })
@@ -95,7 +95,7 @@ router.post('/', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// PATCH /invoices/:id/status — update status (send, pay, cancel)
+// PATCH /invoices/:id/status update status (send, pay, cancel)
 router.patch('/:id/status', async (req, res) => {
   const { status, paymentTxHash, paidAt } = req.body
   const now = Math.floor(Date.now() / 1000)
@@ -112,7 +112,7 @@ router.patch('/:id/status', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// PATCH /invoices/ref/:ref/pay — mark paid or failed by memo ref
+// PATCH /invoices/ref/:ref/pay mark paid or failed by memo ref
 // Called by frontend after on-chain confirmation with receipt.status
 router.patch('/ref/:ref/pay', async (req, res) => {
   const { txHash, payerAddress, status: txStatus, usdcAmount } = req.body
@@ -164,7 +164,7 @@ router.patch('/ref/:ref/pay', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// DELETE /invoices/:id — cancel/delete draft
+// DELETE /invoices/:id cancel/delete draft
 router.delete('/:id', async (req, res) => {
   try {
     await db.run(

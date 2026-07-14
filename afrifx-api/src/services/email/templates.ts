@@ -1,4 +1,4 @@
-// AfriFX email templates — branded, mobile-responsive
+// AfriFX email templates branded, mobile-responsive
 // Designed to render correctly in Gmail, Yahoo, Outlook
 
 const BRAND_COLOR     = '#378ADD'
@@ -51,7 +51,7 @@ ${options.previewText ? `<div style="display:none;font-size:1px;line-height:1px;
         <!-- Footer -->
         <tr>
           <td style="padding-top:24px;text-align:center;color:${TEXT_SECONDARY};font-size:12px;line-height:1.6;">
-            <p style="margin:0 0 8px;">AfriFX — Stablecoin-powered cross-border payments on Arc</p>
+            <p style="margin:0 0 8px;">AfriFX, Stablecoin-powered cross-border payments on Arc</p>
             <p style="margin:0;">
               <a href="${APP_URL}" style="color:${BRAND_COLOR};">afrifx.xyz</a> ·
               <a href="${APP_URL}/profile" style="color:${TEXT_SECONDARY};">Notification settings</a>
@@ -152,7 +152,7 @@ export function tradeCompletedEmail(params: {
   txHash:        string
 }) {
   const isMaker = params.recipientRole === 'maker'
-  const subject = '✅ Trade completed — funds released'
+  const subject = '✅ Trade completed, funds released'
   const previewText = `Your trade with ${params.counterpartName} is complete.`
 
   const content = `
@@ -200,7 +200,7 @@ export function disputeRaisedEmail(params: {
   disputeId:      string
 }) {
   const subject     = `⚠️ Dispute raised on your trade by ${params.raisedByName}`
-  const previewText = `Action required — review the dispute and respond.`
+  const previewText = `Action required, review the dispute and respond.`
 
   const disputeReason = params.disputeType === 'maker_silent'
     ? 'claims you did not confirm receiving payment within the agreed window'
@@ -224,7 +224,7 @@ export function disputeRaisedEmail(params: {
       <strong>What happens next:</strong><br>
       1. An admin will accept the dispute and become the assigned judge<br>
       2. You'll be able to chat privately with the admin<br>
-      3. Upload your bank statement when requested — it stays admin-only<br>
+      3. Upload your bank statement when requested, it stays admin-only<br>
       4. The admin reviews evidence and resolves the dispute on-chain
     </td>
   </tr>
@@ -264,7 +264,7 @@ export function invoicePaidEmail(params: {
   Hi ${params.creatorName},
 </p>
 <p style="margin:0 0 16px;color:${TEXT_SECONDARY};font-size:14px;line-height:1.6;">
-  Good news — your invoice <strong style="color:${TEXT_PRIMARY};">${params.invoiceRef}</strong> just got paid in USDC.
+  Good news, your invoice <strong style="color:${TEXT_PRIMARY};">${params.invoiceRef}</strong> just got paid in USDC.
   The funds have settled to your wallet.
 </p>
 
@@ -319,7 +319,7 @@ ${preview ? `<div style="display:none;font-size:1px;line-height:1px;max-height:0
 ${content}
 </td></tr>
 <tr><td style="padding-top:24px;text-align:center;color:${TEXT_SEC};font-size:12px;line-height:1.6;">
-<p style="margin:0 0 8px;">AfriFX — Stablecoin-powered cross-border payments on Arc</p>
+<p style="margin:0 0 8px;">AfriFX, Stablecoin-powered cross-border payments on Arc</p>
 <p style="margin:0;">
 <a href="${APP_URL_2}" style="color:${BRAND_2};">afrifx.xyz</a> ·
 <a href="${APP_URL_2}/profile" style="color:${TEXT_SEC};">Notification settings</a>
@@ -394,7 +394,7 @@ export function adminDisputeAlertEmail(params: {
   localCcy:       string
   disputeId:      string
 }) {
-  const subject = `⚠️ New dispute needs review — ${params.usdcAmount} USDC`
+  const subject = `⚠️ New dispute needs review, ${params.usdcAmount} USDC`
   const preview = `${params.raisedByName} raised a dispute. Claim it to become the judge.`
 
   const disputeReason = params.disputeType === 'maker_silent'
@@ -444,7 +444,7 @@ An admin is on your case
 Hi ${params.recipientName},
 </p>
 <p style="margin:0 0 16px;color:${TEXT_SEC};font-size:14px;line-height:1.6;">
-Good news — <strong style="color:${TEXT_PRI};">Admin ${params.adminName}</strong> has accepted your dispute and will be handling the review.
+Good news, <strong style="color:${TEXT_PRI};">Admin ${params.adminName}</strong> has accepted your dispute and will be handling the review.
 </p>
 
 <div style="background:${BG_2};border:1px solid ${BORDER_2};border-radius:10px;padding:16px;margin:20px 0;">
@@ -506,7 +506,7 @@ export function invoiceReminderEmail(params: {
   createdAt:    number
 }) {
   const subject = `Invoice ${params.invoiceRef} is still unpaid`
-  const preview = `${params.amount.toLocaleString()} ${params.currency} pending — consider a reminder.`
+  const preview = `${params.amount.toLocaleString()} ${params.currency} pending, consider a reminder.`
 
   const daysAgo = Math.floor((Date.now() / 1000 - params.createdAt) / 86400)
 
@@ -531,7 +531,7 @@ ${card2([
 ${btn2('View invoice', `${APP_URL_2}/invoices/${params.invoiceId}`)}
 
 <p style="margin:16px 0 0;color:${TEXT_SEC};font-size:12px;line-height:1.5;">
-You can copy the payment link from the invoice page and share it with your payer again. This reminder is sent once — future updates come from the platform when the invoice is paid.
+You can copy the payment link from the invoice page and share it with your payer again. This reminder is sent once, future updates come from the platform when the invoice is paid.
 </p>`
 
   return { subject, html: base2(content, preview), previewText: preview }
@@ -546,7 +546,7 @@ export function tradeAutoCancelledEmail(params: {
   offerId:         string
 }) {
   const isMaker = params.recipientRole === 'maker'
-  const subject = 'Trade auto-cancelled — USDC returned'
+  const subject = 'Trade auto-cancelled, USDC returned'
   const preview = isMaker
     ? `Your offer expired. ${params.usdcAmount} USDC has been returned to your wallet.`
     : 'The offer you accepted expired because payment was not confirmed in time.'
@@ -611,7 +611,7 @@ ${preview ? `<div style="display:none;font-size:1px;line-height:1px;max-height:0
 ${content}
 </td></tr>
 <tr><td style="padding-top:24px;text-align:center;color:${TS3};font-size:12px;line-height:1.6;">
-<p style="margin:0 0 8px;">AfriFX — Stablecoin-powered cross-border payments on Arc</p>
+<p style="margin:0 0 8px;">AfriFX, Stablecoin-powered cross-border payments on Arc</p>
 <p style="margin:0;"><a href="${APP3}" style="color:${BRAND_3};">afrifx.xyz</a> · <a href="${APP3}/profile" style="color:${TS3};">Notification settings</a></p>
 </td></tr></table></td></tr></table>
 </body></html>`.trim()
@@ -711,7 +711,7 @@ export function adminAuditSummaryEmail(params: {
 
   const content = `
 <h1 style="margin:0 0 12px;color:${TP};font-size:22px;font-weight:600;">Weekly audit summary</h1>
-<p style="margin:0 0 4px;color:${TS3};font-size:13px;">${params.periodStart} — ${params.periodEnd}</p>
+<p style="margin:0 0 4px;color:${TS3};font-size:13px;">${params.periodStart}, ${params.periodEnd}</p>
 <p style="margin:0 0 20px;color:${TS3};font-size:14px;">Hi ${params.adminName}, here is what happened on AfriFX this past week.</p>
 
 <!-- Key metrics -->

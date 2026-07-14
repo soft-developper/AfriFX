@@ -15,7 +15,7 @@ async function getSections(): Promise<Section[]> {
 }
 
 export const metadata = {
-  title: 'About — AfriFX',
+  title: 'About, AfriFX',
   description: 'Learn about AfriFX, decentralized stablecoin FX and cross-border payments on Arc.',
 }
 

@@ -134,7 +134,7 @@ export default function AdminLoginPage() {
             <div className="space-y-3">
               <div className="text-center mb-2">
                 <p className="text-sm font-medium text-app-text">First-time setup</p>
-                <p className="text-xs text-app-muted">No admin account exists yet — create the super admin</p>
+                <p className="text-xs text-app-muted">No admin account exists yet, create the super admin</p>
               </div>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" />
@@ -253,7 +253,7 @@ export default function AdminLoginPage() {
             </div>
           )}
         </div>
-        <p className="mt-4 text-center text-xs text-app-muted">🔒 Restricted area — all actions are logged</p>
+        <p className="mt-4 text-center text-xs text-app-muted">🔒 Restricted area, all actions are logged</p>
       </div>
     </div>
   )

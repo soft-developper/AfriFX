@@ -8,10 +8,10 @@ import { uploadBuffer } from '../lib/cloudinary'
 
 const router = Router()
 
-// Multer — hold the file in memory, then stream it to Cloudinary.
+// Multer hold the file in memory, then stream it to Cloudinary.
 // PDF ONLY: dispute evidence must be a bank-issued PDF (receipt / statement).
 // Images are rejected because they're trivially edited and can't be trusted as
-// proof of payment or of an account balance. This is the authoritative check —
+// proof of payment or of an account balance. This is the authoritative check
 // the client also validates, but that alone is bypassable.
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -33,7 +33,7 @@ function parseRows(r: any): any[] {
   return []
 }
 
-// GET /disputes?wallet=0x — disputes involving a wallet
+// GET /disputes?wallet=0x disputes involving a wallet
 router.get('/', async (req, res) => {
   const wallet = (req.query.wallet as string)?.toLowerCase()
   if (!wallet) return res.status(400).json({ error: 'wallet required' })
@@ -51,7 +51,7 @@ router.get('/', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// GET /disputes/offer/:offerId — dispute for a specific offer
+// GET /disputes/offer/:offerId dispute for a specific offer
 router.get('/offer/:offerId', async (req, res) => {
   try {
     const rows = await db.run(sql`
@@ -62,7 +62,7 @@ router.get('/offer/:offerId', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /disputes — raise a dispute
+// POST /disputes raise a dispute
 // dispute_type: 'maker_not_received' | 'maker_silent'
 // raised_by_role: 'maker' | 'taker'
 router.post('/', async (req, res) => {
@@ -78,7 +78,7 @@ router.post('/', async (req, res) => {
 
   const now = Math.floor(Date.now() / 1000)
   // Auto-release 24h from now if dispute is maker_silent
-  const autoReleaseAt = null // No auto-release when dispute raised — admin must resolve
+  const autoReleaseAt = null // No auto-release when dispute raised, admin must resolve
 
   try {
     // Check offer exists and is in accepted state
@@ -168,7 +168,7 @@ router.post('/', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// GET /disputes/admin/all — admin: all disputes with offer details
+// GET /disputes/admin/all admin: all disputes with offer details
 router.get('/admin/all', async (req, res) => {
   const status = req.query.status as string
   try {
@@ -186,7 +186,7 @@ router.get('/admin/all', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// PATCH /disputes/:id/resolve — admin resolves dispute
+// PATCH /disputes/:id/resolve admin resolves dispute
 // resolution: 'release_to_taker' | 'refund_maker' | 'escalate'
 router.patch('/:id/resolve', async (req, res) => {
   const { resolution, resolvedBy, notes } = req.body
@@ -252,7 +252,7 @@ export default router
 
 // ── Dispute Assignment ─────────────────────────────────────
 
-// POST /disputes/:id/accept — admin accepts to handle dispute
+// POST /disputes/:id/accept admin accepts to handle dispute
 // GATED: only a sub-admin who is ON DUTY (inside their scheduled working hours
 // AND has clicked "resume duty") may accept. Super admins bypass the gate.
 router.post('/:id/accept', async (req, res) => {
@@ -322,7 +322,7 @@ router.post('/:id/accept', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// GET /disputes/:id/assignment — get assigned admin for a dispute
+// GET /disputes/:id/assignment get assigned admin for a dispute
 router.get('/:id/assignment', async (req, res) => {
   try {
     const rows = await db.run(sql`
@@ -350,7 +350,7 @@ router.get('/:id/messages', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /disputes/:id/messages — send a message
+// POST /disputes/:id/messages send a message
 router.post('/:id/messages', async (req, res) => {
   const { senderId, senderType, senderName, content, adminOnly = 0 } = req.body
   if (!senderId || !senderType || !content) {
@@ -396,7 +396,7 @@ router.post('/:id/messages', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /disputes/:id/messages/document — upload a supporting document
+// POST /disputes/:id/messages/document upload a supporting document
 // Accepts multipart form-data (field name "file"), stores it on Cloudinary,
 // and records the resulting URL as an admin-only dispute message.
 router.post('/:id/messages/document', (req, res, next) => {
@@ -449,7 +449,7 @@ router.post('/:id/messages/document', (req, res, next) => {
   }
 })
 
-// GET /disputes/:id/archive — full archived dispute for super-admin audit
+// GET /disputes/:id/archive full archived dispute for super-admin audit
 router.get('/:id/archive', async (req, res) => {
   try {
     const [disputeRows, msgRows, assignRows] = await Promise.all([

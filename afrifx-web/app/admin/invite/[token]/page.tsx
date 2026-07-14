@@ -50,7 +50,7 @@ export default function AcceptInvitePage() {
           {done ? (
             <div className="flex flex-col items-center gap-2 py-4 text-center">
               <CheckCircle className="h-8 w-8 text-emerald-400" />
-              <p className="text-sm text-app-text">Account created — redirecting…</p>
+              <p className="text-sm text-app-text">Account created, redirecting…</p>
             </div>
           ) : (
             <div className="space-y-3">

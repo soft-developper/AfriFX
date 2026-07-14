@@ -1,9 +1,9 @@
 -- ============================================================
--- Admin broadcasts — mass / targeted email from the general admin
+-- Admin broadcasts mass / targeted email from the general admin
 --
 -- Two things:
 --   1) A broadcast opt-out on profiles. Users opted into TRANSACTIONAL alerts
---      (trades / disputes / invoices) — a general broadcast is a different
+--      (trades / disputes / invoices) a general broadcast is a different
 --      category, so they get an explicit opt-out which we always honour.
 --      Defaults to 1 (opted in) so existing users still receive announcements,
 --      but every broadcast email carries an unsubscribe link.

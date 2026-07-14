@@ -30,7 +30,7 @@ export function useMaintenance() {
     queryFn:  fetchStatus,
     refetchInterval: 30_000,
     staleTime: 15_000,
-    // Fail open — if this check errors, don't lock people out of the app.
+    // Fail open if this check errors, don't lock people out of the app.
     retry: 1,
   })
 }
@@ -69,7 +69,7 @@ export function MaintenanceGate({
           </p>
         )}
         <p className="mt-4 border-t border-amber-500/20 pt-3 text-xs text-app-muted">
-          Trades already in progress are unaffected — you can still confirm,
+          Trades already in progress are unaffected, you can still confirm,
           cancel, and message on them.
         </p>
       </div>

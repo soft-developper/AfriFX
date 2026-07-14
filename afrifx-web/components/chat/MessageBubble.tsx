@@ -18,7 +18,7 @@ interface Props {
 
 function formatTime(createdAt: number | string | null | undefined): string {
   if (!createdAt) return ''
-  // Turso may return string — coerce to number
+  // Turso may return string coerce to number
   const ts = typeof createdAt === 'string' ? parseInt(createdAt, 10) : Number(createdAt)
   if (isNaN(ts) || ts === 0) return ''
   // Unix seconds → milliseconds
@@ -61,7 +61,7 @@ export function MessageBubble({ msg, isMe, senderName }: Props) {
     <div className={`flex ${isMe ? 'justify-end' : 'justify-start'} group py-0.5`}>
       <div className={`max-w-[75%] flex flex-col gap-0.5 ${isMe ? 'items-end' : 'items-start'}`}>
 
-        {/* Sender name — only for received messages */}
+        {/* Sender name only for received messages */}
         {!isMe && (
           <span className="px-1 text-[10px] font-medium text-app-muted">{senderName}</span>
         )}

@@ -74,7 +74,7 @@ export function ProfileSetupClient() {
 
       // ── KEY FIX: write profile directly into cache ──────────
       // This means ProfileGuard sees the profile IMMEDIATELY
-      // when the router navigates — no refetch race condition.
+      // when the router navigates no refetch race condition.
       const now = Math.floor(Date.now() / 1000)
       queryClient.setQueryData(['profile', address], {
         wallet_address:  address.toLowerCase(),
@@ -211,7 +211,7 @@ export function ProfileSetupClient() {
 
               <Button className="w-full" size="lg" onClick={() => setStep(2)}
                 disabled={usernameState !== 'available' || !displayName.trim()}>
-                Next — Add socials
+                Next, Add socials
               </Button>
             </div>
           )}

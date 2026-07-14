@@ -22,7 +22,7 @@ function parseRows(r: any): any[] {
 router.use(requireAdmin)
 
 // ══════════════════════════════════════════════════════════
-// PERMISSIONS META — for building UI
+// PERMISSIONS META for building UI
 // ══════════════════════════════════════════════════════════
 router.get('/permissions', (_req, res) => {
   res.json({
@@ -55,7 +55,7 @@ router.get('/overview', requirePermission(PERMISSIONS.VIEW_DASHBOARD), async (_r
       return rate && rate > 0 ? amount / rate : 0
     }
 
-    // USD value of a transaction — always use the USDC side if present
+    // USD value of a transaction always use the USDC side if present
     function txUSD(fromCcy: string, toCcy: string, fromAmt: number, toAmt: number): number {
       if (toCcy   === 'USDC') return toAmt
       if (fromCcy === 'USDC') return fromAmt
@@ -116,7 +116,7 @@ router.get('/overview', requirePermission(PERMISSIONS.VIEW_DASHBOARD), async (_r
     const nur = parseRows(newUserRows)
     const newUsersWeek = Number(nur[0]?.cnt ?? nur[0]?.[0] ?? 0)
 
-    // Volume chart (last 14 days) — correct day alignment, USD values
+    // Volume chart (last 14 days) correct day alignment, USD values
     const recentTxRows = await db.run(
       sql`SELECT from_currency, to_currency, from_amount, to_amount, created_at
           FROM transactions WHERE created_at > ${now - day * 14}`
@@ -172,7 +172,7 @@ router.get('/overview', requirePermission(PERMISSIONS.VIEW_DASHBOARD), async (_r
 // SUB-ADMIN MANAGEMENT
 // ══════════════════════════════════════════════════════════
 
-// GET /admin/manage/admins — list all admins
+// GET /admin/manage/admins list all admins
 router.get('/admins', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (_req, res) => {
   try {
     const rows = await db.run(
@@ -191,7 +191,7 @@ router.get('/admins', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (_req,
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /admin/manage/admins — create sub-admin
+// POST /admin/manage/admins create sub-admin
 router.post('/admins', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (req, res) => {
   const admin = (req as any).admin
   const {
@@ -206,7 +206,7 @@ router.post('/admins', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (req,
     return res.status(400).json({ error: 'Password must be at least 8 characters' })
   }
 
-  // Working hours (the sub-admin's dispute duty session). Optional at invite —
+  // Working hours (the sub-admin's dispute duty session). Optional at invite
   // if any duty field is supplied, the whole window must be valid (max 6h).
   const wantsDuty = dutyStartMin != null || dutyEndMin != null ||
                     (dutyDays?.length) || (dutyDates?.length)
@@ -260,7 +260,7 @@ router.post('/admins', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (req,
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// PATCH /admin/manage/admins/:id — update permissions / status
+// PATCH /admin/manage/admins/:id update permissions / status
 router.patch('/admins/:id', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (req, res) => {
   const admin = (req as any).admin
   const { permissions, status, suspendedUntil, walletAddress } = req.body
@@ -304,7 +304,7 @@ router.patch('/admins/:id', requirePermission(PERMISSIONS.MANAGE_ADMINS), async 
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// DELETE /admin/manage/admins/:id — remove sub-admin
+// DELETE /admin/manage/admins/:id remove sub-admin
 router.delete('/admins/:id', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (req, res) => {
   const admin = (req as any).admin
   try {
@@ -327,7 +327,7 @@ router.delete('/admins/:id', requirePermission(PERMISSIONS.MANAGE_ADMINS), async
 // USER LOGIN DATA MANAGEMENT (admins can reset passwords etc.)
 // ══════════════════════════════════════════════════════════
 
-// PATCH /admin/manage/admins/:id/credentials — change username/email/password
+// PATCH /admin/manage/admins/:id/credentials change username/email/password
 router.patch('/admins/:id/credentials', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (req, res) => {
   const admin = (req as any).admin
   const { username, email, newPassword } = req.body
@@ -371,7 +371,7 @@ router.patch('/admins/:id/credentials', requirePermission(PERMISSIONS.MANAGE_ADM
 // OFFERS MANAGEMENT
 // ══════════════════════════════════════════════════════════
 
-// GET /admin/manage/offers — all offers with filters
+// GET /admin/manage/offers all offers with filters
 router.get('/offers', requirePermission(PERMISSIONS.MANAGE_OFFERS), async (req, res) => {
   const status = req.query.status as string
   try {
@@ -382,7 +382,7 @@ router.get('/offers', requirePermission(PERMISSIONS.MANAGE_OFFERS), async (req, 
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /admin/manage/offers/:id/release — force release to taker
+// POST /admin/manage/offers/:id/release force release to taker
 router.post('/offers/:id/release', requirePermission(PERMISSIONS.MANAGE_OFFERS), async (req, res) => {
   const admin = (req as any).admin
   const offerId = req.params.id as `0x${string}`
@@ -394,12 +394,12 @@ router.post('/offers/:id/release', requirePermission(PERMISSIONS.MANAGE_OFFERS),
     )
     await db.run(sql`DELETE FROM messages WHERE offer_id = ${offerId}`).catch(() => {})
     await logAction(admin.id, admin.username, 'force_release_offer', 'offer', offerId,
-      `Force released offer — tx ${hash.slice(0,14)}`, req.ip)
+      `Force released offer, tx ${hash.slice(0,14)}`, req.ip)
     res.json({ success: true, txHash: hash })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /admin/manage/offers/:id/cancel — force cancel, refund maker
+// POST /admin/manage/offers/:id/cancel force cancel, refund maker
 router.post('/offers/:id/cancel', requirePermission(PERMISSIONS.MANAGE_OFFERS), async (req, res) => {
   const admin = (req as any).admin
   const offerId = req.params.id as `0x${string}`
@@ -412,7 +412,7 @@ router.post('/offers/:id/cancel', requirePermission(PERMISSIONS.MANAGE_OFFERS), 
     )
     await db.run(sql`DELETE FROM messages WHERE offer_id = ${offerId}`).catch(() => {})
     await logAction(admin.id, admin.username, 'force_cancel_offer', 'offer', offerId,
-      `Force cancelled offer: ${reason ?? 'no reason'} — tx ${hash.slice(0,14)}`, req.ip)
+      `Force cancelled offer: ${reason ?? 'no reason'}, tx ${hash.slice(0,14)}`, req.ip)
     res.json({ success: true, txHash: hash })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
@@ -437,7 +437,7 @@ router.get('/disputes', requirePermission(PERMISSIONS.RESOLVE_DISPUTES), async (
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /admin/manage/disputes/:id/resolve — release to taker OR refund maker
+// POST /admin/manage/disputes/:id/resolve release to taker OR refund maker
 router.post('/disputes/:id/resolve', requirePermission(PERMISSIONS.RESOLVE_DISPUTES), async (req, res) => {
   const admin = (req as any).admin
   const { resolution, offerId, reason } = req.body // resolution: 'release' | 'refund'
@@ -454,7 +454,7 @@ router.post('/disputes/:id/resolve', requirePermission(PERMISSIONS.RESOLVE_DISPU
       hash = await releasePlatform(offerId as `0x${string}`)
       await db.run(sql`UPDATE p2p_offers SET status = 'released', release_tx_hash = ${hash}, updated_at = ${now} WHERE id = ${offerId}`)
     } else {
-      hash = await cancelPlatform(offerId as `0x${string}`, reason ?? 'Dispute resolved — refund')
+      hash = await cancelPlatform(offerId as `0x${string}`, reason ?? 'Dispute resolved, refund')
       await db.run(sql`UPDATE p2p_offers SET status = 'cancelled', updated_at = ${now} WHERE id = ${offerId}`)
     }
 
@@ -464,7 +464,7 @@ router.post('/disputes/:id/resolve', requirePermission(PERMISSIONS.RESOLVE_DISPU
     await db.run(sql`DELETE FROM messages WHERE offer_id = ${offerId}`).catch(() => {})
 
     await logAction(admin.id, admin.username, 'resolve_dispute', 'dispute', req.params.id,
-      `Resolved dispute via ${resolution} — tx ${hash.slice(0,14)}. Reason: ${reason ?? 'none'}`, req.ip)
+      `Resolved dispute via ${resolution}, tx ${hash.slice(0,14)}. Reason: ${reason ?? 'none'}`, req.ip)
 
     res.json({ success: true, txHash: hash, resolution })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
@@ -474,7 +474,7 @@ router.post('/disputes/:id/resolve', requirePermission(PERMISSIONS.RESOLVE_DISPU
 // USER MANAGEMENT
 // ══════════════════════════════════════════════════════════
 
-// GET /admin/manage/users — search/list users
+// GET /admin/manage/users search/list users
 router.get('/users', requirePermission(PERMISSIONS.MANAGE_USERS), async (req, res) => {
   const search = (req.query.search as string)?.toLowerCase()
   try {
@@ -516,7 +516,7 @@ router.post('/users/:address/suspend', requirePermission(PERMISSIONS.SUSPEND_USE
     await db.run(
       sql`UPDATE profiles SET suspended = 1, suspended_until = ${until ?? null}, suspend_reason = ${reason ?? null} WHERE LOWER(wallet_address) = ${addr}`
     ).catch(async () => {
-      // Column might not exist yet — add it
+      // Column might not exist yet add it
       await db.run(sql`ALTER TABLE profiles ADD COLUMN suspended INTEGER DEFAULT 0`).catch(() => {})
       await db.run(sql`ALTER TABLE profiles ADD COLUMN suspended_until INTEGER`).catch(() => {})
       await db.run(sql`ALTER TABLE profiles ADD COLUMN suspend_reason TEXT`).catch(() => {})
@@ -546,7 +546,7 @@ router.post('/users/:address/unsuspend', requirePermission(PERMISSIONS.SUSPEND_U
 // DISPUTE DUTY SESSIONS
 // ══════════════════════════════════════════════════════════
 
-// GET /duty/status — the calling admin's current duty state (for their dashboard)
+// GET /duty/status the calling admin's current duty state (for their dashboard)
 router.get('/duty/status', async (req: any, res) => {
   try {
     const { dutyStatus, getAdminWindow } = await import('../lib/duty')
@@ -566,7 +566,7 @@ router.get('/duty/status', async (req: any, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /duty/resume — sub-admin clicks "resume duty" to go on duty
+// POST /duty/resume sub-admin clicks "resume duty" to go on duty
 router.post('/duty/resume', async (req: any, res) => {
   try {
     const { resumeDuty } = await import('../lib/duty')
@@ -580,7 +580,7 @@ router.post('/duty/resume', async (req: any, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// GET /duty/sessions — session logs for the general admin to review.
+// GET /duty/sessions session logs for the general admin to review.
 // Most recent first; optionally filter by ?admin=<id>.
 router.get('/duty/sessions', requirePermission(PERMISSIONS.VIEW_AUDIT_LOG), async (req, res) => {
   const adminFilter = req.query.admin as string | undefined
@@ -594,7 +594,7 @@ router.get('/duty/sessions', requirePermission(PERMISSIONS.VIEW_AUDIT_LOG), asyn
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// GET /duty/overview — every sub-admin's schedule + LIVE status, for the
+// GET /duty/overview every sub-admin's schedule + LIVE status, for the
 // general admin's sub-admins page. Returns enough for the UI to render a
 // ticking countdown without re-deriving the schedule itself.
 router.get('/duty/overview', requirePermission(PERMISSIONS.MANAGE_ADMINS), async (_req, res) => {
@@ -645,7 +645,7 @@ router.get('/duty/overview', requirePermission(PERMISSIONS.MANAGE_ADMINS), async
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// PATCH /admins/:id/duty — set, change, or CLEAR a sub-admin's working hours.
+// PATCH /admins/:id/duty set, change, or CLEAR a sub-admin's working hours.
 // Send { clear: true } to remove their hours (they can then no longer accept
 // disputes). Otherwise send the window; it's validated (max 6h) as at invite.
 // The sub-admin is emailed whenever their hours change.
@@ -690,7 +690,7 @@ router.patch('/admins/:id/duty', requirePermission(PERMISSIONS.MANAGE_ADMINS), a
                <p>Your dispute duty hours have been removed by an administrator.
                   You will not be able to accept new disputes until hours are
                   assigned again.</p>
-               <p>— AfriFX</p>`,
+               <p>AfriFX</p>`,
       }).catch((e: any) => console.error('[Duty] email failed:', e?.message))
 
       return res.json({ success: true, cleared: true })
@@ -726,7 +726,7 @@ router.patch('/admins/:id/duty', requirePermission(PERMISSIONS.MANAGE_ADMINS), a
              <p>You'll get a reminder shortly before each session begins. Remember to
                 click <strong>Resume duty</strong> on your dashboard to start accepting
                 disputes.</p>
-             <p>— AfriFX</p>`,
+             <p>AfriFX</p>`,
     }).catch((e: any) => console.error('[Duty] email failed:', e?.message))
 
     res.json({ success: true, schedule: text })
@@ -746,7 +746,7 @@ router.get('/audit', requirePermission(PERMISSIONS.VIEW_AUDIT_LOG), async (req, 
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// GET /audit/grouped — audit trail grouped by admin account.
+// GET /audit/grouped audit trail grouped by admin account.
 // Super admin(s) first, then sub-admins. Each group carries that admin's
 // own actions, so the log reads per-person instead of one interleaved list.
 router.get('/audit/grouped', requirePermission(PERMISSIONS.VIEW_AUDIT_LOG), async (_req, res) => {
@@ -782,7 +782,7 @@ router.get('/audit/grouped', requirePermission(PERMISSIONS.VIEW_AUDIT_LOG), asyn
       lastAt:  (byAdmin.get(a.id) ?? [])[0]?.created_at ?? null,
     }))
 
-    // Any logs whose admin no longer exists (deleted sub-admin) — keep them
+    // Any logs whose admin no longer exists (deleted sub-admin) keep them
     // visible rather than silently dropping history.
     const knownIds = new Set(admins.map((a: any) => a.id))
     const orphanLogs = logs.filter((l: any) => !knownIds.has(l.admin_id))
@@ -832,7 +832,7 @@ router.get('/analytics', requirePermission(PERMISSIONS.VIEW_ANALYTICS), async (_
       return rate && rate > 0 ? fromAmt / rate : 0
     }
 
-    // Volume by corridor — all rows then group in JS for USD conversion
+    // Volume by corridor all rows then group in JS for USD conversion
     const corridorRows = await db.run(
       sql`SELECT from_currency, to_currency, from_amount, to_amount
           FROM transactions`
@@ -860,7 +860,7 @@ router.get('/analytics', requirePermission(PERMISSIONS.VIEW_ANALYTICS), async (_
       .sort((a, b) => b.volume - a.volume)
       .slice(0, 10)
 
-    // P2P vs direct split — both in USD
+    // P2P vs direct split both in USD
     const directRows = await db.run(
       sql`SELECT from_currency, to_currency, from_amount, to_amount FROM transactions`
     )

@@ -1,5 +1,5 @@
 // ============================================================
-// Orchestrator tick loop — the backstop behind webhooks (design §6), mirroring
+// Orchestrator tick loop the backstop behind webhooks (design §6), mirroring
 // txSettler. Every N minutes it finds transfers stuck 'in_progress' with an
 // in_flight leg and queries the provider's REAL status to move them forward,
 // in case a webhook was missed. Ground-truth only, never optimistic.
@@ -15,7 +15,7 @@ import { advanceTransfer } from './engine'
 const rowVal = (row: any, key: string, i: number) => Array.isArray(row) ? row[i] : row[key]
 
 export function startTransferReconciler() {
-  console.log('[TransferReconciler] ✅ Started — backstop reconciling in-flight transfers every 3 minutes')
+  console.log('[TransferReconciler] ✅ Started, backstop reconciling in-flight transfers every 3 minutes')
   cron.schedule('*/3 * * * *', reconcile)
   setTimeout(reconcile, 15_000) // shortly after boot too
 }

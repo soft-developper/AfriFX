@@ -6,7 +6,7 @@ export function startRatePoller() {
   // Give oracle access to DB for persistence + fallback
   injectDb(db)
 
-  console.log('[RatePoller] Starting — fetching every 30 minutes')
+  console.log('[RatePoller] Starting, fetching every 30 minutes')
 
   // Run immediately on boot
   fetchLatestRates()

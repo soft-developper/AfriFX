@@ -64,7 +64,7 @@ export function TreasuryContent() {
 
   function getLocalEquiv(usdcAmt: number, currency: string): string {
     const rate = rates.find(r => r.pair === `${currency}/USDC`)?.rate
-    if (!rate) return '—'
+    if (!rate) return '-'
     return (usdcAmt / rate).toLocaleString(undefined, { maximumFractionDigits: 0 })
   }
 
@@ -97,7 +97,7 @@ export function TreasuryContent() {
                 return (
                   <div key={r.id} className="mt-2 flex items-center justify-between text-xs">
                     <span className="text-amber-600">
-                      "{r.name}" — convert {r.action_percent ? `${r.action_percent}%` : `${r.action_amount} USDC`} to {r.target_currency}
+                      "{r.name}", convert {r.action_percent ? `${r.action_percent}%` : `${r.action_amount} USDC`} to {r.target_currency}
                       {amt > 0 && ` (≈ ${getLocalEquiv(amt, r.target_currency)} ${r.target_currency})`}
                     </span>
                     <div className="flex gap-2">

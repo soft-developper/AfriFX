@@ -10,7 +10,7 @@ function parseRows(r: any): any[] {
 }
 
 export function startInvoiceReminders() {
-  console.log('[InvoiceReminders] Started — checks every 6 hours')
+  console.log('[InvoiceReminders] Started, checks every 6 hours')
 
   const check = async () => {
     const now      = Math.floor(Date.now() / 1000)

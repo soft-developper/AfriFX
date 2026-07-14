@@ -1,7 +1,7 @@
 import { createPublicClient, http, parseAbiItem } from 'viem'
 import { defineChain } from 'viem'
 
-// Arc Testnet — Chain ID 5042002
+// Arc Testnet Chain ID 5042002
 export const arcTestnet = defineChain({
   id: 5042002,
   name: 'Arc Testnet',
@@ -23,7 +23,7 @@ export const arcClient = createPublicClient({
 // Arc contract addresses
 export const USDC_ADDRESS = '0x3600000000000000000000000000000000000000' as const
 
-// Watch USDC Transfer events — used to detect incoming vault deposits
+// Watch USDC Transfer events used to detect incoming vault deposits
 export function watchUSDCTransfers(
   toAddress: `0x${string}`,
   onTransfer: (from: string, value: bigint, txHash: string) => void,

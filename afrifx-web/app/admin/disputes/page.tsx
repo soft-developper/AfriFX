@@ -226,7 +226,7 @@ export default function AdminDisputesPage() {
                   {/* Reason */}
                   <div className="mb-3 rounded-lg bg-app-bg p-2.5 text-xs">
                     <p className="text-app-muted mb-1">Reason</p>
-                    <p className="text-app-text">{reason || '—'}</p>
+                    <p className="text-app-text">{reason || '-'}</p>
                   </div>
 
                   {/* Resolution */}
@@ -238,7 +238,7 @@ export default function AdminDisputesPage() {
 
                   {/* Actions */}
                   <div className="flex flex-wrap gap-2">
-                    {/* Accept button — for unassigned open disputes */}
+                    {/* Accept button for unassigned open disputes */}
                     {isOpen && !assignment && (
                       <Button size="sm" onClick={() => acceptDispute(id)}
                         disabled={accepting === id}>
@@ -246,7 +246,7 @@ export default function AdminDisputesPage() {
                           ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           : <Scale className="h-3.5 w-3.5" />
                         }
-                        Accept dispute — become judge
+                        Accept dispute, become judge
                       </Button>
                     )}
 
@@ -257,7 +257,7 @@ export default function AdminDisputesPage() {
                       </p>
                     )}
 
-                    {/* Resolve buttons — only for assigned admin */}
+                    {/* Resolve buttons only for assigned admin */}
                     {isInReview && isMyCase && (
                       <>
                         <Button size="sm"
@@ -284,7 +284,7 @@ export default function AdminDisputesPage() {
                   </div>
                 </div>
 
-                {/* Chat — expanded section */}
+                {/* Chat expanded section */}
                 {isExpanded && admin && (isInReview || isOpen) && isMyCase && (
                   <div className="border-t border-app-border p-4">
                     <p className="mb-2 text-xs font-medium text-app-muted">

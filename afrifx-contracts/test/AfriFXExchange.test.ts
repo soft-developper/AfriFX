@@ -11,7 +11,7 @@ describe('AfriFXExchange', function () {
     // Full integration tests should run on Arc Testnet fork or the live testnet.
 
     const Exchange = await ethers.getContractFactory('AfriFXExchange')
-    // This will fail on local if addresses aren't deployed — expected in unit test
+    // This will fail on local if addresses aren't deployed expected in unit test
     // For now just verify the contract compiles and constructor runs
     try {
       const exchange = await Exchange.deploy()

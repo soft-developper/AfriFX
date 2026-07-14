@@ -22,7 +22,7 @@ function parseRows(r: any): any[] {
   return []
 }
 
-// Auth middleware — validates session token from Authorization header
+// Auth middleware validates session token from Authorization header
 export async function requireAdmin(req: any, res: any, next: any) {
   const token = req.headers.authorization?.replace('Bearer ', '')
   if (!token) return res.status(401).json({ error: 'No session token' })
@@ -216,7 +216,7 @@ router.post('/logout', async (req, res) => {
 })
 
 // ── 2FA Setup ───────────────────────────────────────────────
-// POST /admin-auth/2fa/setup — generate secret + QR code
+// POST /admin-auth/2fa/setup generate secret + QR code
 router.post('/2fa/setup', requireAdmin, async (req: any, res) => {
   try {
     const { secret, uri } = generateTOTPSecret(req.admin.email)
@@ -229,7 +229,7 @@ router.post('/2fa/setup', requireAdmin, async (req: any, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /admin-auth/2fa/verify — verify code and enable 2FA
+// POST /admin-auth/2fa/verify verify code and enable 2FA
 router.post('/2fa/verify', requireAdmin, async (req: any, res) => {
   const { code } = req.body
   if (!code) return res.status(400).json({ error: 'code required' })
@@ -282,7 +282,7 @@ router.post('/forgot-password', async (req, res) => {
 
     await sendEmail({
       to:      admin.email,
-      subject: 'AfriFX Admin — Password reset',
+      subject: 'AfriFX Admin, Password reset',
       html:    '<html><body style="background:#080D1B;color:#E2E8F0;font-family:sans-serif;padding:40px;">'
         + '<div style="max-width:480px;margin:0 auto;background:#0F1729;border:1px solid #1B2B4B;border-radius:12px;padding:32px;">'
         + '<h1 style="color:#378ADD;margin:0 0 16px;font-size:20px;">Password reset</h1>'
@@ -328,7 +328,7 @@ router.post('/reset-password', async (req, res) => {
 })
 
 // ── Sub-admin invitation ────────────────────────────────────
-// POST /admin-auth/invite — super admin invites sub-admin
+// POST /admin-auth/invite super admin invites sub-admin
 router.post('/invite', requireAdmin, async (req: any, res) => {
   if (req.admin.role !== 'super_admin') {
     return res.status(403).json({ error: 'Only super admins can invite' })
@@ -384,7 +384,7 @@ router.post('/invite', requireAdmin, async (req: any, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /admin-auth/accept-invite — sub-admin accepts invitation
+// POST /admin-auth/accept-invite sub-admin accepts invitation
 router.post('/accept-invite', async (req, res) => {
   const { token, username, password } = req.body
   if (!token || !username || !password) {

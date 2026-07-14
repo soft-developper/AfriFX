@@ -1,4 +1,4 @@
-// Multi-source rate oracle — African currency focused
+// Multi-source rate oracle African currency focused
 // Source 1: open.er-api.com   (free, no key, covers NGN/GHS/KES/ZAR/EGP)
 // Source 2: exchangerate-api  (if EXCHANGE_RATE_API_KEY is set)
 // Source 3: Last persisted DB rates (survives API outages for days)
@@ -42,10 +42,10 @@ export async function fetchLatestRates(): Promise<void> {
     return
   }
 
-  // All live sources failed — try DB
+  // All live sources failed try DB
   failCount++
   if (failCount <= 3) {
-    console.warn(`[RateOracle] Live sources failed (${failCount}) — trying DB cache`)
+    console.warn(`[RateOracle] Live sources failed (${failCount}), trying DB cache`)
   }
 
   const dbRates = await loadFromDb()
@@ -58,7 +58,7 @@ export async function fetchLatestRates(): Promise<void> {
     return
   }
 
-  // DB also empty — use hardcoded (only on first boot before any fetch)
+  // DB also empty use hardcoded (only on first boot before any fetch)
   if (!cachedRates.length) {
     cachedRates       = buildRates(HARDCODED, 'hardcoded')
     lastSuccessSource = 'hardcoded'
@@ -67,7 +67,7 @@ export async function fetchLatestRates(): Promise<void> {
 }
 
 async function tryLiveSources(): Promise<{ rates: FXRate[]; source: string } | null> {
-  // Source 1 — open.er-api.com (no key, covers all our currencies)
+  // Source 1 open.er-api.com (no key, covers all our currencies)
   try {
     const raw = await fetchOpenErApi()
     if (raw && hasOurCurrencies(raw)) {
@@ -75,7 +75,7 @@ async function tryLiveSources(): Promise<{ rates: FXRate[]; source: string } | n
     }
   } catch {}
 
-  // Source 2 — exchangerate-api.com (if key configured)
+  // Source 2 exchangerate-api.com (if key configured)
   if (process.env.EXCHANGE_RATE_API_KEY) {
     try {
       const raw = await fetchExchangeRateApi(process.env.EXCHANGE_RATE_API_KEY)
@@ -123,7 +123,7 @@ function buildRates(raw: Record<string, number>, source: string): FXRate[] {
   const prev = Object.fromEntries(cachedRates.map(r => [r.pair, r.rate]))
   const now  = Date.now()
 
-  // raw contains "local units per USD" — use directly
+  // raw contains "local units per USD" use directly
   const map = {
     NGN:  raw.NGN  ?? HARDCODED.NGN,
     GHS:  raw.GHS  ?? HARDCODED.GHS,
@@ -148,7 +148,7 @@ async function persistToDb(rates: FXRate[]): Promise<void> {
   try {
     const { sql } = await import('drizzle-orm')
     for (const r of rates) {
-      // Try upsert — update if pair exists, insert if not
+      // Try upsert update if pair exists, insert if not
       try {
         await _db.run(
           sql`INSERT INTO fx_rates (pair, rate, change_24h, source, fetched_at)

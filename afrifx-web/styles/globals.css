@@ -16,7 +16,7 @@
     --app-accent-text   the accent used as READING text (links/labels);
                         deeper in light mode so it stays legible on ivory
     --app-on-accent     text/icons that sit ON a gold fill (dark in dark
-                        mode, white in light mode) — replaces raw text-white
+                        mode, white in light mode) replaces raw text-white
 */
 :root {
   --app-bg:           18 16 11;    /* #12100B */
@@ -24,8 +24,8 @@
   --app-border:       51 41 27;    /* #33291B */
   --app-accent:       217 164 65;  /* #D9A441 */
   --app-accent-hover: 196 143 46;  /* #C48F2E */
-  --app-accent-text:  217 164 65;  /* #D9A441 — bright gold reads well on dark */
-  --app-on-accent:    18 16 11;    /* #12100B — dark text on gold fill */
+  --app-accent-text:  217 164 65;  /* #D9A441 bright gold reads well on dark */
+  --app-on-accent:    18 16 11;    /* #12100B dark text on gold fill */
   --app-text:         242 233 216; /* #F2E9D8 */
   --app-muted:        156 138 110; /* #9C8A6E */
 
@@ -41,15 +41,15 @@
 }
 
 html.light {
-  --app-bg:           247 241 230; /* #F7F1E6 — warm ivory */
-  --app-surface:      255 253 248; /* #FFFDF8 — near-white warm surface */
-  --app-border:       228 217 196; /* #E4D9C4 — soft sand */
-  --app-accent:       138 94 19;   /* #8A5E13 — deep bronze, readable as fill+text on ivory */
+  --app-bg:           247 241 230; /* #F7F1E6 warm ivory */
+  --app-surface:      255 253 248; /* #FFFDF8 near-white warm surface */
+  --app-border:       228 217 196; /* #E4D9C4 soft sand */
+  --app-accent:       138 94 19;   /* #8A5E13 deep bronze, readable as fill+text on ivory */
   --app-accent-hover: 110 74 15;   /* #6E4A0F */
-  --app-accent-text:  138 94 19;   /* #8A5E13 — passes AA (5.06:1) for link/label text */
-  --app-on-accent:    255 255 255; /* #FFFFFF — white text on bronze fill */
-  --app-text:         43 36 22;    /* #2B2416 — warm near-black */
-  --app-muted:        107 95 73;   /* #6B5F49 — warm gray-brown, passes AA (5.56:1) */
+  --app-accent-text:  138 94 19;   /* #8A5E13 passes AA (5.06:1) for link/label text */
+  --app-on-accent:    255 255 255; /* #FFFFFF white text on bronze fill */
+  --app-text:         43 36 22;    /* #2B2416 warm near-black */
+  --app-muted:        107 95 73;   /* #6B5F49 warm gray-brown, passes AA (5.56:1) */
 
   --bg:      #F7F1E6;
   --card:    #FFFDF8;
@@ -85,7 +85,7 @@ input[type='number']::-webkit-inner-spin-button {
   Light-mode semantic color fixes.
 
   The status colors (emerald/amber/red at the -400/-500 shades) are tuned for
-  the dark theme and wash out on the light ivory background — a light green on
+  the dark theme and wash out on the light ivory background a light green on
   near-white has almost no contrast. Under html.light we remap these specific
   text utilities to darker shades that pass WCAG AA on ivory, without touching
   the dark theme. Badge FILLS are handled separately via the `light:` variant
@@ -94,11 +94,11 @@ input[type='number']::-webkit-inner-spin-button {
   !important is required to win over Tailwind's own utility classes.
 */
 .light .text-emerald-400,
-.light .text-emerald-500 { color: #047857 !important; } /* emerald-700 — 4.88:1 on ivory */
+.light .text-emerald-500 { color: #047857 !important; } /* emerald-700 4.88:1 on ivory */
 .light .text-amber-400,
-.light .text-amber-500  { color: #92400e !important; } /* amber-800 — passes on ivory */
+.light .text-amber-500  { color: #92400e !important; } /* amber-800 passes on ivory */
 .light .text-red-400,
-.light .text-red-500    { color: #b91c1c !important; } /* red-700 — 5.76:1 on ivory */
+.light .text-red-500    { color: #b91c1c !important; } /* red-700 5.76:1 on ivory */
 
 /*
   Brand wordmark gradients (AfriFXLogo). "Afri" uses the warm gold-bronze

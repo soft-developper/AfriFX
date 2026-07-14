@@ -1,9 +1,9 @@
 -- ============================================================
--- Payout orchestrator schema — cross-border transfers
+-- Payout orchestrator schema cross-border transfers
 --
 -- Two tables:
---   transfers      — one row per end-to-end transfer (user-facing summary)
---   transfer_legs  — one row per leg (the audit trail the orchestrator walks)
+--   transfers      one row per end-to-end transfer (user-facing summary)
+--   transfer_legs  one row per leg (the audit trail the orchestrator walks)
 --
 -- Provider-agnostic: no HoneyCoin/Yellow Card specifics live here.
 -- Safe to run more than once (IF NOT EXISTS).

@@ -89,7 +89,7 @@ async function markFailed(notifId: string, error: string) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Public API — called from routes
+// Public API called from routes
 // ─────────────────────────────────────────────────────────────
 
 export async function notifyTradeAccepted(params: {
@@ -163,7 +163,7 @@ export async function notifyTradeCompleted(params: {
     [takerProfile, 'taker' as const, params.takerWallet, makerProfile],
   ] as const) {
 
-    const subject = '✅ Trade completed — funds released'
+    const subject = '✅ Trade completed, funds released'
     const payload = { ...params, role }
 
     if (!profile?.email || !profile.notify_trades) {
@@ -357,7 +357,7 @@ export async function notifyInvoicePaid(params: {
       })
       await sendEmail({
         to:      payerProfile.email,
-        subject: `Receipt — invoice ${params.invoiceRef} paid`,
+        subject: `Receipt, invoice ${params.invoiceRef} paid`,
         html:    `<div style="font-family:sans-serif;line-height:1.5">
           <p>Hi ${getDisplayName(payerProfile)},</p>
           <p>Thanks for your payment of ${params.usdcAmount} USDC for invoice

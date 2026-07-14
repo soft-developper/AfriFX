@@ -6,7 +6,7 @@ export const CONTRACTS = {
   USDC: '0x3600000000000000000000000000000000000000' as `0x${string}`,
   EURC: '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a' as `0x${string}`,
 
-  // Transaction Memos — docs.arc.io/arc/concepts/transaction-memos
+  // Transaction Memos docs.arc.io/arc/concepts/transaction-memos
   MEMO: '0x5294E9927c3306DcBaDb03fe70b92e01cCede505' as `0x${string}`,
 
   // FX + payments
@@ -23,7 +23,7 @@ export const CONTRACTS = {
 
   MULTICALL3: '0xcA11bde05977b3631167028862bE2a173976CA11' as `0x${string}`,
 
-  // AfriFX deployed contracts — from .env.local
+  // AfriFX deployed contracts from .env.local
   AFRIFX_VAULT:    (process.env.NEXT_PUBLIC_AFRIFX_VAULT    || ZERO) as `0x${string}`,
   AFRIFX_EXCHANGE: (process.env.NEXT_PUBLIC_AFRIFX_EXCHANGE || ZERO) as `0x${string}`,
 } as const

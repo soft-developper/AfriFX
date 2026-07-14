@@ -2,7 +2,7 @@
 // Maintenance mode.
 //
 // Sections can be taken offline individually, or the whole platform at once.
-// Enforced at the API (not just hidden in the UI), so nothing slips through —
+// Enforced at the API (not just hidden in the UI), so nothing slips through
 // but with two deliberate carve-outs:
 //
 //   1) IN-FLIGHT WORK STILL COMPLETES. We block endpoints that START new work
@@ -14,7 +14,7 @@
 //   2) ADMINS BYPASS. An authenticated admin can still use a section under
 //      maintenance, so they can verify the upgrade before reopening it.
 //
-// Reads (GET) are always allowed — people can still see their trades.
+// Reads (GET) are always allowed people can still see their trades.
 // ============================================================
 
 import type { Request, Response, NextFunction } from 'express'
@@ -114,7 +114,7 @@ function completesInFlightWork(path: string): boolean {
 */
 export function maintenanceGuard(section: Section) {
   return async (req: Request, res: Response, next: NextFunction) => {
-    // Reads are always fine — users can still see their trades.
+    // Reads are always fine users can still see their trades.
     if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
       return next()
     }

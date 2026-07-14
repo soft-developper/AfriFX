@@ -131,7 +131,7 @@ function CreateInvoiceContent() {
               <div className="flex justify-between">
                 <span className="text-app-muted">Amount</span>
                 <span className="font-mono text-app-text">
-                  {amount ? `${parseFloat(amount).toLocaleString()} ${currency}` : '—'}
+                  {amount ? `${parseFloat(amount).toLocaleString()} ${currency}` : '-'}
                 </span>
               </div>
               {usdEquiv && (
@@ -142,7 +142,7 @@ function CreateInvoiceContent() {
               )}
               <div className="flex justify-between">
                 <span className="text-app-muted">Description</span>
-                <span className="text-app-text truncate max-w-28">{description || '—'}</span>
+                <span className="text-app-text truncate max-w-28">{description || '-'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-app-muted">Due</span>

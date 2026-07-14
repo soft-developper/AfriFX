@@ -1,5 +1,5 @@
-// Platform wallet — used to call releaseP2POffer() on-chain
-// Private key stored in .env — never committed to git
+// Platform wallet used to call releaseP2POffer() on-chain
+// Private key stored in .env never committed to git
 // This wallet must be the contract owner (deployer wallet)
 
 import { createWalletClient, createPublicClient, http, encodeFunctionData } from 'viem'
@@ -41,7 +41,7 @@ function getWalletClient() {
 }
 
 /**
- * Release USDC to taker — called automatically when both sides confirm.
+ * Release USDC to taker called automatically when both sides confirm.
  */
 export async function releasePlatform(offerId: `0x${string}`): Promise<`0x${string}`> {
   if (!VAULT_ADDRESS) throw new Error('AFRIFX_VAULT_ADDRESS not set in .env')
@@ -59,7 +59,7 @@ export async function releasePlatform(offerId: `0x${string}`): Promise<`0x${stri
 }
 
 /**
- * Cancel offer and return USDC to maker — used for disputes/timeouts.
+ * Cancel offer and return USDC to maker used for disputes/timeouts.
  */
 export async function cancelPlatform(
   offerId: `0x${string}`,

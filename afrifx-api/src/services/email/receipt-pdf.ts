@@ -14,7 +14,7 @@ export interface ReceiptData {
   type:            'trade' | 'invoice'
 }
 
-// Brand colors (kept literal — PDF is theme-independent)
+// Brand colors (kept literal PDF is theme-independent)
 const GOLD  = '#8A5E13'
 const INK   = '#2B2416'
 const MUTED = '#6B5F49'

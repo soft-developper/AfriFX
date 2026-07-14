@@ -29,8 +29,8 @@ interface Props {
 }
 
 /*
-  Shows a sender's @username resolved from their wallet profile — the same way
-  the marketplace chat does — instead of a raw wallet address.
+  Shows a sender's @username resolved from their wallet profile, the same way
+  the marketplace chat does, instead of a raw wallet address.
 */
 function SenderName({
   address, fallback,
@@ -63,7 +63,7 @@ export function DisputeChat({
       // for a poll cycle before repopulating.
       if (Array.isArray(data)) setMessages(data)
     } catch {
-      // Network blip — keep the existing messages on screen.
+      // Network blip keep the existing messages on screen.
     }
   }, [disputeId, viewerType])
 
@@ -175,7 +175,7 @@ export function DisputeChat({
       return <>⚖️ Admin{msg.sender_name ? ` (${msg.sender_name})` : ''}</>
     }
     // Maker/taker: resolve their @username from their wallet profile, falling
-    // back to the stored name, then a role label — never a raw wallet address.
+    // back to the stored name, then a role label never a raw wallet address.
     const roleFallback = msg.sender_type === 'maker' ? 'Seller' : 'Buyer'
     return (
       <SenderName
@@ -192,7 +192,7 @@ export function DisputeChat({
         <p className="text-sm font-medium text-app-text">{title}</p>
         <p className="text-xs text-app-muted">
           {viewerType === 'admin'
-            ? 'All parties — messages sent here are visible to maker and taker'
+            ? 'All parties, messages sent here are visible to maker and taker'
             : 'Communicate with the assigned admin · Upload bank PDFs below'}
         </p>
       </div>
@@ -201,7 +201,7 @@ export function DisputeChat({
       <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[200px] max-h-[400px]">
         {messages.length === 0 ? (
           <p className="text-center text-xs text-app-muted py-4">
-            No messages yet — start the conversation
+            No messages yet, start the conversation
           </p>
         ) : (
           messages.map(msg => (
@@ -257,7 +257,7 @@ export function DisputeChat({
           </Button>
         </div>
 
-        {/* Document upload — PDF only, and only for users (maker/taker) */}
+        {/* Document upload PDF only, and only for users (maker/taker) */}
         {viewerType !== 'admin' && (
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
@@ -274,7 +274,7 @@ export function DisputeChat({
               </button>
             </div>
             <p className="text-[10px] text-app-muted">
-              PDF only — bank-issued receipts and statements. Images aren't accepted as proof.
+              PDF only, bank-issued receipts and statements. Images aren't accepted as proof.
             </p>
             {uploadError && (
               <p className="text-xs text-red-400">{uploadError}</p>

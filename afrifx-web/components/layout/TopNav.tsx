@@ -72,7 +72,7 @@ function NavProfile() {
                 </>
               ) : (
                 <>
-                  {/* No profile yet — show shortened address */}
+                  {/* No profile yet show shortened address */}
                   <div className="h-5 w-5 rounded-full bg-app-accent/30 flex items-center justify-center">
                     <span className="text-[8px] font-bold text-app-accent-text">
                       {account.address.slice(2,4).toUpperCase()}

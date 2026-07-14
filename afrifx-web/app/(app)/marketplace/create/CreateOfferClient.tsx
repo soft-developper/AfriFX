@@ -35,7 +35,7 @@ export function CreateOfferClient() {
   const [customTimer,   setCustomTimer]   = useState('')
   const [submitted,     setSubmitted]     = useState(false)
 
-  // Payout details — where the taker sends the local-currency payment.
+  // Payout details where the taker sends the local-currency payment.
   const [paymentMethod, setPaymentMethod] = useState<'bank' | 'mobile_money'>('bank')
   const [accountName,   setAccountName]   = useState('')
   const [accountNumber, setAccountNumber] = useState('')
@@ -108,7 +108,7 @@ export function CreateOfferClient() {
         </Link>
         <div>
           <h1 className="text-xl font-semibold text-app-text">Create P2P offer</h1>
-          <p className="text-sm text-app-muted">Lock USDC in escrow — perpetual until filled or cancelled.</p>
+          <p className="text-sm text-app-muted">Lock USDC in escrow, perpetual until filled or cancelled.</p>
         </div>
       </div>
 
@@ -166,7 +166,7 @@ export function CreateOfferClient() {
           {insufficientUsdc && (
             <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-red-900/20 px-3 py-2 text-xs text-red-400">
               <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-              Insufficient balance — you only have {balance} USDC
+              Insufficient balance, you only have {balance} USDC
             </div>
           )}
           {!insufficientUsdc && usdcNum > 0 && (
@@ -251,7 +251,7 @@ export function CreateOfferClient() {
           </p>
         </div>
 
-        {/* Payout details — where the taker sends the money */}
+        {/* Payout details where the taker sends the money */}
         <div className="rounded-xl border border-app-border bg-app-surface p-4">
           <label className="text-xs font-medium uppercase tracking-wider text-app-muted">
             Your payout details
@@ -349,7 +349,7 @@ export function CreateOfferClient() {
               ? 'Insufficient USDC balance'
               : !payoutComplete
               ? 'Add your payout details'
-              : `Create ${orderType} order — ${usdcAmount || '0'} USDC`}
+              : `Create ${orderType} order, ${usdcAmount || '0'} USDC`}
           </Button>
         )}
 

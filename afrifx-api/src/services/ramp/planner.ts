@@ -1,5 +1,5 @@
 // ============================================================
-// Leg planner — given a transfer, decide the ordered list of legs it needs.
+// Leg planner given a transfer, decide the ordered list of legs it needs.
 // Pure function, no I/O, so it's trivially testable. See design doc §2/§3.
 //
 //   Case A (fiat_in):  onramp -> [bridge?] -> offramp -> payout -> reconcile

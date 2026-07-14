@@ -91,7 +91,7 @@ export default function OfferDetailPage() {
     isLoading: actionLoading, error, txHash,
   } = useP2P()
 
-  // Profile hooks — MUST be before any conditional returns (React rules of hooks)
+  // Profile hooks MUST be before any conditional returns (React rules of hooks)
   const { data: makerProfile } = useProfileByAddress(offer?.maker_address ?? null)
   const { data: takerProfile } = useProfileByAddress(offer?.taker_address ?? null)
 
@@ -199,7 +199,7 @@ export default function OfferDetailPage() {
   const showMakerTimer = offerStatus === 'accepted' && !!offer.taker_confirmed && !offer.maker_confirmed && !!offer.maker_deadline
 
   // Chat is for coordinating an ACTIVE trade. Once the platform has released
-  // the USDC to the taker the trade is settled, so the chat is removed — there
+  // the USDC to the taker the trade is settled, so the chat is removed there
   // is nothing left to coordinate, and the page reflows to two columns.
   const showChat = isInvolved && (
     offerStatus === 'accepted' ||
@@ -218,7 +218,7 @@ export default function OfferDetailPage() {
       await raiseDispute(
         offer.id,
         disputeType === 'maker_silent'
-          ? 'Maker did not confirm receipt — possible non-response'
+          ? 'Maker did not confirm receipt, possible non-response'
           : 'Taker claims to have sent payment but maker did not receive it',
         disputeType,
         raisedByRole,
@@ -319,7 +319,7 @@ export default function OfferDetailPage() {
             <span className="text-app-muted">Rate</span>
             <span className="font-mono text-app-text">
               1 USDC = {Number(offer.rate_offered) > 0
-                ? (1 / Number(offer.rate_offered)).toFixed(2) : '—'} {offer.local_currency}
+                ? (1 / Number(offer.rate_offered)).toFixed(2) : '-'} {offer.local_currency}
             </span>
           </div>
 
@@ -371,7 +371,7 @@ export default function OfferDetailPage() {
             ))}
           </div>
 
-          {/* Maker payout details — shown to involved parties once accepted */}
+          {/* Maker payout details shown to involved parties once accepted */}
           {isInvolved && offerStatus !== 'open' && offer.account_number && (
             <div className="mb-4 rounded-lg border border-app-accent/40 bg-app-accent/[0.06] p-4">
               <p className="mb-1 text-sm font-medium text-app-text">
@@ -429,7 +429,7 @@ export default function OfferDetailPage() {
                   />
                 ) : (
                   <div className="rounded-lg border border-amber-900/40 bg-amber-900/10 p-3 text-xs">
-                    <p className="font-medium text-amber-400">⏳ Dispute raised — awaiting admin review</p>
+                    <p className="font-medium text-amber-400">⏳ Dispute raised, awaiting admin review</p>
                     <p className="mt-1 text-amber-600">An admin will accept and handle your dispute shortly.</p>
                   </div>
                 )
@@ -455,7 +455,7 @@ export default function OfferDetailPage() {
                 <>
                   {isTaker && !offer.taker_confirmed && (
                     <div className="rounded-lg border border-app-accent/30 bg-app-accent/10 p-3 text-xs">
-                      <p className="font-medium text-app-text">Your turn — send {offer.local_currency} to {makerName}</p>
+                      <p className="font-medium text-app-text">Your turn, send {offer.local_currency} to {makerName}</p>
                       <p className="mt-1 text-app-muted">
                         Send <strong className="text-app-text">
                           {localAmountFormatted} {offer.local_currency}
@@ -531,7 +531,7 @@ export default function OfferDetailPage() {
                           {disputing ? 'Raising dispute…' : 'Raise dispute'}
                         </Button>
                       ) : (
-                        <p className="text-xs text-emerald-400">✓ Dispute raised — admin will review and contact both parties.</p>
+                        <p className="text-xs text-emerald-400">✓ Dispute raised, admin will review and contact both parties.</p>
                       )}
                     </div>
                   )}
@@ -554,21 +554,21 @@ export default function OfferDetailPage() {
                           onClick={() => handleDispute('maker_not_received', 'maker')}
                           disabled={disputing}>
                           <Flag className="h-4 w-4" />
-                          {disputing ? 'Raising dispute…' : "I didn't receive payment — raise dispute"}
+                          {disputing ? 'Raising dispute…' : "I didn't receive payment, raise dispute"}
                         </Button>
                       ) : (
                         <div className="rounded-lg bg-amber-900/20 p-3 text-xs text-amber-400">
-                          ✓ Dispute raised — admin will review.
+                          ✓ Dispute raised, admin will review.
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* Both confirmed — waiting for release */}
+                  {/* Both confirmed waiting for release */}
                   {!!offer.maker_confirmed && !!offer.taker_confirmed && (
                     <div className="flex items-center gap-2 rounded-lg border border-emerald-900/30 bg-emerald-900/10 px-3 py-2.5 text-xs text-emerald-400">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      Both confirmed — releasing USDC within 15 seconds…
+                      Both confirmed, releasing USDC within 15 seconds…
                     </div>
                   )}
                 </>

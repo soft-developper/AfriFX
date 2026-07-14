@@ -19,7 +19,7 @@ function toUSD(amount: number, currency: string, rates: Record<string, number>):
   if (currency === 'USDC' || currency === 'USD') return amount
   if (currency === 'EURC') {
     const r = rates['EURC/USDC']
-    // EURC/USDC rate is stored differently — EURC ≈ 1.09 USD
+    // EURC/USDC rate is stored differently EURC ≈ 1.09 USD
     return r ? amount * (1 / r) : amount * 1.09
   }
   // Local currency: rate = local units per USDC
@@ -35,7 +35,7 @@ function txUSD(tx: any, rates: Record<string, number>): number {
   const fromAmt = Number(tx.from_amount ?? tx[4] ?? 0)
   const toAmt   = Number(tx.to_amount   ?? tx[5] ?? 0)
 
-  // Prefer the USDC side — it's already in USD
+  // Prefer the USDC side it's already in USD
   if (toCcy === 'USDC')   return toAmt
   if (fromCcy === 'USDC') return fromAmt
   // Corridor (local → local): convert from_amount to USD

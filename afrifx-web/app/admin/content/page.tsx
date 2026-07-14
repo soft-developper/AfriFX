@@ -142,7 +142,7 @@ export default function AdminContentPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {sections.length === 0 && (
-              <p className="text-sm text-app-muted">No sections yet — add one below.</p>
+              <p className="text-sm text-app-muted">No sections yet, add one below.</p>
             )}
             {sections.map((s, i) => (
               <div key={i} className="rounded-lg border border-app-border bg-app-bg p-3">

@@ -7,7 +7,7 @@ import { uploadBuffer } from '../lib/cloudinary'
 
 const router = Router()
 
-// Multer — store in memory (we pipe to Cloudinary immediately)
+// Multer store in memory (we pipe to Cloudinary immediately)
 const upload = multer({
   storage: multer.memoryStorage(),
   limits:  { fileSize: 10 * 1024 * 1024 }, // 10 MB

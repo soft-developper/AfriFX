@@ -26,7 +26,7 @@ interface Row {
 }
 
 /*
-  Every sub-admin's working-hour session, with live status — and the controls
+  Every sub-admin's working-hour session, with live status, and the controls
   to SET, CHANGE or CLEAR their hours in place (no delete-and-re-invite needed).
   The sub-admin is emailed whenever their hours change.
 */
@@ -128,9 +128,9 @@ export function DutyOverview() {
           const left = r.windowEnd - now
           timer = { label: 'Ends in', value: left > 0 ? countdown(left) : 'Ending…', cls: 'text-emerald-400' }
         } else if (r.inWindow && r.windowEnd) {
-          badge = { label: 'Session open — not resumed', cls: 'bg-app-accent/15 text-app-accent-text', icon: Clock }
+          badge = { label: 'Session open, not resumed', cls: 'bg-app-accent/15 text-app-accent-text', icon: Clock }
           const left = r.windowEnd - now
-          timer = { label: 'Time left', value: left > 0 ? countdown(left) : '—', cls: 'text-app-accent-text' }
+          timer = { label: 'Time left', value: left > 0 ? countdown(left) : '-', cls: 'text-app-accent-text' }
         } else {
           badge = { label: 'Off duty', cls: 'bg-app-border/50 text-app-muted', icon: Timer }
           if (r.nextStart) {
@@ -157,7 +157,7 @@ export function DutyOverview() {
                   </span>
                 </p>
                 <p className="mt-0.5 truncate text-xs text-app-muted">
-                  {schedule ?? 'No working hours assigned — cannot accept disputes'}
+                  {schedule ?? 'No working hours assigned, cannot accept disputes'}
                 </p>
               </div>
 

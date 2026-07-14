@@ -13,7 +13,7 @@ export default function NoAccessPage() {
   const [checked,  setChecked]  = useState(false)
 
   useEffect(() => {
-    // One-time check — do not loop
+    // One-time check do not loop
     const token    = sessionStorage.getItem(TOKEN_KEY)
     const adminRaw = sessionStorage.getItem(ADMIN_KEY)
     if (!token || !adminRaw) {
@@ -25,7 +25,7 @@ export default function NoAccessPage() {
       setUsername(admin.username ?? '')
     } catch {}
     setChecked(true)
-  }, []) // Empty deps — run once only, no loop
+  }, []) // Empty deps, run once only, no loop
 
   function handleLogout() {
     sessionStorage.removeItem(TOKEN_KEY)

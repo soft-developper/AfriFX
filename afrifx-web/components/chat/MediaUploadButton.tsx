@@ -22,7 +22,7 @@ export function MediaUploadButton({ offerId, onUpload, disabled }: Props) {
     if (!file || !address) return
 
     if (file.size > 10 * 1024 * 1024) {
-      setErrMsg('File too large — max 10 MB')
+      setErrMsg('File too large, max 10 MB')
       return
     }
 

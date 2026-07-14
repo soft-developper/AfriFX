@@ -4,7 +4,7 @@ import { sql }    from 'drizzle-orm'
 
 const router = Router()
 
-// ── Broadcast unsubscribe (PUBLIC — reached from an email link, no login) ───
+// ── Broadcast unsubscribe (PUBLIC reached from an email link, no login) ───
 // Honours the opt-out we promise in every broadcast footer. Only affects
 // ANNOUNCEMENTS; the user still receives essential alerts about their own
 // trades, disputes and invoices.
@@ -62,7 +62,7 @@ function parseRows(r: any): any[] {
   return []
 }
 
-// Normalise a profile row — handles both array and object rows
+// Normalise a profile row handles both array and object rows
 // Includes live trade counts from subqueries
 function normalizeProfile(row: any) {
   if (Array.isArray(row)) {
@@ -134,7 +134,7 @@ router.get('/check/:username', async (req, res) => {
   } catch (e: any) { res.status(500).json({ error: e.message }) }
 })
 
-// GET /profile/wallet/:address — by wallet address (includes live trade counts)
+// GET /profile/wallet/:address by wallet address (includes live trade counts)
 router.get('/wallet/:address', async (req, res) => {
   const addr = req.params.address.toLowerCase()
   try {
@@ -163,7 +163,7 @@ router.get('/wallet/:address', async (req, res) => {
   } catch (e: any) { res.status(500).json({ error: e.message }) }
 })
 
-// GET /profile/:username — by username (public)
+// GET /profile/:username by username (public)
 router.get('/:username', async (req, res) => {
   const username = req.params.username.toLowerCase()
   try {
@@ -197,7 +197,7 @@ router.get('/:username', async (req, res) => {
   } catch (e: any) { res.status(500).json({ error: e.message }) }
 })
 
-// POST /profile — create
+// POST /profile create
 router.post('/', async (req, res) => {
   const {
     walletAddress, username, displayName,
@@ -242,7 +242,7 @@ router.post('/', async (req, res) => {
   }
 })
 
-// PATCH /profile/:address — update
+// PATCH /profile/:address update
 router.patch('/:address', async (req, res) => {
   const addr = req.params.address.toLowerCase()
   const {

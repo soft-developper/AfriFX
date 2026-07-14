@@ -2,7 +2,7 @@ import { SectionGuard } from '@/components/layout/SectionGuard'
 import { SwapCard } from '@/components/swap/SwapCard'
 import { ClientOnly } from '@/components/ui/client-only'
 
-export const metadata = { title: 'Convert — AfriFX' }
+export const metadata = { title: 'Convert, AfriFX' }
 
 function SwapSkeleton() {
   return (

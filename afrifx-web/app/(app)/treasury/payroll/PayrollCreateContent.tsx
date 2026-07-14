@@ -178,7 +178,7 @@ export function PayrollCreateContent() {
             </div>
           </div>
 
-          {/* Recipients — tabs */}
+          {/* Recipients tabs */}
           <div className="rounded-xl border border-app-border bg-app-surface p-5">
             <div className="mb-4 flex items-center justify-between">
               <p className="text-sm font-medium text-app-text">Recipients</p>
@@ -324,8 +324,8 @@ Jane Smith,0xabcd...1234,50`}</pre>
             <ol className="space-y-1.5">
               {[
                 'Create batch with recipient list',
-                'Review — confirm amounts are correct',
-                'Execute — approve USDC, then send to each recipient',
+                'Review, confirm amounts are correct',
+                'Execute, approve USDC, then send to each recipient',
                 'Each payment gets a unique Memo reference (PAY-YYYYMMDD-XXXX)',
                 'Track status live as payments confirm on Arc',
               ].map((s, i) => (

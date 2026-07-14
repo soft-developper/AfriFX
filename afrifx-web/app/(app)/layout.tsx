@@ -10,14 +10,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <TopNav />
       <PlatformMaintenanceBanner />
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar — hidden on mobile, visible md+ */}
+        {/* Sidebar hidden on mobile, visible md+ */}
         <Sidebar />
         {/* Main content */}
         <main className="flex-1 overflow-y-auto p-4 pb-24 md:p-6 md:pb-6">
           <ProfileGuard>{children}</ProfileGuard>
         </main>
       </div>
-      {/* Bottom nav — mobile only */}
+      {/* Bottom nav mobile only */}
       <MobileNav />
     </div>
   )

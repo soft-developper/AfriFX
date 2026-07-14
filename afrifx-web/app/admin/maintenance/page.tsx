@@ -47,7 +47,7 @@ export default function AdminMaintenance() {
   useEffect(() => { load() }, [load])
 
   async function toggle(section: string, enabled: boolean) {
-    // Taking something down is destructive to user experience — confirm it.
+    // Taking something down is destructive to user experience confirm it.
     if (enabled) {
       const what = section === 'platform' ? 'the WHOLE PLATFORM' : `"${META[section]?.label ?? section}"`
       if (!confirm(
@@ -191,16 +191,16 @@ export default function AdminMaintenance() {
               {isEditing && !row.enabled && (
                 <div className="mt-4 space-y-2 border-t border-app-border pt-4">
                   <input value={msg} onChange={e => setMsg(e.target.value)}
-                    placeholder="Message shown to users (optional — a sensible default is used)"
+                    placeholder="Message shown to users (optional, a sensible default is used)"
                     className="w-full rounded-lg border border-app-border bg-app-bg px-3 py-2 text-xs text-app-text outline-none focus:ring-1 focus:ring-app-accent" />
                   <input value={eta} onChange={e => setEta(e.target.value)}
-                    placeholder='Expected back (optional) — e.g. "04:00 UTC"'
+                    placeholder='Expected back (optional), e.g. "04:00 UTC"'
                     className="w-full rounded-lg border border-app-border bg-app-bg px-3 py-2 text-xs text-app-text outline-none focus:ring-1 focus:ring-app-accent" />
                   <button onClick={() => toggle(row.section, true)} disabled={busy === row.section}
                     className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/20 px-3 py-1.5 text-xs font-semibold text-amber-400 hover:bg-amber-500/30 disabled:opacity-60">
                     {busy === row.section
                       ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      : <><Wrench className="h-3.5 w-3.5" /> Confirm — take {m.label.toLowerCase()} offline</>}
+                      : <><Wrench className="h-3.5 w-3.5" /> Confirm, take {m.label.toLowerCase()} offline</>}
                   </button>
                 </div>
               )}
@@ -211,7 +211,7 @@ export default function AdminMaintenance() {
 
       <p className="mt-5 text-xs text-app-muted">
         While a section is offline: users can't start new actions there, but trades
-        already in progress can still be confirmed, cancelled, disputed and discussed —
+        already in progress can still be confirmed, cancelled, disputed and discussed
         so nobody's funds get stranded. Admins bypass maintenance, so you can verify
         the upgrade before restoring service.
       </p>

@@ -1,8 +1,8 @@
 // ============================================================
-// FlutterwaveProvider — implements FiatRampProvider against Flutterwave v4.
+// FlutterwaveProvider implements FiatRampProvider against Flutterwave v4.
 //
 // Verified against the live docs (developer.flutterwave.com/docs/stablecoins):
-//   * Stablecoin chains: SOLANA, ETHEREUM, BASE, POLYGON. NOT Arc — so USDC
+//   * Stablecoin chains: SOLANA, ETHEREUM, BASE, POLYGON. NOT Arc so USDC
 //     originating on Arc is CCTP-bridged to BASE before we hand it over.
 //   * Fiat -> stablecoin: source NGN | GHS | GBP | EUR | USD  ->  USDC/USDT/RLUSD
 //   * Stablecoin -> crypto address: POST /direct-transfers with type 'crypto'
@@ -11,7 +11,7 @@
 //   * Webhooks: HMAC-SHA256 over the body, in the 'flutterwave-signature' header
 //
 // Everything the orchestrator needs is here; the engine never imports this file
-// directly — it goes through the registry.
+// directly it goes through the registry.
 // ============================================================
 
 import { createHmac, createHash, timingSafeEqual } from 'crypto'
@@ -39,7 +39,7 @@ const FLW_TO_CHAIN: Record<string, ChainKey> = {
 
   Our internal idempotency keys look like:
       tr-dfab9781-12eb-4d39-97fc-ec8c6259dc34:onramp
-  ...which is 46 chars AND contains a colon — so it fails BOTH rules, and
+  ...which is 46 chars AND contains a colon, so it fails BOTH rules, and
   every transfer would be rejected on the reference alone.
 
   So we derive a compliant reference: strip invalid characters, and if it's
@@ -74,7 +74,7 @@ async function flw<T = any>(req: FlwRequest): Promise<T> {
     'X-Trace-Id':   `afrifx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
   }
   if (req.idempotencyKey) headers['X-Idempotency-Key'] = req.idempotencyKey
-  // The sandbox lets us force success/failure deterministically — invaluable
+  // The sandbox lets us force success/failure deterministically invaluable
   // for exercising the orchestrator's failure paths end to end.
   if (FLW_IS_SANDBOX && req.scenario) headers['X-Scenario-Key'] = req.scenario
 
@@ -102,7 +102,7 @@ async function flw<T = any>(req: FlwRequest): Promise<T> {
     ].filter(Boolean)
 
     const msg = parts.length ? parts.join(' | ') : `HTTP ${res.status}`
-    // Log the whole body server-side — invaluable when a provider rejects us.
+    // Log the whole body server-side invaluable when a provider rejects us.
     console.error('[Flutterwave] request failed', {
       path: req.path, status: res.status, body: data,
     })
@@ -120,7 +120,7 @@ export class FlutterwaveProvider implements FiatRampProvider {
   }
 
   /*
-    Case A — sender pays fiat. Flutterwave converts the local currency into
+    Case A, sender pays fiat. Flutterwave converts the local currency into
     USDC and credits it to OUR Flutterwave stablecoin wallet.
 
     IMPORTANT: it does NOT go to a crypto address. Their documented flow is:
@@ -130,7 +130,7 @@ export class FlutterwaveProvider implements FiatRampProvider {
 
     And for AfriFX's fiat-in flow we don't want step 2 anyway: the USDC never
     needs to touch a blockchain. It lands in our Flutterwave wallet and the
-    off-ramp spends straight from that balance — no gas, no bridge, cheaper and
+    off-ramp spends straight from that balance, no gas, no bridge, cheaper and
     fewer moving parts. (The crypto path is only for usdc_in, where the user's
     USDC starts on Arc.)
 
@@ -149,7 +149,7 @@ export class FlutterwaveProvider implements FiatRampProvider {
     const walletId = process.env.FLUTTERWAVE_WALLET_ID
     if (!walletId) {
       throw new Error(
-        'FLUTTERWAVE_WALLET_ID is not set — the on-ramp needs a Flutterwave ' +
+        'FLUTTERWAVE_WALLET_ID is not set, the on-ramp needs a Flutterwave ' +
         'stablecoin wallet to credit the converted USDC into.')
     }
 
@@ -227,7 +227,7 @@ export class FlutterwaveProvider implements FiatRampProvider {
 
     NOTE: unlike HoneyCoin (which hands back a deposit address to send to),
     Flutterwave debits our own stablecoin wallet balance. So the "deposit
-    address" we return is OUR wallet identifier — the orchestrator's bridge
+    address" we return is OUR wallet identifier, the orchestrator's bridge
     leg tops that wallet up, then this call spends from it.
   */
   async createPayout(params: {
@@ -282,7 +282,7 @@ export class FlutterwaveProvider implements FiatRampProvider {
     const d = data?.data ?? {}
     return {
       providerRef:    d.id,
-      // Flutterwave debits our stablecoin wallet — there is no per-transfer
+      // Flutterwave debits our stablecoin wallet there is no per-transfer
       // deposit address. The orchestrator's bridge leg funds this wallet.
       depositAddress: process.env.FLUTTERWAVE_USDC_WALLET ?? 'flutterwave-wallet',
       depositChain:   params.chain,
@@ -315,7 +315,7 @@ export class FlutterwaveProvider implements FiatRampProvider {
 
     // Per the OpenAPI spec the payload is:
     //   { webhook_id, timestamp, type, data }
-    // where `type` is the EVENT name at the TOP level — e.g. 'transfer.disburse',
+    // where `type` is the EVENT name at the TOP level e.g. 'transfer.disburse',
     // 'transfer.reversal', 'charge.completed'. `data.type` is the TRANSFER type
     // ('bank', 'mobile_money', 'crypto', 'wallet'), which is a different thing.
     const eventType = String(b.type ?? '').toLowerCase()
@@ -326,7 +326,7 @@ export class FlutterwaveProvider implements FiatRampProvider {
       : status === 'FAILED' || status === 'CANCELLED'   ? 'failed'
       : 'pending'
 
-    // A reversal means money came BACK — treat it as a failure so the
+    // A reversal means money came BACK treat it as a failure so the
     // orchestrator unwinds rather than reporting success.
     if (eventType === 'transfer.reversal') norm = 'failed'
 
@@ -365,7 +365,7 @@ export class FlutterwaveProvider implements FiatRampProvider {
     return d?.data ?? []
   }
   /*
-    Verify a bank account and get the holder's real name — so a user can't
+    Verify a bank account and get the holder's real name, so a user can't
     typo an account number and send money into the void.
 
     The v4 validation errors told us the shape: it wants a nested `account`
@@ -386,14 +386,14 @@ export class FlutterwaveProvider implements FiatRampProvider {
     })
     // Return the WHOLE envelope, not just `data`. A previous version returned
     // `d?.data ?? null`, which silently produced an EMPTY response when the
-    // account details sat elsewhere in the payload — indistinguishable from a
+    // account details sat elsewhere in the payload indistinguishable from a
     // failure. Better to surface exactly what the provider sent.
     return d ?? null
   }
 
   /*
     Our balances. The off-ramp spends USDC from here, so a dry wallet is the
-    likeliest payout failure — worth surfacing.
+    likeliest payout failure, worth surfacing.
 
     NOTE: `/wallets/{ccy}/balance` returned RESOURCE_NOT_FOUND on a fresh
     sandbox account, which most likely means no stablecoin balance is
@@ -420,7 +420,7 @@ export class FlutterwaveProvider implements FiatRampProvider {
 
   // Send stablecoin OUT to a crypto address. Not used by the fiat-in flow
   // (which keeps USDC inside Flutterwave), but needed if we ever push funds
-  // on-chain — and it's the mirror of how usdc_in gets funds IN.
+  // on-chain and it's the mirror of how usdc_in gets funds IN.
   async sendToAddress(params: {
     idempotencyKey: string
     amount: number

@@ -1,11 +1,11 @@
 // ============================================================
-// CCTP bridge module — moves USDC from Arc to a provider-supported chain
+// CCTP bridge module moves USDC from Arc to a provider-supported chain
 // (e.g. Base) using Circle's Cross-Chain Transfer Protocol: burn on source,
 // get Circle's attestation, mint canonical USDC on destination. No wrapped
 // tokens, 1:1 amount. See HONEYCOIN_INTEGRATION_NOTES.md §5.
 //
 // STATUS: structured skeleton. The on-chain calls are marked TODO and gated
-// behind CCTP_LIVE — with CCTP_LIVE unset (default), bridge() runs in MOCK mode
+// behind CCTP_LIVE with CCTP_LIVE unset (default), bridge() runs in MOCK mode
 // so the state machine is testable end-to-end now. Real burn/attest/mint gets
 // filled in once we finalize the destination chain (Base) + have RPC/keys.
 //
@@ -65,7 +65,7 @@ export async function bridge(req: BridgeRequest): Promise<BridgeResult> {
   }
 }
 
-// ---- real implementations (TODO — filled in with RPC/keys + final chain) ----
+// ---- real implementations (TODO filled in with RPC/keys + final chain) ----
 
 async function burnOnSource(_req: BridgeRequest): Promise<string> {
   // TODO: build viem client for Arc, call depositForBurn, return tx hash.
@@ -83,7 +83,7 @@ async function mintOnDestination(_req: BridgeRequest, _attestation: string): Pro
   throw new Error('CCTP mint not implemented yet')
 }
 
-// ---- mock mode (default) — lets the state machine run end-to-end now ----
+// ---- mock mode (default) lets the state machine run end-to-end now ----
 
 async function mockBridge(req: BridgeRequest): Promise<BridgeResult> {
   // Force failure for tests via a key suffix, else succeed with fake hashes.

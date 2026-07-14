@@ -1,5 +1,5 @@
 // ============================================================
-// Mock fiat ramp provider — a fully working fake for testing the orchestrator
+// Mock fiat ramp provider a fully working fake for testing the orchestrator
 // state machine end-to-end with NO real API keys. Mirrors the SHAPES HoneyCoin
 // returns (see HONEYCOIN_INTEGRATION_NOTES.md) so swapping in the real one
 // later changes nothing in the core.

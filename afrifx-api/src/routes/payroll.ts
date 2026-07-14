@@ -51,7 +51,7 @@ router.get('/batches', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /payroll/batches — create batch
+// POST /payroll/batches create batch
 router.post('/batches', async (req, res) => {
   const { walletAddress, name, description, recipients, currency = 'USDC' } = req.body
   if (!walletAddress || !name || !recipients?.length) {
@@ -89,7 +89,7 @@ router.post('/batches', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// GET /payroll/batches/:id — batch + recipients
+// GET /payroll/batches/:id batch + recipients
 router.get('/batches/:id', async (req, res) => {
   try {
     const batchRows = await db.run(
@@ -111,7 +111,7 @@ router.get('/batches/:id', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// PATCH /payroll/recipients/:id — update recipient status + tx_hash
+// PATCH /payroll/recipients/:id update recipient status + tx_hash
 router.patch('/recipients/:id', async (req, res) => {
   const { status, txHash } = req.body
   try {
@@ -146,7 +146,7 @@ router.patch('/recipients/:id', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// DELETE /payroll/batches/:id — delete draft
+// DELETE /payroll/batches/:id delete draft
 router.delete('/batches/:id', async (req, res) => {
   try {
     await db.run(sql`DELETE FROM payroll_recipients WHERE batch_id = ${req.params.id}`)

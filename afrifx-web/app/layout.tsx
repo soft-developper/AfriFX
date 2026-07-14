@@ -4,8 +4,8 @@ import '@/styles/globals.css'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://afrifx.xyz'),
-  title: 'AfriFX — Stablecoin FX & cross-border payments on Arc',
-  description: 'Convert between USDC and African currencies, send across borders, and trade peer-to-peer — settled on the Arc blockchain in seconds.',
+  title: 'AfriFX, Stablecoin FX & cross-border payments on Arc',
+  description: 'Convert between USDC and African currencies, send across borders, and trade peer-to-peer, settled on the Arc blockchain in seconds.',
   icons: {
     icon:     [{ url: '/favicon.svg', type: 'image/svg+xml' }],
     shortcut: '/favicon.svg',
@@ -15,15 +15,15 @@ export const metadata: Metadata = {
   openGraph: {
     type:        'website',
     siteName:    'AfriFX',
-    title:       'AfriFX — Stablecoin FX & cross-border payments on Arc',
-    description: 'Convert between USDC and African currencies, send across borders, and trade peer-to-peer — settled on Arc in seconds.',
+    title:       'AfriFX, Stablecoin FX & cross-border payments on Arc',
+    description: 'Convert between USDC and African currencies, send across borders, and trade peer-to-peer, settled on Arc in seconds.',
     url:         'https://afrifx.xyz',
-    images:      [{ url: '/brand/og-image.png', width: 1200, height: 630, alt: 'AfriFX — stablecoin FX on Arc' }],
+    images:      [{ url: '/brand/og-image.png', width: 1200, height: 630, alt: 'AfriFX, stablecoin FX on Arc' }],
   },
   twitter: {
     card:        'summary_large_image',
-    title:       'AfriFX — Stablecoin FX & cross-border payments on Arc',
-    description: 'Convert, send across borders, and trade peer-to-peer — settled on Arc in seconds.',
+    title:       'AfriFX, Stablecoin FX & cross-border payments on Arc',
+    description: 'Convert, send across borders, and trade peer-to-peer, settled on Arc in seconds.',
     images:      ['/brand/og-image.png'],
   },
 }

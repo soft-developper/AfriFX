@@ -1,10 +1,10 @@
 -- ============================================================
--- Dispute duty sessions — sub-admin working hours + duty tracking
+-- Dispute duty sessions sub-admin working hours + duty tracking
 --
 -- 1) Working hours live ON the admin record (set by the general admin when
 --    inviting them). Max 6 hours, recurring daily, with optional specific dates.
 -- 2) admin_duty_sessions records each actual shift: when they clicked
---    "resume duty", when it ended, and what they did — this is the session log
+--    "resume duty", when it ended, and what they did this is the session log
 --    the general admin reviews.
 --
 -- SQLite/libSQL has no "ADD COLUMN IF NOT EXISTS": if a column already exists
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS admin_duty_sessions (
   status            TEXT NOT NULL DEFAULT 'scheduled',
                     -- scheduled | on_duty | ended | missed
 
-  -- Session log (what they did) — filled when the session ends
+  -- Session log (what they did) filled when the session ends
   disputes_accepted INTEGER DEFAULT 0,
   disputes_resolved INTEGER DEFAULT 0,
   actions_count     INTEGER DEFAULT 0,

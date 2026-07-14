@@ -58,7 +58,7 @@ function UnsubscribeInner() {
             </p>
             <p className="mt-3 rounded-lg bg-app-accent/[0.07] px-3 py-2 text-xs text-app-muted">
               You'll still receive essential emails about your own trades, disputes
-              and invoices — those aren't affected.
+              and invoices, those aren't affected.
             </p>
             <button onClick={confirm} disabled={state === 'working'}
               className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-app-accent px-4 py-2.5 text-sm font-semibold text-app-on-accent hover:bg-app-accent-hover disabled:opacity-60">

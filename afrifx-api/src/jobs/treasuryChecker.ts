@@ -1,5 +1,5 @@
 // Checks auto-conversion rules every hour
-// Marks triggered rules — user executes manually (no stored keys)
+// Marks triggered rules user executes manually (no stored keys)
 import cron from 'node-cron'
 import { db } from '../db/client'
 import { sql } from 'drizzle-orm'
@@ -30,7 +30,7 @@ function parseRows(r: any): any[] {
 }
 
 export function startTreasuryChecker() {
-  console.log('[TreasuryChecker] ✅ Started — checks every hour')
+  console.log('[TreasuryChecker] ✅ Started, checks every hour')
 
   // Run every hour
   cron.schedule('0 * * * *', checkRules)
@@ -72,7 +72,7 @@ async function checkRules() {
                   last_triggered = ${now}
                 WHERE id = ${id}`
           )
-          console.log(`[TreasuryChecker] ⚡ Rule triggered for ${wallet.slice(0,10)}… — balance ${balance} >= ${threshold}`)
+          console.log(`[TreasuryChecker] ⚡ Rule triggered for ${wallet.slice(0,10)}…, balance ${balance} >= ${threshold}`)
         }
       } catch {}
     }

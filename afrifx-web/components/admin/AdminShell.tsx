@@ -159,7 +159,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-app-bg md:flex-row">
-      {/* Mobile top bar — hidden md+ */}
+      {/* Mobile top bar hidden md+ */}
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-app-border bg-app-surface px-4 md:hidden">
         <div className="flex items-center gap-2">
           <Shield className="h-5 w-5 text-app-accent-text" />
@@ -175,7 +175,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* Mobile drawer — hidden md+ */}
+      {/* Mobile drawer hidden md+ */}
       {drawerOpen && (
         <div className="md:hidden">
           <div
@@ -202,7 +202,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {/* Desktop sidebar — hidden on mobile */}
+      {/* Desktop sidebar hidden on mobile */}
       <aside className="hidden md:flex md:w-56 md:shrink-0 flex-col border-r border-app-border bg-app-surface">
         <div className="flex items-center gap-2 border-b border-app-border px-4 py-4">
           <Shield className="h-5 w-5 text-app-accent-text" />
@@ -215,7 +215,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <main className="flex-1 overflow-y-auto p-4 md:p-6">
-        {/* Duty banner shows on EVERY admin page — a dispute-only sub-admin may
+        {/* Duty banner shows on EVERY admin page a dispute-only sub-admin may
             never land on /admin/dashboard (they lack view_dashboard and get
             redirected), so the Resume duty control has to live in the shell. */}
         <DutyBanner />

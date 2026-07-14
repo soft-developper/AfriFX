@@ -139,7 +139,7 @@ function TwoFactorCard({ autoStart }: { autoStart: boolean }) {
         {!enabled && stage === 'idle' && (
           <>
             <div className="flex items-center gap-2 rounded-lg bg-amber-900/20 px-3 py-2.5 text-xs text-amber-400">
-              <ShieldOff className="h-4 w-4" /> 2FA is not enabled — we recommend turning it on
+              <ShieldOff className="h-4 w-4" /> 2FA is not enabled, we recommend turning it on
             </div>
             <Button onClick={handleStart} disabled={busy}>
               {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> Starting…</> : <>Set up 2FA</>}
@@ -176,7 +176,7 @@ function TwoFactorCard({ autoStart }: { autoStart: boolean }) {
               <CheckCircle className="h-4 w-4" /> 2FA enabled
             </div>
             <p className="text-xs text-app-muted">
-              Save these recovery codes somewhere safe — each can be used once if you lose access to your authenticator.
+              Save these recovery codes somewhere safe, each can be used once if you lose access to your authenticator.
             </p>
             <div className="grid grid-cols-2 gap-1.5 rounded-lg bg-app-bg p-3 font-mono text-xs text-app-text">
               {codes.map(c => <span key={c}>{c}</span>)}

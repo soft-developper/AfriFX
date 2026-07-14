@@ -81,7 +81,7 @@ export function PayrollExecuteContent() {
           })
         }
 
-        // Confirm on-chain before marking sent — a broadcast tx can revert.
+        // Confirm on-chain before marking sent a broadcast tx can revert.
         let onChainOk = true
         if (publicClient) {
           try {

@@ -70,7 +70,7 @@ export default function MyTradesPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-app-text">My trades</h1>
-          <p className="text-sm text-app-muted">All your P2P trades — as buyer or seller.</p>
+          <p className="text-sm text-app-muted">All your P2P trades, as buyer or seller.</p>
         </div>
         <Link href="/marketplace/create">
           <Button size="sm"><Plus className="h-4 w-4" /> New offer</Button>

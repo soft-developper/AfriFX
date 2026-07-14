@@ -29,7 +29,7 @@ function SendPageInner() {
   const validAmount   = amountNum > 0 && !insufficientFunds
   const valid         = validAddress && validAmount
 
-  // Max button — fill in full balance
+  // Max button fill in full balance
   function setMax() {
     setAmount(balanceNum.toFixed(6))
   }
@@ -100,7 +100,7 @@ function SendPageInner() {
           {insufficientFunds && (
             <div className="flex items-center gap-1.5 rounded-lg bg-red-900/20 px-3 py-2 text-xs text-red-400">
               <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-              Insufficient balance — you only have {balance} USDC
+              Insufficient balance, you only have {balance} USDC
             </div>
           )}
 
@@ -124,7 +124,7 @@ function SendPageInner() {
           </div>
         </div>
 
-        {/* Send button — disabled when insufficient */}
+        {/* Send button disabled when insufficient */}
         <Button className="w-full" size="lg" onClick={handleSend}
           disabled={!isConnected || !walletReady || !valid || isPending || insufficientFunds}>
           {isPending

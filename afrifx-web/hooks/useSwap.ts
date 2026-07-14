@@ -107,7 +107,7 @@ export function useSwap() {
           setTxStatus(settled ? 'settled' : 'failed')
           if (!settled) setError('Transaction reverted on-chain')
         }).catch(() => {
-          // Receipt lookup failed (e.g. timeout) — leave as pending; the
+          // Receipt lookup failed (e.g. timeout) leave as pending; the
           // txSettler job will reconcile it against the chain shortly.
         })
       }

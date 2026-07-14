@@ -1,4 +1,4 @@
-// AfriFX broadcast email template — the branded shell for admin announcements.
+// AfriFX broadcast email template the branded shell for admin announcements.
 //
 // Uses the CURRENT gold brand (the older transactional templates in
 // templates.ts still use the pre-rebrand blue; those are left alone here).
@@ -80,7 +80,7 @@ export function broadcastEmail(p: BroadcastTemplateParams): { subject: string; h
       <!-- Card -->
       <tr><td style="background:${CARD};border:1px solid ${BORDER};border-radius:14px;padding:28px 26px;">
 
-        <!-- Who it's from — an authenticity signal -->
+        <!-- Who it's from, an authenticity signal -->
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
           <tr><td style="padding-bottom:14px;border-bottom:1px solid ${BORDER};">
             <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:${MUTED};">
@@ -105,7 +105,7 @@ export function broadcastEmail(p: BroadcastTemplateParams): { subject: string; h
 
         <!-- Sign-off -->
         <p style="margin:24px 0 0;padding-top:18px;border-top:1px solid ${BORDER};font-size:14px;color:${MUTED};">
-          — ${p.senderName}<br/>
+         , ${p.senderName}<br/>
           <span style="font-size:12px;">${p.senderRole}, AfriFX</span>
         </p>
       </td></tr>
@@ -127,7 +127,7 @@ export function broadcastEmail(p: BroadcastTemplateParams): { subject: string; h
         </p>
         <p style="margin:0;font-size:10px;color:${MUTED};">
           ${p.unsubscribeUrl
-            ? 'Unsubscribing stops announcements only — you will still receive essential alerts about your own trades and disputes.'
+            ? 'Unsubscribing stops announcements only, you will still receive essential alerts about your own trades and disputes.'
             : ''}
         </p>
       </td></tr>

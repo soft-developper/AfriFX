@@ -80,7 +80,7 @@ export function useCorridorSwap() {
   }
 
   // Wait for the on-chain receipt and return whether it actually succeeded.
-  // A tx hash existing only means it was broadcast — it can still revert.
+  // A tx hash existing only means it was broadcast it can still revert.
   async function confirmedOnChain(hash: `0x${string}`): Promise<boolean> {
     if (!publicClient) return false
     try {
@@ -134,7 +134,7 @@ export function useCorridorSwap() {
       const step1Ok = await confirmedOnChain(hash1)
       await patchTxStatus(hash1, step1Ok ? 'settled' : 'failed')
       if (!step1Ok) {
-        setError('Step 1 reverted on-chain — the corridor was not completed. No further transaction was sent.')
+        setError('Step 1 reverted on-chain, the corridor was not completed. No further transaction was sent.')
         setStep('error')
         return
       }

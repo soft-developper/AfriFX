@@ -4,7 +4,7 @@
 // Rules (per spec):
 //  * A sub-admin's working hours are set by the general admin at invite time.
 //    Max 6 hours. Recurring on chosen weekdays, plus optional specific dates.
-//  * Being INSIDE the window is not enough — the sub-admin must click
+//  * Being INSIDE the window is not enough the sub-admin must click
 //    "resume duty" to actually go on duty.
 //  * Only an ON-DUTY sub-admin can ACCEPT a new dispute.
 //  * If their window ends while they hold a dispute, they may finish it,
@@ -205,6 +205,6 @@ export function formatWindowText(
   const sorted = order.filter(d => days?.includes(d))
   const dayPart = sorted.length
     ? sorted.map(d => DAY_LABEL[d]).join(', ')
-    : (dates?.length ? `${dates.length} specific date${dates.length === 1 ? '' : 's'}` : '—')
+    : (dates?.length ? `${dates.length} specific date${dates.length === 1 ? '' : 's'}` : '-')
   return `${dayPart} · ${hhmm(startMin)}-${hhmm(endMin)} UTC (${span}h)`
 }

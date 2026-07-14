@@ -46,7 +46,7 @@ export function DisputeStatus({ disputeId, offerId, userAddress, userRole, usern
 
   if (!disputeId) return (
     <div className="rounded-lg border border-amber-900/40 bg-amber-900/10 p-3 text-xs">
-      <p className="font-medium text-amber-400">⏳ Dispute raised — awaiting admin review</p>
+      <p className="font-medium text-amber-400">⏳ Dispute raised, awaiting admin review</p>
       <p className="mt-1 text-amber-600">An admin will accept and handle your dispute shortly.</p>
     </div>
   )
@@ -90,7 +90,7 @@ export function DisputeStatus({ disputeId, offerId, userAddress, userRole, usern
         </div>
       </div>
 
-      {/* Chat — only visible after admin accepts */}
+      {/* Chat only visible after admin accepts */}
       {assignment && disputeId && (
         <DisputeChat
           disputeId={disputeId}

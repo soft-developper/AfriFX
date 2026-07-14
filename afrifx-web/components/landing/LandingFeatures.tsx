@@ -33,7 +33,7 @@ const GROUPS: Group[] = [
         icon: Globe,
         name: 'Corridor',
         overview: 'A two-step cross-border route (e.g. NGN → USDC → KES) that bridges two African currencies through USDC in one flow.',
-        useCase: 'Send money from Nigeria to Kenya without a bank wire — the corridor handles both legs and confirms each on-chain.',
+        useCase: 'Send money from Nigeria to Kenya without a bank wire, the corridor handles both legs and confirms each on-chain.',
       },
       {
         icon: Send,
@@ -93,7 +93,7 @@ const GROUPS: Group[] = [
         icon: CreditCard,
         name: 'Payroll',
         overview: 'Pay a whole team in one batch, with each payment confirmed on-chain and marked sent or failed accurately.',
-        useCase: 'Run monthly payroll for a distributed team — one batch, every payment verified on Arc.',
+        useCase: 'Run monthly payroll for a distributed team, one batch, every payment verified on Arc.',
       },
     ],
   },
@@ -104,7 +104,7 @@ const GROUPS: Group[] = [
       {
         icon: Wallet,
         name: 'Wallet',
-        overview: 'Connect with MetaMask or sign in with Google/email to get a secure embedded wallet — your keys, no seed phrase required.',
+        overview: 'Connect with MetaMask or sign in with Google/email to get a secure embedded wallet, your keys, no seed phrase required.',
         useCase: 'A first-time user signs in with Google and starts transacting immediately, no crypto setup.',
       },
       {
@@ -116,7 +116,7 @@ const GROUPS: Group[] = [
       {
         icon: History,
         name: 'History',
-        overview: 'Every conversion and corridor swap, with real on-chain status — settled, pending, or failed.',
+        overview: 'Every conversion and corridor swap, with real on-chain status, settled, pending, or failed.',
         useCase: 'Check whether last night’s conversion actually settled on-chain, with the transaction hash to verify.',
       },
       {
@@ -139,7 +139,7 @@ export function LandingFeatures() {
             One app for African <span className="afx-gradient-text">money movement</span>
           </h2>
           <p className="mt-4 text-app-muted">
-            From simple conversions to business payroll — here’s what you can do, and when you’d reach for it.
+            From simple conversions to business payroll, here’s what you can do, and when you’d reach for it.
           </p>
         </div>
       </Reveal>
@@ -184,7 +184,7 @@ export function LandingFeatures() {
           Ready to move money the <span className="afx-gradient-text">modern way?</span>
         </h3>
         <p className="mx-auto mt-3 max-w-xl text-app-muted">
-          Connect a wallet or sign in with Google — you’ll be transacting on Arc in under a minute.
+          Connect a wallet or sign in with Google, you’ll be transacting on Arc in under a minute.
         </p>
         <a
           href="/dashboard" target="_blank" rel="noopener noreferrer"

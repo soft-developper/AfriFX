@@ -12,7 +12,7 @@ function parseRows(r: any): any[] {
   return []
 }
 
-// GET /notifications?wallet=0x — recent notifications for in-app bell
+// GET /notifications?wallet=0x recent notifications for in-app bell
 router.get('/', async (req, res) => {
   const wallet = (req.query.wallet as string)?.toLowerCase()
   if (!wallet) return res.status(400).json({ error: 'wallet required' })
@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// GET /notifications/unread?wallet=0x — unread count for badge
+// GET /notifications/unread?wallet=0x unread count for badge
 router.get('/unread', async (req, res) => {
   const wallet = (req.query.wallet as string)?.toLowerCase()
   if (!wallet) return res.status(400).json({ error: 'wallet required' })
@@ -42,7 +42,7 @@ router.get('/unread', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// PATCH /notifications/:id/read — mark as read
+// PATCH /notifications/:id/read mark as read
 router.patch('/:id/read', async (req, res) => {
   const now = Math.floor(Date.now() / 1000)
   try {
@@ -67,7 +67,7 @@ router.patch('/mark-all-read', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /notifications/email — update user email + preferences
+// POST /notifications/email update user email + preferences
 router.post('/email', async (req, res) => {
   const {
     wallet, email, notify_trades, notify_disputes, notify_invoices,
@@ -114,7 +114,7 @@ router.post('/email', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /notifications/heartbeat — track user activity to suppress duplicate emails
+// POST /notifications/heartbeat track user activity to suppress duplicate emails
 router.post('/heartbeat', async (req, res) => {
   const { wallet } = req.body
   if (!wallet) return res.status(400).json({ error: 'wallet required' })
@@ -129,7 +129,7 @@ router.post('/heartbeat', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /notifications/test-email — send a test email to verify setup
+// POST /notifications/test-email send a test email to verify setup
 router.post('/test-email', async (req, res) => {
   const { wallet } = req.body
   if (!wallet) return res.status(400).json({ error: 'wallet required' })

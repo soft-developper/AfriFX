@@ -1,5 +1,5 @@
 // ============================================================
-// Admin broadcasts — mass / targeted email from the general admin.
+// Admin broadcasts mass / targeted email from the general admin.
 //
 // Audiences:  sub_admins | all_users | selected | filtered
 // Opt-out:    honoured for USERS (profiles.notify_broadcasts). Sub-admins are
@@ -41,7 +41,7 @@ async function resolveAudience(
   audience: string, detail: any,
 ): Promise<{ recipients: Recipient[]; internal: boolean }> {
 
-  // Staff — always receive internal mail (no opt-out).
+  // Staff always receive internal mail (no opt-out).
   if (audience === 'sub_admins') {
     const rows = parseRows(await db.run(sql`
       SELECT username, email FROM admins
@@ -55,7 +55,7 @@ async function resolveAudience(
     }
   }
 
-  // Users — opt-out honoured.
+  // Users opt-out honoured.
   let rows: any[] = []
 
   if (audience === 'all_users') {
@@ -118,7 +118,7 @@ async function resolveAudience(
   }
 }
 
-// ── GET /broadcasts/audience/:audience — preview the recipient count ────────
+// ── GET /broadcasts/audience/:audience preview the recipient count ────────
 router.get('/audience/:audience', requirePermission(PERMISSIONS.SEND_BROADCASTS), async (req, res) => {
   try {
     const detail = req.query.filter ? { filter: req.query.filter } : {}
@@ -133,7 +133,7 @@ router.get('/audience/:audience', requirePermission(PERMISSIONS.SEND_BROADCASTS)
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// ── GET /broadcasts/users — list users (for "selected" audience picker) ─────
+// ── GET /broadcasts/users list users (for "selected" audience picker) ─────
 router.get('/users', requirePermission(PERMISSIONS.SEND_BROADCASTS), async (_req, res) => {
   try {
     const rows = parseRows(await db.run(sql`
@@ -150,7 +150,7 @@ router.get('/users', requirePermission(PERMISSIONS.SEND_BROADCASTS), async (_req
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// ── POST /broadcasts — send ────────────────────────────────────────────────
+// ── POST /broadcasts send ────────────────────────────────────────────────
 router.post('/', requirePermission(PERMISSIONS.SEND_BROADCASTS), async (req: any, res) => {
   const admin = req.admin
   const { audience, detail, subject, body } = req.body
@@ -234,7 +234,7 @@ router.post('/', requirePermission(PERMISSIONS.SEND_BROADCASTS), async (req: any
       WHERE id = ${id}`)
 
     await logAction(admin.id, admin.username, 'send_broadcast', 'broadcast', id,
-      `Broadcast "${subject.trim()}" to ${audience} — ${delivered} delivered, ${failed} failed, ${skipped} opted out`)
+      `Broadcast "${subject.trim()}" to ${audience}, ${delivered} delivered, ${failed} failed, ${skipped} opted out`)
 
   } catch (err: any) {
     await db.run(sql`
@@ -244,7 +244,7 @@ router.post('/', requirePermission(PERMISSIONS.SEND_BROADCASTS), async (req: any
   }
 })
 
-// ── GET /broadcasts — history ──────────────────────────────────────────────
+// ── GET /broadcasts history ──────────────────────────────────────────────
 router.get('/', requirePermission(PERMISSIONS.SEND_BROADCASTS), async (_req, res) => {
   try {
     const rows = parseRows(await db.run(sql`

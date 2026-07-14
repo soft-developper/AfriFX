@@ -76,7 +76,7 @@ export function DutyBanner() {
     )
   }
 
-  // ON DUTY — show time remaining, ticking.
+  // ON DUTY show time remaining, ticking.
   if (state.onDuty && state.windowEnd) {
     const left = state.windowEnd - now
     return (
@@ -97,14 +97,14 @@ export function DutyBanner() {
           </div>
         </div>
         <p className="mt-3 border-t border-emerald-500/20 pt-2.5 text-xs text-app-muted">
-          Disputes you've already accepted can still be finished after your session ends —
+          Disputes you've already accepted can still be finished after your session ends
           you just can't accept new ones.
         </p>
       </div>
     )
   }
 
-  // IN WINDOW, NOT RESUMED — the actionable state.
+  // IN WINDOW, NOT RESUMED the actionable state.
   if (state.inWindow && state.windowEnd) {
     const left = state.windowEnd - now
     return (
@@ -122,7 +122,7 @@ export function DutyBanner() {
             <div className="text-right">
               <p className="text-[10px] uppercase tracking-wider text-app-muted">Time left</p>
               <p className="font-mono text-lg font-semibold text-app-accent-text">
-                {left > 0 ? countdown(left) : '—'}
+                {left > 0 ? countdown(left) : '-'}
               </p>
             </div>
             <button onClick={resume} disabled={busy}
@@ -138,7 +138,7 @@ export function DutyBanner() {
     )
   }
 
-  // OFF DUTY — ticking countdown to the next session.
+  // OFF DUTY ticking countdown to the next session.
   const until = state.nextStart ? state.nextStart - now : null
   return (
     <div className="mb-6 rounded-xl border border-app-border bg-app-surface p-4">

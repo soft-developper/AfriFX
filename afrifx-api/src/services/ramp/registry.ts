@@ -1,7 +1,7 @@
 // ============================================================
 // Provider registry. The orchestrator asks for a provider by key; whichever
 // implementations are registered are available. This is where HoneyCoin /
-// Yellow Card get plugged in later — the core never imports them directly.
+// Yellow Card get plugged in later the core never imports them directly.
 // ============================================================
 
 import type { FiatRampProvider } from './types'
@@ -29,11 +29,11 @@ export function listProviders(): string[] {
 registerProvider(new MockProvider())
 
 // Flutterwave registers only when credentials are present, so a missing .env
-// can never take the app down — it just means no live provider is available.
+// can never take the app down it just means no live provider is available.
 if (flutterwaveConfigured()) {
   registerProvider(new FlutterwaveProvider())
   console.log('[Ramp] ✅ Flutterwave provider registered' +
     (process.env.FLUTTERWAVE_ENV === 'production' ? ' (PRODUCTION)' : ' (sandbox)'))
 } else {
-  console.log('[Ramp] Flutterwave not configured — mock provider only')
+  console.log('[Ramp] Flutterwave not configured, mock provider only')
 }

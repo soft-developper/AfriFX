@@ -7,7 +7,7 @@ import { ConnectButton } from '@/components/wallet/ConnectButton'
 
 const features = [
   { icon: Zap,           title: 'Sub-second settlement', desc: 'Arc finalises transactions in under 1 second.' },
-  { icon: Shield,        title: 'USDC-native',           desc: 'Gas fees paid in USDC — no volatile ETH needed.' },
+  { icon: Shield,        title: 'USDC-native',           desc: 'Gas fees paid in USDC, no volatile ETH needed.' },
   { icon: Globe,         title: 'Pan-African corridors', desc: 'NGN, GHS, KES, ZAR and more coming soon.' },
 ]
 

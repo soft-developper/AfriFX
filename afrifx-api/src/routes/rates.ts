@@ -3,12 +3,12 @@ import { getCachedRates, getRateByPair } from '../services/rateOracle'
 
 const router = Router()
 
-// GET /rates — all FX rates
+// GET /rates all FX rates
 router.get('/', (_req, res) => {
   res.json(getCachedRates())
 })
 
-// GET /rates/:pair — e.g. /rates/NGN%2FUSDC
+// GET /rates/:pair e.g. /rates/NGN%2FUSDC
 router.get('/:pair', (req, res) => {
   const pair = decodeURIComponent(req.params.pair)
   const rate = getRateByPair(pair)

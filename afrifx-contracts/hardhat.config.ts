@@ -17,7 +17,7 @@ const config: HardhatUserConfig = {
       url:      process.env.ARC_RPC_URL ?? 'https://rpc.testnet.arc.network',
       chainId:  5042002,
       accounts: [PRIVATE_KEY],
-      // Arc uses USDC as gas token — ensure deployer wallet has testnet USDC
+      // Arc uses USDC as gas token ensure deployer wallet has testnet USDC
       // Faucet: https://faucet.circle.com
     },
     hardhat: {

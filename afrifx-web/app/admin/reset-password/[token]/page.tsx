@@ -27,7 +27,7 @@ export default function ResetPasswordPage() {
     try {
       const result = await resetPassword(params.token, password)
       if (result.success) setDone(true)
-      else setError((result as any).error ?? 'Reset failed — the link may have expired')
+      else setError((result as any).error ?? 'Reset failed, the link may have expired')
     } finally { setBusy(false) }
   }
 

@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// POST /transactions — create
+// POST /transactions create
 router.post('/', async (req, res) => {
   const {
     walletAddress, fromCurrency, toCurrency,
@@ -53,7 +53,7 @@ router.post('/', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// PATCH /transactions/:hash — update status (called after on-chain confirmation)
+// PATCH /transactions/:hash update status (called after on-chain confirmation)
 router.patch('/:hash', async (req, res) => {
   const { status } = req.body
   const now        = Math.floor(Date.now() / 1000)

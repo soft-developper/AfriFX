@@ -1,5 +1,5 @@
 // Cloudinary upload via AfriFX backend
-// API keys stay on the server — never exposed to the browser
+// API keys stay on the server never exposed to the browser
 // Backend endpoint: POST /chat/:offerId/upload
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
@@ -59,7 +59,7 @@ export async function uploadToCloudinary(
       }
     })
 
-    xhr.addEventListener('error', () => reject(new Error('Upload failed — network error')))
+    xhr.addEventListener('error', () => reject(new Error('Upload failed, network error')))
     xhr.send(formData)
   })
 }

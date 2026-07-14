@@ -55,7 +55,7 @@ export interface PayoutResult {
 // Normalized shape a provider's webhook is translated into.
 export interface NormalizedWebhook {
   providerRef?:      string
-  externalReference?: string   // our idempotency key — how we find the transfer/leg
+  externalReference?: string   // our idempotency key, how we find the transfer/leg
   leg:    'onramp' | 'offramp' | 'payout'
   status: 'done' | 'failed' | 'pending'
   detail?: unknown

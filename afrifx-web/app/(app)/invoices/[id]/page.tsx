@@ -75,7 +75,7 @@ function InvoiceDetail() {
               </span>
             </div>
             {[
-              ['Description', invoice.description ?? '—'],
+              ['Description', invoice.description ?? '-'],
               ['Reference',   invoice.memo_ref],
               ['Created',     new Date(invoice.created_at * 1000).toLocaleString()],
               ['Due',         invoice.due_date ? new Date(invoice.due_date * 1000).toLocaleDateString() : 'No deadline'],
