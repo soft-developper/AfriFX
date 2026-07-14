@@ -14,7 +14,7 @@
 // directly — it goes through the registry.
 // ============================================================
 
-import { createHmac, timingSafeEqual } from 'crypto'
+import { createHmac, createHash, timingSafeEqual } from 'crypto'
 import type {
   FiatRampProvider, ChainKey, RampQuote, PayoutRecipient,
   OnrampResult, PayoutResult, NormalizedWebhook,
@@ -30,6 +30,31 @@ const CHAIN_TO_FLW: Partial<Record<ChainKey, string>> = {
 }
 const FLW_TO_CHAIN: Record<string, ChainKey> = {
   BASE: 'base', ETHEREUM: 'eth', POLYGON: 'matic',
+}
+
+/*
+  Flutterwave's `reference` has a STRICT schema:
+      pattern ^[a-zA-Z0-9\-]+$   (letters, digits, hyphens ONLY)
+      minLength 6, maxLength 42
+
+  Our internal idempotency keys look like:
+      tr-dfab9781-12eb-4d39-97fc-ec8c6259dc34:onramp
+  ...which is 46 chars AND contains a colon — so it fails BOTH rules, and
+  every transfer would be rejected on the reference alone.
+
+  So we derive a compliant reference: strip invalid characters, and if it's
+  still too long, keep a readable prefix plus a short hash of the FULL key so
+  it stays unique and deterministic (same key -> same reference, which is what
+  makes it a real idempotency key rather than just a random id).
+*/
+export function toFlwReference(idempotencyKey: string): string {
+  const cleaned = idempotencyKey.replace(/[^a-zA-Z0-9-]/g, '-')
+  if (cleaned.length >= 6 && cleaned.length <= 42) return cleaned
+
+  const hash = createHash('sha256').update(idempotencyKey).digest('hex').slice(0, 10)
+  const prefix = cleaned.replace(/-+/g, '-').slice(0, 31).replace(/-+$/, '')
+  const ref = `${prefix}-${hash}`.slice(0, 42)
+  return ref.length >= 6 ? ref : `afx-${hash}`
 }
 
 interface FlwRequest {
@@ -137,7 +162,7 @@ export class FlutterwaveProvider implements FiatRampProvider {
         action: 'instant',
         type:   'wallet',
         narration: 'AfriFX on-ramp',
-        reference: params.idempotencyKey,
+        reference: toFlwReference(params.idempotencyKey),
         payment_instruction: {
           source_currency: params.senderCurrency,   // NGN, GHS, GBP, EUR, USD
           amount: {
@@ -244,7 +269,7 @@ export class FlutterwaveProvider implements FiatRampProvider {
         action: 'instant',
         type:   r.method === 'mobile_money' ? 'mobile_money' : 'bank',
         narration: r.note ?? 'AfriFX payout',
-        reference: params.idempotencyKey,
+        reference: toFlwReference(params.idempotencyKey),
         payment_instruction: {
           source_currency: 'USDC',
           amount: { applies_to: 'source_currency', value: params.usdcAmount },
@@ -288,19 +313,32 @@ export class FlutterwaveProvider implements FiatRampProvider {
     const b: any = typeof body === 'string' ? JSON.parse(body) : (body ?? {})
     const d = b.data ?? b
 
+    // Per the OpenAPI spec the payload is:
+    //   { webhook_id, timestamp, type, data }
+    // where `type` is the EVENT name at the TOP level — e.g. 'transfer.disburse',
+    // 'transfer.reversal', 'charge.completed'. `data.type` is the TRANSFER type
+    // ('bank', 'mobile_money', 'crypto', 'wallet'), which is a different thing.
+    const eventType = String(b.type ?? '').toLowerCase()
+
     const status = String(d.status ?? '').toUpperCase()
-    const norm: NormalizedWebhook['status'] =
+    let norm: NormalizedWebhook['status'] =
       status === 'SUCCESSFUL' || status === 'COMPLETED' ? 'done'
       : status === 'FAILED' || status === 'CANCELLED'   ? 'failed'
       : 'pending'
 
-    // We set `reference` = our idempotency key on every create call, so it
-    // comes back here and tells us exactly which leg this event belongs to.
+    // A reversal means money came BACK — treat it as a failure so the
+    // orchestrator unwinds rather than reporting success.
+    if (eventType === 'transfer.reversal') norm = 'failed'
+
+    // We set `reference` on every create call, so it comes back here and tells
+    // us exactly which leg this event belongs to.
     const externalReference = d.reference ?? b.reference
 
-    const type = String(d.type ?? '').toLowerCase()
+    // Which leg? A crypto/wallet destination is the on-ramp settling USDC to
+    // us; a bank/mobile_money destination is the payout going out.
+    const transferType = String(d.type ?? '').toLowerCase()
     const leg: NormalizedWebhook['leg'] =
-      type === 'crypto' ? 'onramp' : 'payout'
+      (transferType === 'crypto' || transferType === 'wallet') ? 'onramp' : 'payout'
 
     return { providerRef: d.id, externalReference, leg, status: norm, detail: d }
   }
@@ -330,16 +368,20 @@ export class FlutterwaveProvider implements FiatRampProvider {
     Verify a bank account and get the holder's real name — so a user can't
     typo an account number and send money into the void.
 
-    NOTE: v4 requires the account CURRENCY. Omitting it fails with
-    "Invalid value 'null' for BankAccountCurrency".
+    The v4 validation errors told us the shape: it wants a nested `account`
+    object (not flat account_number/code), and the currency is required.
+      "field_name":"account","message":"must not be null"
+      "Invalid value 'null' for BankAccountCurrency"
   */
   async resolveBankAccount(accountNumber: string, bankCode: string, currency = 'NGN') {
     const d = await flw({
       path: '/banks/account-resolve', method: 'POST',
       body: {
-        account_number: accountNumber,
-        code:           bankCode,
-        currency,                    // required — e.g. NGN, GHS, KES
+        account: {
+          number:   accountNumber,
+          bank_code: bankCode,
+          currency,
+        },
       },
     })
     return d?.data ?? null
@@ -392,7 +434,7 @@ export class FlutterwaveProvider implements FiatRampProvider {
         action: 'instant',
         type:   'crypto',
         narration: 'AfriFX transfer',
-        reference: params.idempotencyKey,
+        reference: toFlwReference(params.idempotencyKey),
         payment_instruction: {
           source_currency: 'USDC',
           amount: { applies_to: 'source_currency', value: params.amount },

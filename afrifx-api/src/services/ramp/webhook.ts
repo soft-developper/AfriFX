@@ -5,7 +5,7 @@
 // ============================================================
 
 import { getProvider } from './registry'
-import { findLegByIdempotencyKey, updateLeg, getLegs } from './repository'
+import { findLegByIdempotencyKey, updateLeg, getLegs, parseRows } from './repository'
 import { advanceTransfer } from './engine'
 import { db } from '../../db/client'
 import { sql } from 'drizzle-orm'
@@ -23,11 +23,18 @@ export async function handleProviderWebhook(
 
   const norm = provider.parseWebhook(body, headers)
 
-  // Find the leg by our idempotency key (which we set == externalReference).
+  // Find the leg. We set `reference` on every provider call, but some providers
+  // (Flutterwave) impose a STRICT reference format, so what comes back may be a
+  // TRANSFORMED version of our idempotency key rather than the key itself.
+  // Try the raw key first, then fall back to matching on the derived reference.
   const key = norm.externalReference
   if (!key) return { ok: false }
 
-  const leg = await findLegByIdempotencyKey(key)
+  let leg = await findLegByIdempotencyKey(key)
+
+  if (!leg) {
+    leg = await findLegByProviderReference(providerKey, key)
+  }
   if (!leg) return { ok: false }
 
   const legId      = rowVal(leg, 'id', 0)
@@ -48,6 +55,28 @@ export async function handleProviderWebhook(
 
   await advanceTransfer(transferId)
   return { ok: true, transferId }
+}
+
+// When the provider echoes back a TRANSFORMED reference (because our
+// idempotency key doesn't fit their format), find the leg by re-deriving the
+// reference for each in-flight leg and comparing. Scoped to in-flight legs, so
+// this stays cheap.
+async function findLegByProviderReference(
+  providerKey: string, reference: string,
+): Promise<any | null> {
+  if (providerKey !== 'flutterwave') return null
+  try {
+    const { toFlwReference } = await import('./providers/flutterwave')
+    const rows = parseRows(await db.run(sql`
+      SELECT * FROM transfer_legs
+      WHERE status IN ('in_flight', 'pending')
+      ORDER BY created_at DESC LIMIT 200`))
+    for (const r of rows) {
+      const key = rowVal(r, 'idempotency_key', 5)
+      if (key && toFlwReference(String(key)) === reference) return r
+    }
+  } catch { /* fall through */ }
+  return null
 }
 
 // When the offramp completes, HoneyCoin auto-initiates the payout and its
