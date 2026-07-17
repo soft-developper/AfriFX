@@ -5,6 +5,7 @@
 // Source 4: Hardcoded absolute last resort
 
 import type { FXRate } from '../types'
+import { LOCAL_CURRENCIES } from '../types'
 
 const TIMEOUT_MS = 8_000
 
@@ -125,24 +126,24 @@ function buildRates(raw: Record<string, number>, source: string): FXRate[] {
   const prev = Object.fromEntries(cachedRates.map(r => [r.pair, r.rate]))
   const now  = Date.now()
 
-  // raw contains "local units per USD" use directly
-  const map = {
-    NGN:  raw.NGN  ?? HARDCODED.NGN,
-    GHS:  raw.GHS  ?? HARDCODED.GHS,
-    KES:  raw.KES  ?? HARDCODED.KES,
-    ZAR:  raw.ZAR  ?? HARDCODED.ZAR,
-    EGP:  raw.EGP  ?? HARDCODED.EGP,
-    EURC: raw.EUR  ?? HARDCODED.EUR,  // EUR rate used for EURC
-  }
+  // raw contains "local units per USD" — use directly, falling back to the
+  // hardcoded last-resort value when a feed omits a currency.
+  // Driven by LOCAL_CURRENCIES so every supported currency gets a pair; adding
+  // one to that list is all it takes for its rate to appear here.
+  const rates: FXRate[] = LOCAL_CURRENCIES.map(cur => {
+    const rate = raw[cur] ?? HARDCODED[cur]
+    const pair = `${cur}/USDC`
+    return { pair, rate, change24h: pct(prev[pair], rate), source, fetchedAt: now }
+  })
 
-  return [
-    { pair: 'NGN/USDC',  rate: map.NGN,  change24h: pct(prev['NGN/USDC'],  map.NGN),  source, fetchedAt: now },
-    { pair: 'GHS/USDC',  rate: map.GHS,  change24h: pct(prev['GHS/USDC'],  map.GHS),  source, fetchedAt: now },
-    { pair: 'KES/USDC',  rate: map.KES,  change24h: pct(prev['KES/USDC'],  map.KES),  source, fetchedAt: now },
-    { pair: 'ZAR/USDC',  rate: map.ZAR,  change24h: pct(prev['ZAR/USDC'],  map.ZAR),  source, fetchedAt: now },
-    { pair: 'EGP/USDC',  rate: map.EGP,  change24h: pct(prev['EGP/USDC'],  map.EGP),  source, fetchedAt: now },
-    { pair: 'EURC/USDC', rate: map.EURC, change24h: pct(prev['EURC/USDC'], map.EURC), source, fetchedAt: now },
-  ]
+  // EURC is priced off the EUR rate and isn't in LOCAL_CURRENCIES.
+  const eur = raw.EUR ?? HARDCODED.EUR
+  rates.push({
+    pair: 'EURC/USDC', rate: eur, change24h: pct(prev['EURC/USDC'], eur),
+    source, fetchedAt: now,
+  })
+
+  return rates
 }
 
 async function persistToDb(rates: FXRate[]): Promise<void> {

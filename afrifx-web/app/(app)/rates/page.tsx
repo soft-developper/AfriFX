@@ -1,11 +1,8 @@
 'use client'
 import { useFXRates } from '@/hooks/useFXRate'
 import { TrendingUp, TrendingDown, RefreshCw } from 'lucide-react'
+import { CURRENCY_FLAG as FLAG } from '@/lib/corridor'
 
-const FLAG: Record<string, string> = {
-  NGN: '🇳🇬', GHS: '🇬🇭', KES: '🇰🇪',
-  ZAR: '🇿🇦', EGP: '🇪🇬', EURC: '🇪🇺', USDC: '💵',
-}
 
 export default function RatesPage() {
   const { data: rates, isLoading, refetch } = useFXRates()
@@ -27,13 +24,13 @@ export default function RatesPage() {
 
       {isLoading && <p className="text-sm text-app-muted">Fetching rates…</p>}
 
-      <div className="space-y-2">
+      <div className="max-h-[32rem] space-y-2 overflow-y-auto pr-1 afx-scroll">
         {(rates ?? []).map((r) => {
           const [from] = r.pair.split('/')
           const up = r.change24h >= 0
           return (
             <div key={r.pair} className="flex items-center gap-4 rounded-xl border border-app-border bg-app-surface p-4">
-              <span className="text-2xl">{FLAG[from] ?? '🌍'}</span>
+              <span className="text-2xl">{FLAG[from as keyof typeof FLAG] ?? '🌍'}</span>
               <div className="flex-1">
                 <p className="text-sm font-medium text-app-text">{r.pair}</p>
                 <p className="text-xs text-app-muted">Arc Testnet · USDC settlement</p>

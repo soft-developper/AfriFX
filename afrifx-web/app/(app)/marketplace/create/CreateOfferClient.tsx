@@ -10,11 +10,8 @@ import { useUSDCBalance } from '@/hooks/useUSDCBalance'
 import { useRate } from '@/hooks/useFXRate'
 import { ArrowLeft, Info, CheckCircle, TrendingUp, Sliders, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
+import { LOCAL_CURRENCIES as CURRENCIES, CURRENCY_FLAG } from '@/lib/corridor'
 
-const CURRENCIES      = ['NGN', 'GHS', 'KES', 'ZAR', 'EGP']
-const CURRENCY_FLAG: Record<string, string> = {
-  NGN: '🇳🇬', GHS: '🇬🇭', KES: '🇰🇪', ZAR: '🇿🇦', EGP: '🇪🇬'
-}
 const TIMER_OPTIONS = [
   { label: '30 min',  value: 1800 },
   { label: '1 hour',  value: 3600 },
