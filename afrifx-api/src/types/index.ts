@@ -1,4 +1,4 @@
-export type Currency = 'USDC' | 'EURC' | 'NGN' | 'GHS' | 'KES' | 'ZAR' | 'EGP'
+export type Currency = 'USDC' | 'EURC' | 'NGN' | 'GHS' | 'KES' | 'ZAR' | 'EGP' | 'UGX' | 'TZS' | 'RWF' | 'XOF' | 'XAF' | 'ZMW' | 'ETB' | 'MZN'
 export type TxStatus = 'pending' | 'settled' | 'failed'
 
 export interface FXRate {

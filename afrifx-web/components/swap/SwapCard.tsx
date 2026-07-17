@@ -7,12 +7,12 @@ import { RateDisplay } from './RateDisplay'
 import { Button } from '@/components/ui/button'
 import { useRate } from '@/hooks/useFXRate'
 import { useSwap } from '@/hooks/useSwap'
+import { LOCAL_CURRENCIES } from '@/lib/corridor'  // single source of truth
 import { useArcTransaction } from '@/hooks/useArcTransaction'
 import { useUSDCBalance } from '@/hooks/useUSDCBalance'
 import { SPREAD_BPS } from '@/lib/contracts'
 import type { Currency } from '@/types'
 
-const LOCAL_CURRENCIES: Currency[] = ['NGN', 'GHS', 'KES', 'ZAR', 'EGP']
 const GAS_BUFFER = 0.001 // ~network fee per tx, kept aside so Max never over-spends
 
 export function SwapCard() {

@@ -367,7 +367,7 @@ You can now trade stablecoins for African currencies with anyone on the platform
 <div style="background:${BG_2};border:1px solid ${BORDER_2};border-radius:10px;padding:16px;margin:20px 0;">
 <p style="margin:0 0 12px;color:${TEXT_PRI};font-size:14px;font-weight:500;">Here is what you can do:</p>
 <ul style="margin:0;padding:0 0 0 20px;color:${TEXT_SEC};font-size:13px;line-height:1.8;">
-<li>Convert USDC ↔ NGN, GHS, KES, ZAR, EGP at live rates</li>
+<li>Convert USDC ↔ NGN, GHS, KES, ZAR, EGP and more at live rates</li>
 <li>Trade peer-to-peer with any wallet at agreed prices</li>
 <li>Generate invoices with shareable payment links</li>
 <li>Track all your trades and payments in one place</li>

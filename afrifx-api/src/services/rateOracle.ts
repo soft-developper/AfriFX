@@ -8,10 +8,12 @@ import type { FXRate } from '../types'
 
 const TIMEOUT_MS = 8_000
 
-// Hardcoded last-resort (only used if DB is also empty)
+// Hardcoded last-resort (only used if DB is also empty).
+// Approximate units-per-USD; the live oracle overrides these.
 const HARDCODED: Record<string, number> = {
-  NGN: 1620, GHS: 14.8, KES: 130.5,
-  ZAR: 18.6, EGP: 49.2, EUR: 0.92,
+  NGN: 1620,  GHS: 14.8,  KES: 130.5, ZAR: 18.6,  EGP: 49.2,
+  UGX: 3750,  TZS: 2600,  RWF: 1350,  XOF: 605,   XAF: 605,
+  ZMW: 27,    ETB: 122,   MZN: 64,    EUR: 0.92,
 }
 
 let cachedRates: FXRate[] = []

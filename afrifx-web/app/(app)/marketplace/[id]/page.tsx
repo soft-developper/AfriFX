@@ -17,11 +17,10 @@ import {
 import type { P2POffer } from '@/types'
 import { useProfileByAddress } from '@/hooks/useProfile'
 import { DisputeStatus } from '@/components/dispute/DisputeStatus'
+import { CURRENCY_FLAG } from '@/lib/corridor'
+import type { Currency } from '@/types'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
-const CURRENCY_FLAG: Record<string, string> = {
-  NGN: '🇳🇬', GHS: '🇬🇭', KES: '🇰🇪', ZAR: '🇿🇦', EGP: '🇪🇬'
-}
 
 // Extend P2POffer with extra fields we use
 interface OfferExtended extends P2POffer {
@@ -302,7 +301,7 @@ export default function OfferDetailPage() {
             </div>
             <ArrowRight className="h-5 w-5 text-app-muted" />
             <div className="text-center">
-              <p className="text-2xl">{CURRENCY_FLAG[offer.local_currency] ?? '🌍'}</p>
+              <p className="text-2xl">{CURRENCY_FLAG[offer.local_currency as Currency] ?? '🌍'}</p>
               <p className="mt-1 font-mono text-xl font-semibold text-app-text">{localAmountFormatted}</p>
               <p className="text-xs text-app-muted">{offer.local_currency} (to maker)</p>
             </div>

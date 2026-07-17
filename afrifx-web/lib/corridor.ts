@@ -5,7 +5,10 @@
 import { SPREAD_BPS } from './contracts'
 import type { Currency, SwapQuote, CorridorQuote } from '@/types'
 
-export const LOCAL_CURRENCIES: Currency[] = ['NGN', 'GHS', 'KES', 'ZAR', 'EGP']
+export const LOCAL_CURRENCIES: Currency[] = [
+  'NGN', 'GHS', 'KES', 'ZAR', 'EGP',
+  'UGX', 'TZS', 'RWF', 'XOF', 'XAF', 'ZMW', 'ETB', 'MZN',
+]
 
 export const CURRENCY_LABELS: Record<Currency, string> = {
   NGN:  'Nigerian Naira',
@@ -13,6 +16,14 @@ export const CURRENCY_LABELS: Record<Currency, string> = {
   KES:  'Kenyan Shilling',
   ZAR:  'South African Rand',
   EGP:  'Egyptian Pound',
+  UGX:  'Ugandan Shilling',
+  TZS:  'Tanzanian Shilling',
+  RWF:  'Rwandan Franc',
+  XOF:  'West African CFA Franc',
+  XAF:  'Central African CFA Franc',
+  ZMW:  'Zambian Kwacha',
+  ETB:  'Ethiopian Birr',
+  MZN:  'Mozambican Metical',
   USDC: 'USD Coin',
   EURC: 'Euro Coin',
 }
@@ -23,23 +34,25 @@ export const CURRENCY_FLAG: Record<Currency, string> = {
   KES:  '🇰🇪',
   ZAR:  '🇿🇦',
   EGP:  '🇪🇬',
+  UGX:  '🇺🇬',
+  TZS:  '🇹🇿',
+  RWF:  '🇷🇼',
+  XOF:  '🌍',
+  XAF:  '🌍',
+  ZMW:  '🇿🇲',
+  ETB:  '🇪🇹',
+  MZN:  '🇲🇿',
   USDC: '💵',
   EURC: '🇪🇺',
 }
 
-// All supported corridors (local → local via USDC)
-export const CORRIDORS: [Currency, Currency][] = [
-  ['NGN', 'GHS'],
-  ['NGN', 'KES'],
-  ['NGN', 'ZAR'],
-  ['NGN', 'EGP'],
-  ['GHS', 'KES'],
-  ['GHS', 'ZAR'],
-  ['GHS', 'EGP'],
-  ['KES', 'ZAR'],
-  ['KES', 'EGP'],
-  ['ZAR', 'EGP'],
-]
+// Every local currency swaps to every other local currency (all route through
+// USDC), so corridors are DERIVED from LOCAL_CURRENCIES rather than hardcoded.
+// Adding a currency above automatically enables all of its corridors, with no
+// long pair list to maintain by hand.
+export const CORRIDORS: [Currency, Currency][] = LOCAL_CURRENCIES.flatMap(
+  (from, i) => LOCAL_CURRENCIES.slice(i + 1).map(to => [from, to] as [Currency, Currency])
+)
 
 export function isCorridorSupported(from: Currency, to: Currency): boolean {
   return CORRIDORS.some(

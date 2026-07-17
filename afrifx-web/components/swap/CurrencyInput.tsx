@@ -3,10 +3,7 @@ import React from 'react'
 import { cn } from '@/lib/utils'
 import type { Currency } from '@/types'
 
-const FLAG: Record<Currency, string> = {
-  NGN: '🇳🇬', GHS: '🇬🇭', KES: '🇰🇪',
-  ZAR: '🇿🇦', EGP: '🇪🇬', USDC: '💵', EURC: '🇪🇺',
-}
+import { CURRENCY_FLAG as FLAG, LOCAL_CURRENCIES } from '@/lib/corridor'
 
 interface CurrencyInputProps {
   label: string
@@ -19,7 +16,7 @@ interface CurrencyInputProps {
   className?: string
 }
 
-const DEFAULT_CURRENCIES: Currency[] = ['NGN', 'GHS', 'KES', 'USDC', 'EURC']
+const DEFAULT_CURRENCIES: Currency[] = [...LOCAL_CURRENCIES, 'USDC', 'EURC']
 
 export function CurrencyInput({
   label, amount, currency,
