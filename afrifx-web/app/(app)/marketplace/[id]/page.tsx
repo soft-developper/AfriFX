@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { useAccount } from 'wagmi'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -74,6 +74,11 @@ function normalizeOffer(row: unknown): OfferExtended | null {
 export default function OfferDetailPage() {
   const params       = useParams()
   const searchParams = useSearchParams()
+  const router       = useRouter()
+
+  // Once a trade finishes (USDC released) we briefly show the completed state,
+  // then send the user to "My trades" so they aren't stranded on a static page.
+  const [redirectIn, setRedirectIn] = useState<number | null>(null)
   const { address }  = useAccount()
 
   const justAccepted = searchParams.get('accepted') === '1'
@@ -135,6 +140,31 @@ export default function OfferDetailPage() {
     const interval = setInterval(load, isStillSyncing ? 2000 : 5000)
     return () => clearInterval(interval)
   }, [load, justAccepted, offer?.taker_address])
+
+  // When the trade completes (USDC released), start a short countdown and then
+  // route the involved user to "My trades". We compute involvement inline here
+  // because the derived isMaker/isInvolved vars live below the early returns
+  // (hooks must run before those returns).
+  useEffect(() => {
+    if (offer?.status !== 'released') return
+    const me = address?.toLowerCase()
+    const involved =
+      (!!me && me === offer?.maker_address?.toLowerCase()) ||
+      (!!me && me === offer?.taker_address?.toLowerCase()) ||
+      justAccepted
+    if (!involved) return
+
+    // Start the countdown once.
+    setRedirectIn(prev => (prev == null ? 5 : prev))
+  }, [offer?.status, offer?.maker_address, offer?.taker_address, address, justAccepted])
+
+  // Tick the countdown down; navigate at zero.
+  useEffect(() => {
+    if (redirectIn == null) return
+    if (redirectIn <= 0) { router.push('/my-trades'); return }
+    const t = setTimeout(() => setRedirectIn(n => (n == null ? null : n - 1)), 1000)
+    return () => clearTimeout(t)
+  }, [redirectIn, router])
 
   if (loading) return (
     <div className="space-y-4">
@@ -407,6 +437,19 @@ export default function OfferDetailPage() {
                   <CheckCircle className="mx-auto mb-2 h-6 w-6 text-emerald-400" />
                   <p className="text-sm font-medium text-emerald-400">Trade complete</p>
                   <p className="mt-1 text-xs text-emerald-600">USDC released to buyer</p>
+                  {redirectIn != null && (
+                    <div className="mt-3 border-t border-emerald-900/40 pt-3">
+                      <p className="text-xs text-app-muted">
+                        Taking you to your trades in {redirectIn}s…
+                      </p>
+                      <button
+                        onClick={() => router.push('/my-trades')}
+                        className="mt-2 text-xs font-medium text-emerald-400 underline underline-offset-2 hover:text-emerald-300"
+                      >
+                        Go to My trades now
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
