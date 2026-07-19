@@ -2,6 +2,7 @@ import express from 'express'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
+import { securityHeaders }        from './middleware/security'
 import { corsMiddleware }         from './middleware/cors'
 import { rateLimitMiddleware }    from './middleware/rateLimit'
 import { errorHandler }           from './middleware/errorHandler'
@@ -40,6 +41,9 @@ import { seedSuperAdmin }         from './lib/seedAdmin'
 const app  = express()
 const PORT = Number(process.env.PORT ?? 4000)
 
+// Security headers first, so they apply to EVERY response (including errors
+// and CORS preflight failures).
+app.use(securityHeaders)
 app.use(corsMiddleware)
 
 // Capture the RAW body so webhook HMAC signatures can be verified against the
