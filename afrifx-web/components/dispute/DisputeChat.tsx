@@ -192,7 +192,7 @@ export function DisputeChat({
         <p className="text-sm font-medium text-app-text">{title}</p>
         <p className="text-xs text-app-muted">
           {viewerType === 'admin'
-            ? 'All parties, messages sent here are visible to maker and taker'
+            ? 'All parties, messages sent here are visible to seller and buyer'
             : 'Communicate with the assigned admin · Upload bank PDFs below'}
         </p>
       </div>

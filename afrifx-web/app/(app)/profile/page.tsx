@@ -307,14 +307,14 @@ function ProfileContent() {
                 sub:   `${makerTrades} as maker · ${takerTrades} as taker`,
               },
               {
-                label: 'Maker trades',
+                label: 'Seller trades',
                 value: String(makerTrades),
                 icon:  TrendingUp,
                 color: 'text-app-accent-text',
                 sub:   'Offers you created',
               },
               {
-                label: 'Taker trades',
+                label: 'Buyer trades',
                 value: String(takerTrades),
                 icon:  TrendingUp,
                 color: 'text-app-accent-text',

@@ -36,7 +36,7 @@ export default function AdminOffers() {
   useEffect(() => { load() }, [filter])
 
   async function forceRelease(id: string) {
-    if (!confirm('Force release USDC to the taker? This is irreversible.')) return
+    if (!confirm('Force release USDC to the buyer? This is irreversible.')) return
     setBusy(id)
     try {
       const res = await adminFetch(`/admin/manage/offers/${id}/release`, { method: 'POST' })

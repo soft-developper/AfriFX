@@ -189,9 +189,9 @@ export default function OfferDetailPage() {
   const steps = [
     { n:1, done: offerStatus !== 'open',     label: `${takerName} accepted offer`,               desc: 'USDC locked in vault' },
     { n:2, done: offerStatus !== 'open',     label: `${takerName} sends ${Number(offer.local_amount).toLocaleString()} ${offer.local_currency} to ${makerName}`, desc: 'Off-chain payment' },
-    { n:3, done: !!offer.taker_confirmed,     label: `${takerName} confirmed: "I sent the money"`, desc: 'Taker window' },
-    { n:4, done: !!offer.maker_confirmed,     label: `${makerName} confirmed: "I received it"`,    desc: 'Maker window' },
-    { n:5, done: offerStatus === 'released',  label: 'Platform releases USDC to taker',     desc: 'Auto within 15s' },
+    { n:3, done: !!offer.taker_confirmed,     label: `${takerName} confirmed: "I sent the money"`, desc: 'Buyer window' },
+    { n:4, done: !!offer.maker_confirmed,     label: `${makerName} confirmed: "I received it"`,    desc: 'Seller window' },
+    { n:5, done: offerStatus === 'released',  label: 'Platform releases USDC to buyer',     desc: 'Auto within 15s' },
   ]
 
   const showTakerTimer = offerStatus === 'accepted' && !offer.taker_confirmed && !!offer.taker_deadline
@@ -217,8 +217,8 @@ export default function OfferDetailPage() {
       await raiseDispute(
         offer.id,
         disputeType === 'maker_silent'
-          ? 'Maker did not confirm receipt, possible non-response'
-          : 'Taker claims to have sent payment but maker did not receive it',
+          ? 'Seller did not confirm receipt, possible non-response'
+          : 'Buyer claims to have sent payment but seller did not receive it',
         disputeType,
         raisedByRole,
       )
@@ -303,7 +303,7 @@ export default function OfferDetailPage() {
             <div className="text-center">
               <p className="text-2xl">{CURRENCY_FLAG[offer.local_currency as Currency] ?? '🌍'}</p>
               <p className="mt-1 font-mono text-xl font-semibold text-app-text">{localAmountFormatted}</p>
-              <p className="text-xs text-app-muted">{offer.local_currency} (to maker)</p>
+              <p className="text-xs text-app-muted">{offer.local_currency} (to seller)</p>
             </div>
           </div>
 
@@ -374,7 +374,7 @@ export default function OfferDetailPage() {
           {isInvolved && offerStatus !== 'open' && offer.account_number && (
             <div className="mb-4 rounded-lg border border-app-accent/40 bg-app-accent/[0.06] p-4">
               <p className="mb-1 text-sm font-medium text-app-text">
-                {isTaker ? `Send ${Number(offer.local_amount).toLocaleString()} ${offer.local_currency} to:` : 'Your payout details (shown to taker)'}
+                {isTaker ? `Send ${Number(offer.local_amount).toLocaleString()} ${offer.local_currency} to:` : 'Your payout details (shown to buyer)'}
               </p>
               <p className="mb-3 text-xs text-app-muted">
                 {offer.payment_method === 'mobile_money' ? 'Mobile money' : 'Bank transfer'}
@@ -406,7 +406,7 @@ export default function OfferDetailPage() {
                 <div className="rounded-lg border border-emerald-900/50 bg-emerald-900/20 p-4 text-center">
                   <CheckCircle className="mx-auto mb-2 h-6 w-6 text-emerald-400" />
                   <p className="text-sm font-medium text-emerald-400">Trade complete</p>
-                  <p className="mt-1 text-xs text-emerald-600">USDC released to taker</p>
+                  <p className="mt-1 text-xs text-emerald-600">USDC released to buyer</p>
                 </div>
               )}
 

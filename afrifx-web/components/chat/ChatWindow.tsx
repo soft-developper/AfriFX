@@ -159,7 +159,7 @@ export function ChatWindow({ offerId, makerAddress, takerAddress, currency, amou
             </p>
             <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium
               ${isMaker ? 'bg-app-accent/20 text-app-accent-text' : 'bg-emerald-900/40 text-emerald-400'}`}>
-              {isMaker ? 'Taker' : 'Maker'}
+              {isMaker ? 'Buyer' : 'Seller'}
             </span>
           </div>
           <p className="text-[10px] text-app-muted">

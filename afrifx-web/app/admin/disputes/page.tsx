@@ -181,7 +181,7 @@ export default function AdminDisputesPage() {
                           {status.replace('_', ' ')}
                         </Badge>
                         <Badge variant={disputeType === 'maker_silent' ? 'arc' : 'danger'}>
-                          {disputeType === 'maker_silent' ? '🔇 Maker silent' : '💸 Payment not received'}
+                          {disputeType === 'maker_silent' ? '🔇 Seller silent' : '💸 Payment not received'}
                         </Badge>
                         <Badge variant={raisedByRole === 'maker' ? 'warning' : 'arc'}>
                           By {raisedByRole}
@@ -214,11 +214,11 @@ export default function AdminDisputesPage() {
                       <p className="font-mono font-semibold text-app-text">{localAmt.toLocaleString()} {localCcy}</p>
                     </div>
                     <div className="rounded-lg bg-app-bg p-2">
-                      <p className="text-app-muted">Maker</p>
+                      <p className="text-app-muted">Seller</p>
                       <p className="font-mono text-app-text">{makerAddr.slice(0,10)}…</p>
                     </div>
                     <div className="rounded-lg bg-app-bg p-2">
-                      <p className="text-app-muted">Taker</p>
+                      <p className="text-app-muted">Buyer</p>
                       <p className="font-mono text-app-text">{takerAddr.slice(0,10)}…</p>
                     </div>
                   </div>
@@ -265,14 +265,14 @@ export default function AdminDisputesPage() {
                           disabled={resolving === id}>
                           {resolving === id ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             : <CheckCircle className="h-3.5 w-3.5" />}
-                          Release to taker
+                          Release to buyer
                         </Button>
                         <Button size="sm" variant="danger"
                           onClick={() => resolve(id, 'refund_maker')}
                           disabled={resolving === id}>
                           {resolving === id ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             : <AlertTriangle className="h-3.5 w-3.5" />}
-                          Refund maker
+                          Refund seller
                         </Button>
                       </>
                     )}
@@ -305,7 +305,7 @@ export default function AdminDisputesPage() {
                           })
                         }}
                         className="rounded-lg border border-app-accent/40 bg-app-accent/10 px-3 py-1.5 text-xs text-app-accent-text hover:bg-app-accent/20 transition-colors">
-                        📋 Request statement from maker
+                        📋 Request statement from seller
                       </button>
                       <button
                         onClick={async () => {
@@ -320,7 +320,7 @@ export default function AdminDisputesPage() {
                           })
                         }}
                         className="rounded-lg border border-app-accent/40 bg-app-accent/10 px-3 py-1.5 text-xs text-app-accent-text hover:bg-app-accent/20 transition-colors">
-                        📋 Request statement from taker
+                        📋 Request statement from buyer
                       </button>
                     </div>
                     <DisputeChat

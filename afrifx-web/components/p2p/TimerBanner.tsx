@@ -24,8 +24,8 @@ export function TimerBanner({ deadline, totalSeconds, phase, isMine }: TimerBann
     : { bg: 'bg-app-surface',     border: 'border-app-border',    bar: 'bg-app-accent',  text: 'text-app-muted',  icon: 'text-app-accent-text',  time: 'text-app-text'  }
 
   const phaseLabel = phase === 'taker'
-    ? isMine ? 'Your window to send local currency' : "Waiting for taker to send"
-    : isMine ? 'Your window to confirm receipt'      : 'Waiting for maker to confirm'
+    ? isMine ? 'Your window to send local currency' : "Waiting for buyer to send"
+    : isMine ? 'Your window to confirm receipt'      : 'Waiting for seller to confirm'
 
   const urgencyLabel = isExpired
     ? 'Time expired'

@@ -32,7 +32,7 @@ export function CreateOfferClient() {
   const [customTimer,   setCustomTimer]   = useState('')
   const [submitted,     setSubmitted]     = useState(false)
 
-  // Payout details where the taker sends the local-currency payment.
+  // Payout details where the buyer sends the local-currency payment.
   const [paymentMethod, setPaymentMethod] = useState<'bank' | 'mobile_money'>('bank')
   const [accountName,   setAccountName]   = useState('')
   const [accountNumber, setAccountNumber] = useState('')
@@ -221,7 +221,7 @@ export function CreateOfferClient() {
         <div className="rounded-xl border border-app-border bg-app-surface p-4">
           <div className="mb-3 flex items-center gap-2">
             <label className="text-xs font-medium uppercase tracking-wider text-app-muted">
-              Taker completion window
+              Buyer completion window
             </label>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -244,17 +244,17 @@ export function CreateOfferClient() {
             </div>
           )}
           <p className="mt-2 text-xs text-app-muted">
-            If taker doesn't send {localCurrency} within this window, the offer automatically cancels and USDC returns to you.
+            If the buyer doesn't send {localCurrency} within this window, the offer automatically cancels and USDC returns to you.
           </p>
         </div>
 
-        {/* Payout details where the taker sends the money */}
+        {/* Payout details where the buyer sends the money */}
         <div className="rounded-xl border border-app-border bg-app-surface p-4">
           <label className="text-xs font-medium uppercase tracking-wider text-app-muted">
             Your payout details
           </label>
           <p className="mt-1 mb-3 text-xs text-app-muted">
-            Where should the taker send your {localCurrency}? Shown to a taker only after they accept.
+            Where should the buyer send your {localCurrency}? Shown to a buyer only after they accept.
           </p>
 
           {/* Method toggle */}
@@ -296,7 +296,7 @@ export function CreateOfferClient() {
                 ['Order type', orderType],
                 ['You lock',   `${usdcAmount} USDC`],
                 ['You receive', `${localAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${localCurrency}`],
-                ['Taker window', timerSeconds >= 3600 ? `${timerSeconds/3600}h` : `${timerSeconds/60}min`],
+                ['Buyer window', timerSeconds >= 3600 ? `${timerSeconds/3600}h` : `${timerSeconds/60}min`],
                 ['Duration',    'Perpetual until filled or cancelled'],
                 ['Platform fee', `${(parseFloat(usdcAmount) * 0.003).toFixed(4)} USDC (0.3%)`],
               ].map(([label, val]) => (
@@ -315,10 +315,10 @@ export function CreateOfferClient() {
           <ol className="space-y-0.5">
             {[
               'You lock USDC in vault escrow',
-              `Taker accepts + sends ${localCurrency} to you within the window`,
-              'Taker confirms: "I sent the money"',
+              `Buyer accepts + sends ${localCurrency} to you within the window`,
+              'Buyer confirms: "I sent the money"',
               'You confirm: "I received it"',
-              'Platform releases USDC to taker',
+              'Platform releases USDC to buyer',
             ].map((s, i) => (
               <li key={i} className="flex items-start gap-2">
                 <span className="shrink-0 text-app-accent-text">{i+1}.</span>
