@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useAccount } from 'wagmi'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -78,7 +78,11 @@ export default function OfferDetailPage() {
 
   // Once a trade finishes (USDC released) we briefly show the completed state,
   // then send the user to "My trades" so they aren't stranded on a static page.
+  // BUT only when the trade completes WHILE WE'RE WATCHING — if it was already
+  // released when the page opened, the user came from My Trades to REVIEW it, so
+  // we must NOT bounce them straight back out.
   const [redirectIn, setRedirectIn] = useState<number | null>(null)
+  const wasReleasedOnLoadRef = useRef<boolean | null>(null)
   const { address }  = useAccount()
 
   const justAccepted = searchParams.get('accepted') === '1'
@@ -146,7 +150,16 @@ export default function OfferDetailPage() {
   // because the derived isMaker/isInvolved vars live below the early returns
   // (hooks must run before those returns).
   useEffect(() => {
-    if (offer?.status !== 'released') return
+    if (!offer) return
+
+    // Record, exactly once, whether the trade was ALREADY released the first
+    // time we saw the offer. If so, this is a review from My Trades — no redirect.
+    if (wasReleasedOnLoadRef.current === null) {
+      wasReleasedOnLoadRef.current = offer.status === 'released'
+    }
+    if (wasReleasedOnLoadRef.current) return   // opened an already-finished trade
+
+    if (offer.status !== 'released') return
     const me = address?.toLowerCase()
     const involved =
       (!!me && me === offer?.maker_address?.toLowerCase()) ||
@@ -156,7 +169,7 @@ export default function OfferDetailPage() {
 
     // Start the countdown once.
     setRedirectIn(prev => (prev == null ? 5 : prev))
-  }, [offer?.status, offer?.maker_address, offer?.taker_address, address, justAccepted])
+  }, [offer, address, justAccepted])
 
   // Tick the countdown down; navigate at zero.
   useEffect(() => {
