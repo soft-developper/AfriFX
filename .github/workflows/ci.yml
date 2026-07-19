@@ -1,0 +1,84 @@
+name: CI
+
+# Run on every push and PR to main, so a broken commit is caught before it
+# reaches Vercel/Render (both of which deploy whatever lands on main).
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# If you push again while CI is still running on an older commit, cancel the
+# stale run — no point building a commit you've already superseded.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API — typecheck & build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: afrifx-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: afrifx-api/package-lock.json
+
+      # npm ci is the CI-correct install: it's faster and installs EXACTLY the
+      # locked versions, failing if package.json and the lockfile disagree.
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+
+  web:
+    name: Web — typecheck, lint & build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: afrifx-web
+    # Build-time NEXT_PUBLIC_* vars all have '' fallbacks in code, so the build
+    # compiles with placeholders — CI needs no real secrets. Set here so any
+    # future strict check has non-empty values to work with.
+    env:
+      NEXT_PUBLIC_API_URL: https://afrifx-api.onrender.com
+      NEXT_PUBLIC_WEB3AUTH_CLIENT_ID: ci-placeholder
+      NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ci-placeholder
+      NEXT_PUBLIC_ARC_RPC_URL: https://rpc.example.invalid
+      NEXT_PUBLIC_AFRIFX_EXCHANGE: '0x0000000000000000000000000000000000000000'
+      NEXT_PUBLIC_AFRIFX_VAULT: '0x0000000000000000000000000000000000000000'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: afrifx-web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      # Lint is allowed to fail without failing the build for now — flip
+      # continue-on-error to false once the existing lint warnings are cleared.
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Build
+        run: npm run build
