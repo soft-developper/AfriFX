@@ -2,6 +2,7 @@ import { db }     from '../../db/client'
 import { sql }    from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import { sendEmail } from './client'
+import { isOnDuty } from '../../lib/duty'
 import { generateReceiptPdf } from './receipt-pdf'
 import {
   tradeAcceptedEmail,
@@ -427,24 +428,51 @@ export async function notifyAdminsOfNewDispute(params: {
   disputeId:      string
 }) {
   try {
-    // Get all admins with resolve_disputes permission and an email
+    // Candidates: super admins + any sub-admin who can resolve disputes.
+    // We need id + role so we can decide WHO actually gets emailed.
     const adminRows = await db.run(sql`
-      SELECT id, username, email FROM admins
+      SELECT id, username, email, role FROM admins
       WHERE email IS NOT NULL
         AND (role = 'super_admin' OR permissions LIKE '%resolve_disputes%')
     `)
     const admins = parseRows(adminRows)
 
+    // Decide recipients:
+    //   * super/general admin  -> ALWAYS (they're the fallback + oversight)
+    //   * sub-admin            -> ONLY if currently on-duty (inside their
+    //     scheduled window AND they clicked "resume duty" on their dashboard)
+    // This stops off-duty sub-admins from being spammed with dispute alerts,
+    // and guarantees the general admin is always notified — especially when no
+    // sub-admin is on-duty.
+    const recipients: { email: string; name: string }[] = []
+    for (const admin of admins) {
+      const id    = admin.id       ?? admin[0]
+      const name  = admin.username ?? admin[1]
+      const email = admin.email    ?? admin[2]
+      const role  = admin.role     ?? admin[3]
+      if (!email) continue
+
+      if (role === 'super_admin') {
+        recipients.push({ email, name })
+        continue
+      }
+
+      // Sub-admin: gate on live duty status.
+      const duty = await isOnDuty(String(id))
+      if (duty.onDuty) recipients.push({ email, name })
+    }
+
+    if (!recipients.length) {
+      console.warn('[Notify] dispute alert: no eligible recipients (no super admin email set?)')
+      return
+    }
+
     const raisedByProfile = await getProfile(params.raisedByWallet)
     const raisedByName    = getDisplayName(raisedByProfile)
 
-    for (const admin of admins) {
-      const email = admin.email ?? admin[2]
-      const name  = admin.username ?? admin[1]
-      if (!email) continue
-
+    for (const r of recipients) {
       const template = adminDisputeAlertEmail({
-        adminName:    name,
+        adminName:    r.name,
         raisedByName,
         raisedByRole: params.raisedByRole,
         disputeType:  params.disputeType,
@@ -454,7 +482,7 @@ export async function notifyAdminsOfNewDispute(params: {
         disputeId:    params.disputeId,
       })
 
-      await sendEmail({ to: email, subject: template.subject, html: template.html })
+      await sendEmail({ to: r.email, subject: template.subject, html: template.html })
         .catch(err => console.error('[Notify] admin_dispute_alert:', err.message))
     }
   } catch (err: any) {
