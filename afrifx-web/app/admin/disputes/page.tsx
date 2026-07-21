@@ -5,6 +5,7 @@ import { Badge }         from '@/components/ui/badge'
 import { Button }        from '@/components/ui/button'
 import { adminFetch, useAdminAuth } from '@/hooks/useAdminAuth'
 import { DisputeChat }   from '@/components/dispute/DisputeChat'
+import { AiSummaryPanel } from '@/components/admin/AiSummaryPanel'
 import { formatAmount }  from '@/lib/utils'
 import {
   AlertTriangle, CheckCircle, ExternalLink,
@@ -287,6 +288,10 @@ export default function AdminDisputesPage() {
                 {/* Chat expanded section */}
                 {isExpanded && admin && (isInReview || isOpen) && isMyCase && (
                   <div className="border-t border-app-border p-4">
+                    {/* AI case summary — advisory, admin decides */}
+                    <div className="mb-4">
+                      <AiSummaryPanel disputeId={id} adminId={admin.id} />
+                    </div>
                     <p className="mb-2 text-xs font-medium text-app-muted">
                       ⚖️ Messages go to both parties · Request statements privately below
                     </p>
