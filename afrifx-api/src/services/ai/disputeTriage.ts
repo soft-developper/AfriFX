@@ -77,7 +77,7 @@ Keep each field concise and factual.`
 async function gatherCase(disputeId: string) {
   const dRows = parseRows(await db.run(sql`
     SELECT d.*, o.id as oid, o.maker_address, o.taker_address, o.usdc_amount,
-           o.local_amount, o.local_currency, o.rate, o.status as offer_status,
+           o.local_amount, o.local_currency, o.rate_offered, o.status as offer_status,
            o.taker_confirmed, o.maker_confirmed, o.taker_deadline, o.maker_deadline,
            o.created_at as offer_created
     FROM disputes d
@@ -123,7 +123,7 @@ function renderCaseText(c: NonNullable<Awaited<ReturnType<typeof gatherCase>>>):
   lines.push(`Dispute status: ${d.status ?? 'unknown'}`)
   lines.push(`Raised by role: ${d.raised_by_role ?? d.raisedByRole ?? 'unknown'}`)
   lines.push(`Trade: ${d.usdc_amount ?? '?'} USDC  <->  ${d.local_amount ?? '?'} ${d.local_currency ?? ''}`)
-  lines.push(`Rate: ${d.rate ?? '?'}`)
+  lines.push(`Rate: ${d.rate_offered ?? '?'}`)
   lines.push(`Offer status: ${d.offer_status ?? '?'}`)
   lines.push(`Buyer (taker) confirmed "I sent": ${d.taker_confirmed ? 'yes' : 'no'}`)
   lines.push(`Seller (maker) confirmed "I received": ${d.maker_confirmed ? 'yes' : 'no'}`)
