@@ -317,6 +317,9 @@ router.post('/:id/ai-summary', async (req, res) => {
       summary:       result.summary,
       model:         result.model,
       evidenceCount: result.evidenceCount,
+      tokensIn:      result.tokensIn,
+      tokensOut:     result.tokensOut,
+      estCost:       result.estCost,
       createdAt:     now,
       cached:        false,
     })

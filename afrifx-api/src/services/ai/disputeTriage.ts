@@ -33,8 +33,20 @@ function parseRows(r: any): any[] {
 }
 
 const MODEL = process.env.AI_TRIAGE_MODEL ?? 'claude-sonnet-4-6'
-const MAX_PDFS = 6            // cap evidence PDFs per summary (tokens + safety)
-const MAX_PDF_BYTES = 8_000_000  // skip anything absurdly large
+
+// Cost control. Evidence PDFs (especially image scans) dominate token cost, so
+// keep these tight — most disputes have only 1-2 documents that matter.
+// Overridable by env so you can tune without a redeploy.
+const MAX_PDFS      = Number(process.env.AI_TRIAGE_MAX_PDFS ?? 2)
+const MAX_PDF_BYTES = Number(process.env.AI_TRIAGE_MAX_PDF_BYTES ?? 3_000_000)  // 3 MB each
+
+// Rough per-token prices (USD per token) for a cost ESTIMATE in the logs.
+// Not billing-accurate, just a guide so you can see relative spend. Update if
+// pricing changes; only used for the console/summary estimate.
+const PRICE: Record<string, { in: number; out: number }> = {
+  'claude-sonnet-4-6':          { in: 3 / 1_000_000,   out: 15 / 1_000_000 },
+  'claude-haiku-4-5-20251001':  { in: 0.8 / 1_000_000, out: 4 / 1_000_000 },
+}
 
 export function aiTriageConfigured(): boolean {
   return !!process.env.ANTHROPIC_API_KEY
@@ -144,6 +156,9 @@ export async function generateDisputeSummary(disputeId: string): Promise<{
   summary?: DisputeSummary
   evidenceCount?: number
   model?: string
+  tokensIn?: number
+  tokensOut?: number
+  estCost?: number
   error?: string
 }> {
   if (!aiTriageConfigured()) {
@@ -187,6 +202,7 @@ export async function generateDisputeSummary(disputeId: string): Promise<{
   ]
 
   let raw = ''
+  let usage: { input: number; output: number } = { input: 0, output: 0 }
   try {
     const resp = await client.messages.create({
       model: MODEL,
@@ -198,6 +214,20 @@ export async function generateDisputeSummary(disputeId: string): Promise<{
       .map(b => (b.type === 'text' ? b.text : ''))
       .join('')
       .trim()
+
+    // Capture real token usage so cost is visible, not guessed.
+    usage = {
+      input:  resp.usage?.input_tokens  ?? 0,
+      output: resp.usage?.output_tokens ?? 0,
+    }
+    const price = PRICE[MODEL]
+    const estCost = price
+      ? usage.input * price.in + usage.output * price.out
+      : null
+    console.log(
+      `[AI triage] dispute=${disputeId} model=${MODEL} ` +
+      `pdfs=${evidenceCount} tokens_in=${usage.input} tokens_out=${usage.output}` +
+      (estCost != null ? ` est_cost=$${estCost.toFixed(3)}` : ''))
   } catch (err: any) {
     return { ok: false, error: `Claude API error: ${err?.message ?? 'unknown'}` }
   }
@@ -223,5 +253,12 @@ export async function generateDisputeSummary(disputeId: string): Promise<{
     injection_flags: String(parsed.injection_flags ?? 'None detected.'),
   }
 
-  return { ok: true, summary, evidenceCount, model: MODEL }
+  const price = PRICE[MODEL]
+  const estCost = price ? usage.input * price.in + usage.output * price.out : undefined
+
+  return {
+    ok: true, summary, evidenceCount, model: MODEL,
+    tokensIn: usage.input, tokensOut: usage.output,
+    estCost: estCost != null ? +estCost.toFixed(4) : undefined,
+  }
 }
