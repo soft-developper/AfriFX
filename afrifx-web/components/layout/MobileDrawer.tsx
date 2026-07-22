@@ -14,8 +14,8 @@ import { ThemeToggle } from '@/components/layout/ThemeToggle'
 
 const nav = [
   { label: 'Exchange', items: [
-    { href: '/convert',  icon: ArrowLeftRight, label: 'Convert'  },
-    { href: '/corridor', icon: Globe,          label: 'Corridor' },
+    { href: '/convert',  icon: ArrowLeftRight, label: 'Trade'    },
+    { href: '/bridge',   icon: Globe,          label: 'Bridge'   },
     { href: '/send',     icon: Send,           label: 'Send'     },
   ]},
   { label: 'P2P Market', items: [
