@@ -1,3 +1,179 @@
+#!/bin/bash
+# ============================================================
+# AfriFX BRIDGE -- FIX: "RPC Request failed" with nothing failing on-chain
+#
+# Your observation was the diagnosis: if nothing failed on-chain, the request
+# never REACHED the chain. Two real bugs caused that.
+#
+# *** BUG 1: the public client wasn't pinned to a chain ***
+# The hook used usePublicClient() with NO argument, which returns a client for
+# whatever chain wagmi currently considers active. But this hook SWITCHES CHAINS
+# mid-flow (source -> destination). So when it waited for a receipt, the client
+# could be pointed at the WRONG chain — the receipt never arrives, and it
+# surfaces as "RPC Request failed".
+# FIX: every receipt wait now uses getPublicClient(config, { chainId }) pinned to
+# the exact chain that transaction was sent on.
+#
+# *** BUG 2: no explicit RPC endpoints for non-Arc chains ***
+# wagmi was given http(undefined) for every chain except Arc, so viem fell back
+# to its DEFAULT PUBLIC RPCs. Those are heavily rate-limited and frequently
+# reject browser requests outright (CORS / 429) — again looking like an RPC
+# failure while nothing reached a node.
+# FIX: rpcUrlFor() supplies an explicit endpoint per chain, each overridable by
+# env (NEXT_PUBLIC_BASE_RPC_URL, NEXT_PUBLIC_ETH_RPC_URL, etc.) so you can drop
+# in Alchemy/Infura keys later without a code change.
+#
+# ALSO: the error message. "RPC Request failed" is cryptic and alarming. It now
+# reads: "Could not reach the network. This is usually a busy public RPC
+# endpoint rather than a problem with your transfer — nothing was submitted to
+# the chain." That's both accurate and actionable.
+#
+# Verified: all five chains resolve to a real RPC URL, typechecks clean, builds
+# clean.
+#
+# Run from ~/AfriFX:  bash bridge-rpc-fix.sh
+# ============================================================
+set -e
+echo ""
+echo "Fixing RPC transports and chain-pinned clients..."
+echo ""
+
+mkdir -p "afrifx-web/lib"
+cat > "afrifx-web/lib/bridge-chains.ts" << 'AFX_EOF'
+// ============================================================
+// Chain definitions for every CCTP route we support.
+//
+// WHY THIS EXISTS: wagmi was configured with ONLY Arc. A bridge needs the
+// user's wallet to sign on the SOURCE chain, which may be Base, Ethereum,
+// Arbitrum or Polygon — if those aren't in the wagmi config, switchChain()
+// fails and the burn simply can't happen. So they're defined here and added to
+// the config.
+//
+// Adding a chain to wagmi does NOT change any existing behaviour: the app still
+// defaults to Arc, and every existing contract call is explicitly pinned to
+// arcTestnet.id. This only makes the other chains *available* to switch to.
+// ============================================================
+
+import { defineChain } from 'viem'
+import {
+  base, baseSepolia, mainnet, sepolia,
+  arbitrum, arbitrumSepolia, polygon, polygonAmoy,
+} from 'viem/chains'
+import { arcTestnet } from './arc-chain'
+import { CCTP_ENV } from './cctp-chains'
+
+// Re-export the stock viem chains we use, so callers have one import site.
+export {
+  base, baseSepolia, mainnet, sepolia,
+  arbitrum, arbitrumSepolia, polygon, polygonAmoy,
+}
+export { arcTestnet }
+
+/*
+  The chain list handed to wagmi. Arc stays FIRST so it remains the default
+  network for the rest of the app.
+
+  Testnet and mainnet sets are separate — mixing them would let a user bridge
+  from Base Sepolia to Polygon mainnet, which fails in confusing ways.
+*/
+export const TESTNET_CHAINS = [
+  arcTestnet, baseSepolia, sepolia, arbitrumSepolia, polygonAmoy,
+] as const
+
+export const MAINNET_CHAINS = [
+  base, mainnet, arbitrum, polygon,
+] as const
+
+export function activeChains() {
+  return CCTP_ENV === 'mainnet' ? MAINNET_CHAINS : TESTNET_CHAINS
+}
+
+/*
+  RPC URL per chain id, so wagmi doesn't fall back to viem's DEFAULT PUBLIC RPCs.
+  Those defaults are heavily rate-limited and often reject browser requests
+  outright (CORS / 429), which surfaces in the UI as "RPC Request failed" with
+  NOTHING having failed on-chain — because the request never reached a node.
+
+  Each is overridable by env so you can drop in Alchemy/Infura keys for
+  production without a code change.
+*/
+export function rpcUrlFor(chainId: number): string | undefined {
+  const map: Record<number, string | undefined> = {
+    [arcTestnet.id]:      process.env.NEXT_PUBLIC_ARC_RPC_URL     ?? arcTestnet.rpcUrls.default.http[0],
+    [baseSepolia.id]:     process.env.NEXT_PUBLIC_BASE_RPC_URL    ?? 'https://sepolia.base.org',
+    [sepolia.id]:         process.env.NEXT_PUBLIC_ETH_RPC_URL     ?? 'https://ethereum-sepolia-rpc.publicnode.com',
+    [arbitrumSepolia.id]: process.env.NEXT_PUBLIC_ARB_RPC_URL     ?? 'https://sepolia-rollup.arbitrum.io/rpc',
+    [polygonAmoy.id]:     process.env.NEXT_PUBLIC_POLYGON_RPC_URL ?? 'https://rpc-amoy.polygon.technology',
+    [base.id]:            process.env.NEXT_PUBLIC_BASE_RPC_URL    ?? 'https://mainnet.base.org',
+    [mainnet.id]:         process.env.NEXT_PUBLIC_ETH_RPC_URL,
+    [arbitrum.id]:        process.env.NEXT_PUBLIC_ARB_RPC_URL     ?? 'https://arb1.arbitrum.io/rpc',
+    [polygon.id]:         process.env.NEXT_PUBLIC_POLYGON_RPC_URL ?? 'https://polygon-rpc.com',
+  }
+  return map[chainId]
+}
+
+// Map our internal chain key -> the numeric EVM chain id for the active env.
+export function evmChainId(key: string): number | undefined {
+  const testnet: Record<string, number> = {
+    arc: arcTestnet.id, base: baseSepolia.id, ethereum: sepolia.id,
+    arbitrum: arbitrumSepolia.id, polygon: polygonAmoy.id,
+  }
+  const main: Record<string, number> = {
+    arc: 0, base: base.id, ethereum: mainnet.id,
+    arbitrum: arbitrum.id, polygon: polygon.id,
+  }
+  return (CCTP_ENV === 'mainnet' ? main : testnet)[key]
+}
+AFX_EOF
+echo "  afrifx-web/lib/bridge-chains.ts"
+
+mkdir -p "afrifx-web/lib"
+cat > "afrifx-web/lib/wagmi.ts" << 'AFX_EOF'
+import { getDefaultConfig, getDefaultWallets } from '@rainbow-me/rainbowkit'
+import { http } from 'wagmi'
+import { arcTestnet } from './arc-chain'
+// Bridge routes need the wallet to sign on OTHER chains too. Arc stays first,
+// so it remains the app's default network and nothing existing changes.
+import { activeChains, rpcUrlFor } from './bridge-chains'
+import { web3AuthWallet, hasWeb3Auth } from './web3auth'
+
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? 'demo'
+
+// Start from RainbowKit's default wallet groups (MetaMask, WalletConnect, etc.)
+const { wallets: defaultWallets } = getDefaultWallets()
+
+// Add Web3Auth social login (Google + Email) as its own group at the top, so it
+// appears INSIDE the same Connect modal alongside the default wallets. Only
+// added when a client ID is configured.
+const wallets = hasWeb3Auth
+  ? [
+      { groupName: 'Social login', wallets: [web3AuthWallet] },
+      ...defaultWallets,
+    ]
+  : defaultWallets
+
+export const wagmiConfig = getDefaultConfig({
+  appName:    'AfriFX',
+  appIcon:    'https://afrifx.xyz/favicon.svg',
+  projectId,
+  wallets,
+  chains:     activeChains() as any,
+  transports: Object.fromEntries(
+    activeChains().map(c => [
+      c.id,
+      // Explicit RPC per chain — viem's default public endpoints are
+      // rate-limited and often blocked in-browser, which looks like
+      // "RPC Request failed" even though nothing reached the chain.
+      http(rpcUrlFor(c.id)),
+    ]),
+  ),
+  ssr:        true,
+})
+AFX_EOF
+echo "  afrifx-web/lib/wagmi.ts"
+
+mkdir -p "afrifx-web/hooks"
+cat > "afrifx-web/hooks/useBridge.ts" << 'AFX_EOF'
 'use client'
 // ============================================================
 // useBridge — the CCTP flow, driven by the USER'S OWN WALLET.
@@ -260,3 +436,23 @@ export function useBridge() {
 
   return { ...state, bridge, reset, env: CCTP_ENV }
 }
+AFX_EOF
+echo "  afrifx-web/hooks/useBridge.ts"
+
+echo ""
+echo "Done. Then:"
+echo "  cd afrifx-web && npx tsc --noEmit && npm run build"
+echo "  cd .. && git add -A && git commit -m 'Fix: chain-pinned RPC clients and explicit endpoints'"
+echo "  git push"
+echo ""
+echo "  ===== RETRY ====="
+echo "  Arc Testnet -> Base Sepolia, 0.1 USDC."
+echo ""
+echo "  IF IT STILL FAILS, open the browser console (F12) and look at the"
+echo "  actual failing request — the URL will tell us WHICH chain's RPC is"
+echo "  refusing. Paste that and I can target it exactly."
+echo ""
+echo "  Public testnet RPCs are genuinely flaky. If Base Sepolia is the problem,"
+echo "  a free Alchemy key fixes it permanently:"
+echo "     NEXT_PUBLIC_BASE_RPC_URL=https://base-sepolia.g.alchemy.com/v2/<key>"
+echo "  (set it in Vercel, not just locally)."

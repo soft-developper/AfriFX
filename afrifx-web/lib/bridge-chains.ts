@@ -46,6 +46,30 @@ export function activeChains() {
   return CCTP_ENV === 'mainnet' ? MAINNET_CHAINS : TESTNET_CHAINS
 }
 
+/*
+  RPC URL per chain id, so wagmi doesn't fall back to viem's DEFAULT PUBLIC RPCs.
+  Those defaults are heavily rate-limited and often reject browser requests
+  outright (CORS / 429), which surfaces in the UI as "RPC Request failed" with
+  NOTHING having failed on-chain — because the request never reached a node.
+
+  Each is overridable by env so you can drop in Alchemy/Infura keys for
+  production without a code change.
+*/
+export function rpcUrlFor(chainId: number): string | undefined {
+  const map: Record<number, string | undefined> = {
+    [arcTestnet.id]:      process.env.NEXT_PUBLIC_ARC_RPC_URL     ?? arcTestnet.rpcUrls.default.http[0],
+    [baseSepolia.id]:     process.env.NEXT_PUBLIC_BASE_RPC_URL    ?? 'https://sepolia.base.org',
+    [sepolia.id]:         process.env.NEXT_PUBLIC_ETH_RPC_URL     ?? 'https://ethereum-sepolia-rpc.publicnode.com',
+    [arbitrumSepolia.id]: process.env.NEXT_PUBLIC_ARB_RPC_URL     ?? 'https://sepolia-rollup.arbitrum.io/rpc',
+    [polygonAmoy.id]:     process.env.NEXT_PUBLIC_POLYGON_RPC_URL ?? 'https://rpc-amoy.polygon.technology',
+    [base.id]:            process.env.NEXT_PUBLIC_BASE_RPC_URL    ?? 'https://mainnet.base.org',
+    [mainnet.id]:         process.env.NEXT_PUBLIC_ETH_RPC_URL,
+    [arbitrum.id]:        process.env.NEXT_PUBLIC_ARB_RPC_URL     ?? 'https://arb1.arbitrum.io/rpc',
+    [polygon.id]:         process.env.NEXT_PUBLIC_POLYGON_RPC_URL ?? 'https://polygon-rpc.com',
+  }
+  return map[chainId]
+}
+
 // Map our internal chain key -> the numeric EVM chain id for the active env.
 export function evmChainId(key: string): number | undefined {
   const testnet: Record<string, number> = {
