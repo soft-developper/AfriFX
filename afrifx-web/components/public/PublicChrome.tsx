@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowUpRight } from 'lucide-react'
 import { AfriFXLogo } from '@/components/brand/AfriFXLogo'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 
 export function PublicHeader({ active }: { active?: 'about' | 'contact' }) {
   return (
@@ -16,6 +17,9 @@ export function PublicHeader({ active }: { active?: 'about' | 'contact' }) {
             className={active === 'contact' ? 'text-app-text' : 'text-app-muted hover:text-app-accent-text'}>
             Contact
           </Link>
+          {/* Same theme switch as the landing page, so every public page
+              behaves consistently. */}
+          <ThemeToggle />
           <a href="/dashboard" target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-lg bg-app-accent px-3 py-1.5 font-medium text-app-on-accent hover:bg-app-accent-hover">
             Launch app <ArrowUpRight className="h-3.5 w-3.5" />

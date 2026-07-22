@@ -1,3 +1,37 @@
+#!/bin/bash
+# ============================================================
+# AfriFX -- Dark/light toggle on the public pages
+#
+# The app had a theme switch but the PUBLIC pages didn't, so a visitor couldn't
+# change theme until after launching the app.
+#
+# Adds the EXISTING ThemeToggle component (no new theme logic -- it reuses the
+# same hook, storage key and behaviour as the in-app switch) to:
+#   * the landing page nav
+#   * PublicHeader, which About and Contact both use
+# so every public page now behaves consistently.
+#
+# Notes:
+#   * ThemeToggle is already a 'use client' component, so dropping it into the
+#     landing page (a SERVER component) doesn't force the whole page
+#     client-side. Verified by a clean production build.
+#   * It's placed OUTSIDE the sm:block links, so it stays visible on mobile
+#     where Features/About/Contact are hidden.
+#   * The toggle keeps its existing niceties: a hydration-safe placeholder, and
+#     the small accent dot indicating theme is on AUTO (following time of day)
+#     until the visitor picks one manually.
+#
+# Web typechecks clean and builds.
+#
+# Run from ~/AfriFX:  bash landing-theme-toggle.sh
+# ============================================================
+set -e
+echo ""
+echo "Adding the theme toggle to public pages..."
+echo ""
+
+mkdir -p "afrifx-web/app"
+cat > "afrifx-web/app/page.tsx" << 'AFX_EOF'
 import Link from 'next/link'
 import { AfriFXLogo } from '@/components/brand/AfriFXLogo'
 import { ArrowUpRight } from 'lucide-react'
@@ -141,3 +175,66 @@ function LandingFooter() {
     </footer>
   )
 }
+AFX_EOF
+echo "  afrifx-web/app/page.tsx"
+
+mkdir -p "afrifx-web/components/public"
+cat > "afrifx-web/components/public/PublicChrome.tsx" << 'AFX_EOF'
+import Link from 'next/link'
+import { ArrowUpRight } from 'lucide-react'
+import { AfriFXLogo } from '@/components/brand/AfriFXLogo'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
+
+export function PublicHeader({ active }: { active?: 'about' | 'contact' }) {
+  return (
+    <header className="border-b border-app-border bg-app-surface">
+      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
+        <AfriFXLogo size="sm" href="/" />
+        <nav className="flex items-center gap-4 text-sm sm:gap-5">
+          <Link href="/about"
+            className={active === 'about' ? 'text-app-text' : 'text-app-muted hover:text-app-accent-text'}>
+            About
+          </Link>
+          <Link href="/contact"
+            className={active === 'contact' ? 'text-app-text' : 'text-app-muted hover:text-app-accent-text'}>
+            Contact
+          </Link>
+          {/* Same theme switch as the landing page, so every public page
+              behaves consistently. */}
+          <ThemeToggle />
+          <a href="/dashboard" target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-app-accent px-3 py-1.5 font-medium text-app-on-accent hover:bg-app-accent-hover">
+            Launch app <ArrowUpRight className="h-3.5 w-3.5" />
+          </a>
+        </nav>
+      </div>
+    </header>
+  )
+}
+
+export function PublicFooter() {
+  return (
+    <footer className="border-t border-app-border">
+      <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 px-4 py-6 text-xs text-app-muted sm:flex-row">
+        <span>© {new Date().getFullYear()} AfriFX. Stablecoin FX on Arc.</span>
+        <div className="flex gap-4">
+          <Link href="/" className="hover:text-app-text">Home</Link>
+          <Link href="/about" className="hover:text-app-text">About</Link>
+          <Link href="/contact" className="hover:text-app-text">Contact</Link>
+        </div>
+      </div>
+    </footer>
+  )
+}
+AFX_EOF
+echo "  afrifx-web/components/public/PublicChrome.tsx"
+
+echo ""
+echo "Done. Now:"
+echo "  cd afrifx-web && npx tsc --noEmit && npm run build"
+echo "  cd .. && git add -A && git commit -m 'Public pages: dark/light theme toggle'"
+echo "  git push"
+echo ""
+echo "  After deploy, check the landing page, /about and /contact -- the sun/moon"
+echo "  button sits next to 'Launch app'. Click it to switch; the choice persists"
+echo "  (and carries into the app, since it's the same storage key)."
