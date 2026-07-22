@@ -477,31 +477,105 @@ router.post('/disputes/:id/resolve', requirePermission(PERMISSIONS.RESOLVE_DISPU
 // GET /admin/manage/users search/list users
 router.get('/users', requirePermission(PERMISSIONS.MANAGE_USERS), async (req, res) => {
   const search = (req.query.search as string)?.toLowerCase()
-  try {
-    const rows = search
-      ? await db.run(sql`SELECT * FROM profiles
-          WHERE LOWER(username) LIKE ${'%'+search+'%'}
-             OR LOWER(wallet_address) LIKE ${'%'+search+'%'}
-             OR LOWER(display_name) LIKE ${'%'+search+'%'}
-          ORDER BY created_at DESC LIMIT 50`)
-      : await db.run(sql`SELECT * FROM profiles ORDER BY created_at DESC LIMIT 50`)
+  // Sortable columns. Whitelisted — never interpolate user input into SQL.
+  const sortKey = String(req.query.sort ?? 'volume')
+  const dir     = String(req.query.dir ?? 'desc').toLowerCase() === 'asc' ? 'ASC' : 'DESC'
 
-    // Enrich with trade counts
-    const users = []
-    for (const r of parseRows(rows)) {
-      const u = Array.isArray(r) ? {
-        wallet_address: r[0], username: r[1], display_name: r[2],
-        verified: r[9], created_at: r[11],
-      } : r
-      const tradeRows = await db.run(
-        sql`SELECT COUNT(*) as cnt FROM p2p_offers
-            WHERE (LOWER(maker_address) = ${u.wallet_address.toLowerCase()}
-               OR LOWER(taker_address) = ${u.wallet_address.toLowerCase()})
-              AND status = 'released'`
+  const SORTABLE: Record<string, string> = {
+    volume:    'volume',
+    trades:    'trades',
+    disputes:  'disputes',
+    avg:       'avg_trade',
+    active:    'last_active',
+    joined:    'created_at',
+    name:      'username',
+  }
+  const orderCol = SORTABLE[sortKey] ?? 'volume'
+
+  try {
+    /*
+      ONE query instead of the old N+1 (it ran a separate COUNT per user — 50
+      users meant 51 round trips). We LEFT JOIN an aggregate of each wallet's
+      released trades so volume, counts, average size and last activity all come
+      back in a single pass.
+
+      A user appears as maker OR taker, so the aggregate unions both sides.
+    */
+    const rows = await db.run(sql`
+      WITH trade_stats AS (
+        SELECT wallet, COUNT(*) AS trades, SUM(usdc_amount) AS volume,
+               MAX(updated_at) AS last_active
+        FROM (
+          SELECT LOWER(maker_address) AS wallet, usdc_amount, updated_at
+            FROM p2p_offers WHERE status = 'released' AND maker_address IS NOT NULL
+          UNION ALL
+          SELECT LOWER(taker_address) AS wallet, usdc_amount, updated_at
+            FROM p2p_offers WHERE status = 'released' AND taker_address IS NOT NULL
+        )
+        GROUP BY wallet
+      ),
+      maker_stats AS (
+        SELECT LOWER(maker_address) AS wallet, COUNT(*) AS maker_trades
+        FROM p2p_offers WHERE status = 'released' AND maker_address IS NOT NULL
+        GROUP BY wallet
+      ),
+      taker_stats AS (
+        SELECT LOWER(taker_address) AS wallet, COUNT(*) AS taker_trades
+        FROM p2p_offers WHERE status = 'released' AND taker_address IS NOT NULL
+        GROUP BY wallet
+      ),
+      dispute_stats AS (
+        SELECT wallet, COUNT(*) AS disputes FROM (
+          SELECT LOWER(o.maker_address) AS wallet FROM disputes d
+            JOIN p2p_offers o ON o.id = d.offer_id WHERE o.maker_address IS NOT NULL
+          UNION ALL
+          SELECT LOWER(o.taker_address) AS wallet FROM disputes d
+            JOIN p2p_offers o ON o.id = d.offer_id WHERE o.taker_address IS NOT NULL
+        )
+        GROUP BY wallet
       )
-      const tc = parseRows(tradeRows)
-      users.push({ ...u, trades: Number(tc[0]?.cnt ?? tc[0]?.[0] ?? 0) })
-    }
+      SELECT p.*,
+             COALESCE(t.trades, 0)        AS trades,
+             COALESCE(t.volume, 0)        AS volume,
+             t.last_active                AS last_active,
+             COALESCE(mk.maker_trades, 0) AS maker_trades_live,
+             COALESCE(tk.taker_trades, 0) AS taker_trades_live,
+             COALESCE(d.disputes, 0)      AS disputes,
+             CASE WHEN COALESCE(t.trades,0) > 0
+                  THEN COALESCE(t.volume,0) / t.trades ELSE 0 END AS avg_trade
+      FROM profiles p
+      LEFT JOIN trade_stats   t  ON t.wallet  = LOWER(p.wallet_address)
+      LEFT JOIN maker_stats   mk ON mk.wallet = LOWER(p.wallet_address)
+      LEFT JOIN taker_stats   tk ON tk.wallet = LOWER(p.wallet_address)
+      LEFT JOIN dispute_stats d  ON d.wallet  = LOWER(p.wallet_address)
+      ${search
+        ? sql`WHERE LOWER(p.username) LIKE ${'%'+search+'%'}
+                 OR LOWER(p.wallet_address) LIKE ${'%'+search+'%'}
+                 OR LOWER(p.display_name) LIKE ${'%'+search+'%'}`
+        : sql``}
+      ORDER BY ${sql.raw(orderCol)} ${sql.raw(dir)}
+      LIMIT 100`)
+
+    const users = parseRows(rows).map((r: any) => {
+      const o = Array.isArray(r) ? {} : r
+      const trades   = Number(o.trades   ?? 0)
+      const disputes = Number(o.disputes ?? 0)
+      return {
+        ...o,
+        trades,
+        disputes,
+        volume:        Number(o.volume    ?? 0),
+        avg_trade:     Number(o.avg_trade ?? 0),
+        last_active:   o.last_active ? Number(o.last_active) : null,
+        maker_trades:  Number(o.maker_trades_live ?? 0),
+        taker_trades:  Number(o.taker_trades_live ?? 0),
+        // Dispute rate is the number an admin actually cares about: 3 disputes
+        // on 3 trades is very different from 3 on 300.
+        dispute_rate:  trades > 0 ? +((disputes / trades) * 100).toFixed(1) : 0,
+        verified:      !!o.verified,
+        suspended:     !!o.suspended,
+      }
+    })
     res.json(users)
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
