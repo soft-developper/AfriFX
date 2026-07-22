@@ -1,6 +1,9 @@
 import { getDefaultConfig, getDefaultWallets } from '@rainbow-me/rainbowkit'
 import { http } from 'wagmi'
 import { arcTestnet } from './arc-chain'
+// Bridge routes need the wallet to sign on OTHER chains too. Arc stays first,
+// so it remains the app's default network and nothing existing changes.
+import { activeChains } from './bridge-chains'
 import { web3AuthWallet, hasWeb3Auth } from './web3auth'
 
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? 'demo'
@@ -23,7 +26,12 @@ export const wagmiConfig = getDefaultConfig({
   appIcon:    'https://afrifx.xyz/favicon.svg',
   projectId,
   wallets,
-  chains:     [arcTestnet],
-  transports: { [arcTestnet.id]: http(arcTestnet.rpcUrls.default.http[0]) },
+  chains:     activeChains() as any,
+  transports: Object.fromEntries(
+    activeChains().map(c => [
+      c.id,
+      http(c.id === arcTestnet.id ? arcTestnet.rpcUrls.default.http[0] : undefined),
+    ]),
+  ),
   ssr:        true,
 })
