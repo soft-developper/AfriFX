@@ -1,5 +1,6 @@
 'use client'
-import { Download, FileText } from 'lucide-react'
+import { useState } from 'react'
+import { Download, FileText, Loader2 } from 'lucide-react'
 import type { ChatMessage } from '@/hooks/useChat'
 
 const QUICK_ACTION_LABELS: Record<string, { emoji: string; label: string; color: string }> = {
@@ -30,6 +31,41 @@ function formatTime(createdAt: number | string | null | undefined): string {
 
 export function MessageBubble({ msg, isMe, senderName }: Props) {
   const time = formatTime(msg.created_at)
+  const [downloading, setDownloading] = useState(false)
+
+  /*
+    Download the attachment in-page instead of opening the Cloudinary URL in a
+    new tab. We fetch the blob and trigger a real browser download, so the user
+    gets a save dialog with a proper .pdf filename and never leaves the trade.
+  */
+  async function downloadDoc(url: string, name: string | null) {
+    setDownloading(true)
+    try {
+      const res  = await fetch(url)
+      const blob = await res.blob()
+      // Force the PDF type so the browser saves it correctly.
+      const pdfBlob = blob.type === 'application/pdf'
+        ? blob
+        : new Blob([blob], { type: 'application/pdf' })
+
+      let filename = name ?? 'payment-proof'
+      if (!filename.toLowerCase().endsWith('.pdf')) filename += '.pdf'
+
+      const href = URL.createObjectURL(pdfBlob)
+      const a = document.createElement('a')
+      a.href = href
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(href)
+    } catch {
+      // Fall back to opening it if the direct download is blocked (e.g. CORS).
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   // System message
   if (!msg.sender || msg.msg_type === 'system' || msg.sender === 'system') {
@@ -72,29 +108,32 @@ export function MessageBubble({ msg, isMe, senderName }: Props) {
             : 'rounded-tl-sm bg-app-border text-app-text'
         }`}>
 
-          {/* Media */}
+          {/* Attachment — PDFs only for new uploads. Older image messages that
+              already exist in the DB still render, but every attachment now
+              downloads in-page rather than opening the CDN in a new tab. */}
           {msg.media_url && (
             <div className="mb-2">
               {msg.media_type === 'image' ? (
-                <a href={msg.media_url} target="_blank" rel="noopener noreferrer">
-                  <img
-                    src={msg.media_url}
-                    alt="Shared image"
-                    className="max-h-48 w-full rounded-lg object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                  />
-                </a>
+                <img
+                  src={msg.media_url}
+                  alt="Shared image"
+                  className="max-h-48 w-full rounded-lg object-cover"
+                />
               ) : (
-                <a
-                  href={msg.media_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`flex items-center gap-2 rounded-lg p-2 text-xs
+                <button
+                  type="button"
+                  onClick={() => downloadDoc(msg.media_url!, msg.content ?? null)}
+                  disabled={downloading}
+                  title="Download PDF"
+                  className={`flex w-full items-center gap-2 rounded-lg p-2 text-left text-xs transition-opacity hover:opacity-80 disabled:opacity-50
                     ${isMe ? 'bg-app-on-accent/10 text-app-on-accent' : 'bg-app-surface text-app-text'}`}
                 >
                   <FileText className="h-4 w-4 shrink-0" />
                   <span className="flex-1 truncate">{msg.content ?? 'Document'}</span>
-                  <Download className="h-3.5 w-3.5 shrink-0 opacity-60" />
-                </a>
+                  {downloading
+                    ? <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                    : <Download className="h-3.5 w-3.5 shrink-0 opacity-60" />}
+                </button>
               )}
             </div>
           )}

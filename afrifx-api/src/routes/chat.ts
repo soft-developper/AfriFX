@@ -12,14 +12,12 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits:  { fileSize: 10 * 1024 * 1024 }, // 10 MB
   fileFilter: (_req, file, cb) => {
-    const allowed = [
-      'image/jpeg','image/png','image/webp','image/gif',
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'video/mp4','video/webm',
-    ]
-    cb(null, allowed.includes(file.mimetype))
+    // PDF ONLY. Bank receipts/statements are issued as PDFs; images are too
+    // easily edited to be trusted as proof of payment. Enforced HERE as well as
+    // in the browser, because client-side checks are trivially bypassed.
+    const isPdf = file.mimetype === 'application/pdf' ||
+                  file.originalname.toLowerCase().endsWith('.pdf')
+    cb(null, isPdf)
   },
 })
 
@@ -71,7 +69,13 @@ router.post('/:offerId/upload', upload.single('file'), async (req, res) => {
   const wallet      = req.body.wallet as string
 
   if (!wallet)   return res.status(400).json({ error: 'wallet required' })
-  if (!req.file) return res.status(400).json({ error: 'No file provided' })
+  // multer's fileFilter drops non-PDFs, which leaves req.file undefined. Say
+  // WHY, otherwise "No file provided" is baffling when a file clearly was sent.
+  if (!req.file) {
+    return res.status(400).json({
+      error: 'Only PDF files are accepted. Please upload the bank-issued PDF receipt.',
+    })
+  }
 
   const role = await verifyAccess(offerId, wallet)
   if (!role)  return res.status(403).json({ error: 'Access denied' })

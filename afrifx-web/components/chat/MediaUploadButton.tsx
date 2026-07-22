@@ -21,8 +21,21 @@ export function MediaUploadButton({ offerId, onUpload, disabled }: Props) {
     const file = e.target.files?.[0]
     if (!file || !address) return
 
+    // PDF only. Bank receipts and statements are issued as PDFs; images are too
+    // easily edited to be trusted as proof of payment, so they're rejected.
+    // The `accept` attribute is only a hint — users can bypass it in the file
+    // picker — so we validate here as well.
+    const isPdf = file.type === 'application/pdf' ||
+                  file.name.toLowerCase().endsWith('.pdf')
+    if (!isPdf) {
+      setErrMsg('Only PDF files are accepted. Please upload the bank-issued PDF receipt.')
+      if (inputRef.current) inputRef.current.value = ''
+      return
+    }
+
     if (file.size > 10 * 1024 * 1024) {
       setErrMsg('File too large, max 10 MB')
+      if (inputRef.current) inputRef.current.value = ''
       return
     }
 
@@ -47,7 +60,7 @@ export function MediaUploadButton({ offerId, onUpload, disabled }: Props) {
       <input
         ref={inputRef}
         type="file"
-        accept="image/*,application/pdf,.doc,.docx,video/mp4,video/webm"
+        accept="application/pdf,.pdf"
         onChange={handleFile}
         className="hidden"
       />
@@ -55,7 +68,7 @@ export function MediaUploadButton({ offerId, onUpload, disabled }: Props) {
       <button
         onClick={() => { setErrMsg(null); inputRef.current?.click() }}
         disabled={disabled || uploading}
-        title="Attach image, PDF, or document (max 10 MB)"
+        title="Attach a PDF receipt or statement (max 10 MB)"
         className="flex h-9 w-9 items-center justify-center rounded-full border border-app-border bg-app-surface text-app-muted transition-colors hover:border-app-accent hover:text-app-text disabled:opacity-40"
       >
         {uploading
