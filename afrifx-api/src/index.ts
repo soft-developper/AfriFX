@@ -25,7 +25,9 @@ import adminManageRouter          from './routes/adminManage'
 import broadcastsRouter           from './routes/broadcasts'
 import maintenanceRouter          from './routes/maintenance'
 import transfersRouter, { webhookRouter } from './routes/transfers'
+import bridgeRouter               from './routes/bridge'
 import { startTransferReconciler } from './services/ramp/reconciler'
+import { startBridgeReconciler }   from './services/bridge/reconciler'
 import { maintenanceGuard }       from './lib/maintenance'
 import contentRouter              from './routes/content'
 import { startRatePoller }        from './jobs/ratePoller'
@@ -76,6 +78,7 @@ app.use('/admin/manage',   adminManageRouter)
 app.use('/admin/broadcasts', broadcastsRouter)
 app.use('/maintenance',    maintenanceRouter)
 app.use('/transfers',      transfersRouter)
+app.use('/bridge',         bridgeRouter)
 app.use('/webhooks',       webhookRouter)
 
 app.use(errorHandler)
@@ -95,4 +98,5 @@ startAdminAuditSummary()
   startTxSettler()
   startDutyScheduler()
   startTransferReconciler()
+  startBridgeReconciler()
 })
