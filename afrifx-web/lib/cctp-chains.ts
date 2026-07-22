@@ -75,9 +75,22 @@ export interface CctpChain {
 const TESTNET_CHAINS: CctpChain[] = [
   {
     key: 'arc', name: 'Arc Testnet', domain: 26, chainId: 5042002,
-    // Arc's USDC is the native gas token; the ERC-20 interface address is set
-    // via env so it can't drift from the rest of the app's config.
-    usdc: process.env.NEXT_PUBLIC_ARC_USDC ?? '',
+    /*
+      Arc's USDC ERC-20 INTERFACE address (from Arc's official contract-address
+      docs). Arc uses USDC as its native gas token, but CCTP's depositForBurn
+      needs an ERC-20 `burnToken` — this system contract is that interface, and
+      it exposes approve/allowance/transferFrom over the same native balance.
+
+      It is HARDCODED rather than env-only on purpose: when it was missing, the
+      approve step was skipped AND burnToken was passed as the zero address,
+      which makes depositForBurn revert. A silent misconfiguration that breaks
+      every Arc-source bridge is not worth the flexibility.
+
+      NOTE ON DECIMALS: the native gas token uses 18 decimals, but this ERC-20
+      interface uses 6 — which is what CCTP amounts must use. Arc's docs
+      explicitly warn against mixing the two.
+    */
+    usdc: process.env.NEXT_PUBLIC_ARC_USDC ?? '0x3600000000000000000000000000000000000000',
     rpcUrl:  process.env.NEXT_PUBLIC_ARC_RPC_URL ?? 'https://rpc.testnet.arc.network',
     explorer: 'https://testnet.arcscan.app',
     isHome: true,

@@ -114,20 +114,29 @@ export function useBridge() {
       const contracts = cctpContracts()
       const messenger = contracts.tokenMessenger as `0x${string}`
 
-      // ── 3. Approve the TokenMessenger to spend USDC ──────
-      // Skipped when the chain's USDC address isn't configured (e.g. Arc, where
-      // USDC is the native gas token rather than an ERC-20 we approve).
-      if (from.usdc) {
-        setState(s => ({ ...s, step: 'approving' }))
-        const approveTx = await writeContractAsync({
-          address: from.usdc as `0x${string}`,
-          abi: ERC20_ABI,
-          functionName: 'approve',
-          args: [messenger, amountUnits],
-          chainId: srcChainId,
-        })
-        await publicClient?.waitForTransactionReceipt({ hash: approveTx as `0x${string}` })
+      /*
+        CCTP burns an ERC-20, so burnToken MUST be a real token address. If it's
+        missing we fail HERE with a clear message rather than passing the zero
+        address to depositForBurn, which reverts with an opaque error after the
+        user has already approved and signed. This was the actual cause of
+        Arc-source bridges failing.
+      */
+      if (!from.usdc || /^0x0+$/.test(from.usdc)) {
+        throw new Error(
+          `No USDC token address configured for ${from.name}. ` +
+          `Bridging from this chain can't proceed until it's set.`)
       }
+
+      // ── 3. Approve the TokenMessenger to spend USDC ──────
+      setState(s => ({ ...s, step: 'approving' }))
+      const approveTx = await writeContractAsync({
+        address: from.usdc as `0x${string}`,
+        abi: ERC20_ABI,
+        functionName: 'approve',
+        args: [messenger, amountUnits],
+        chainId: srcChainId,
+      })
+      await publicClient?.waitForTransactionReceipt({ hash: approveTx as `0x${string}` })
 
       // ── 4. BURN on the source chain ──────────────────────
       setState(s => ({ ...s, step: 'burning' }))
@@ -143,7 +152,8 @@ export function useBridge() {
           amountUnits,
           to.domain,
           addressToBytes32(recipient),
-          (from.usdc || '0x0000000000000000000000000000000000000000') as `0x${string}`,
+          // Guarded above, so this is always a real token address.
+          from.usdc as `0x${string}`,
           // bytes32(0) = ANY address may call receiveMessage on the destination.
           // That's what allows our reconciler (or the user from another device)
           // to finish a stranded mint.
