@@ -11,6 +11,7 @@ import { usePayrollBatches } from '@/hooks/usePayroll'
 import { useTreasuryRules, useCreateRule, useToggleRule, useDeleteRule } from '@/hooks/useTreasury'
 import { useFXRates } from '@/hooks/useFXRate'
 import { formatAmount } from '@/lib/utils'
+import { GatewayBalancePanel } from '@/components/treasury/GatewayBalancePanel'
 import {
   Plus, Zap, Trash2, Pause, Play,
   AlertTriangle, ArrowRight, Users, Building2,
@@ -135,6 +136,13 @@ export function TreasuryContent() {
             <p className="mt-0.5 text-xs text-app-muted">{sub}</p>
           </div>
         ))}
+      </div>
+
+      {/* Circle Gateway unified balance — read-only for now. Sits above the
+          existing panels because "how much can I actually spend, anywhere" is
+          the first question when funding a payout. */}
+      <div className="mb-4">
+        <GatewayBalancePanel />
       </div>
 
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
