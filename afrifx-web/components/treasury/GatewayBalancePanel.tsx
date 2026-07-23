@@ -1,25 +1,36 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { Layers, RefreshCw, AlertCircle, Info, ExternalLink } from 'lucide-react'
+import { useAccount } from 'wagmi'
 import {
-  fetchGatewayBalances, gatewayChains, treasuryAddress, gatewayConfigured,
+  fetchGatewayBalances, gatewayChains, isValidAddress,
   GATEWAY_ENV, gatewayContracts,
 } from '@/lib/gateway'
 
 /*
-  READ-ONLY view of AfriFX's Circle Gateway unified balance.
+  READ-ONLY view of the CONNECTED USER'S Circle Gateway unified balance.
+
+  Gateway is permissionless and non-custodial, so this is a genuine user
+  feature: any AfriFX user can hold one USDC balance spendable across chains.
+  AfriFX's own company treasury uses the same feature with its own wallet — it
+  is not special-cased.
 
   Stage 2 of the Gateway work: this panel only LOOKS. It cannot deposit,
   transfer or withdraw — those need a signer and are deliberately not wired up
-  yet. The value of shipping it first is that treasury across chains becomes
-  visible in one place, which it isn't today.
+  yet.
 */
 export function GatewayBalancePanel() {
   const [data, setData]       = useState<any>(null)
   const [error, setError]     = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const addr = treasuryAddress()
+  /*
+    The CONNECTED USER'S wallet — not a hardcoded company address. /treasury is
+    a per-user page, so each user sees their own unified balance. AfriFX's own
+    company treasury is just another wallet using the same feature.
+  */
+  const { address } = useAccount()
+  const addr = isValidAddress(address) ? address : undefined
 
   const load = useCallback(async () => {
     if (!addr) return
@@ -32,21 +43,16 @@ export function GatewayBalancePanel() {
 
   useEffect(() => { load() }, [load])
 
-  // Not configured yet — explain rather than render an empty box.
-  if (!gatewayConfigured()) {
+  // No wallet connected — explain rather than render an empty box.
+  if (!addr) {
     return (
       <div className="rounded-xl border border-app-border bg-app-surface p-5">
         <h3 className="mb-1 flex items-center gap-2 text-sm font-semibold text-app-text">
           <Layers className="h-4 w-4 text-app-accent-text" /> Unified balance
         </h3>
         <p className="text-xs leading-relaxed text-app-muted">
-          Circle Gateway isn&apos;t set up yet. Once a treasury wallet address is
-          configured, this shows a single USDC balance spendable on any supported
-          chain — so a payout on Base can settle instantly without bridging
-          mid-transaction.
-        </p>
-        <p className="mt-2 text-[11px] text-app-muted">
-          Set <code className="rounded bg-app-bg px-1">NEXT_PUBLIC_TREASURY_ADDRESS</code> to enable.
+          Connect your wallet to see your Circle Gateway balance — a single USDC
+          balance you can spend on any supported chain, without bridging first.
         </p>
       </div>
     )
@@ -132,8 +138,8 @@ export function GatewayBalancePanel() {
         </p>
         <p className="flex items-start gap-1.5 text-[11px] leading-relaxed text-amber-200/70">
           <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" />
-          Withdrawing without Circle&apos;s API takes 7 days. Treat this as working
-          capital, not the whole reserve.
+          If Circle&apos;s API is ever unavailable, withdrawing takes 7 days. Keep
+          only working capital here, not everything you hold.
         </p>
         <a
           href={`https://developers.circle.com/gateway`}

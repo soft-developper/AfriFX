@@ -109,17 +109,20 @@ export function gatewayChainByDomain(domain: number, env: GatewayEnv = GATEWAY_E
 }
 
 /*
-  The treasury wallet address. Read-only here — we only ever LOOK UP balances
-  for it. Signing (stage 3+) is a separate decision and deliberately not wired
-  into this file.
-*/
-export function treasuryAddress(): string | undefined {
-  const a = process.env.NEXT_PUBLIC_TREASURY_ADDRESS
-  return a && /^0x[a-fA-F0-9]{40}$/.test(a) ? a : undefined
-}
+  WHOSE balance are we showing?
 
-export function gatewayConfigured(): boolean {
-  return !!treasuryAddress()
+  /treasury is a PER-USER page (it reads the connected wallet), so the Gateway
+  panel must show the CONNECTED USER'S OWN unified balance — never a hardcoded
+  company address. An earlier draft of this file used a single
+  NEXT_PUBLIC_TREASURY_ADDRESS, which would have shown AfriFX's operational
+  balance to every user: confusing, and a disclosure of company finances.
+
+  Gateway is permissionless and non-custodial, so every user can have their own
+  unified balance keyed to their own wallet. AfriFX's company treasury is simply
+  one more wallet — it isn't special-cased here.
+*/
+export function isValidAddress(a?: string | null): boolean {
+  return !!a && /^0x[a-fA-F0-9]{40}$/.test(a)
 }
 
 // ── Read-only API helpers ───────────────────────────────────
