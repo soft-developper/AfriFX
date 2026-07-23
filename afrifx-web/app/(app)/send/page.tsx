@@ -45,6 +45,18 @@ function SendPageInner() {
   }, [address, gw.step])
 
   /*
+    Clear the form once a cross-chain send completes.
+
+    The same-chain path clears immediately after submitting, but a cross-chain
+    send finishes asynchronously — so without this the recipient and amount sat
+    there with the button still live, inviting an accidental second send of the
+    same amount. For a money form that's a real hazard, not just untidiness.
+  */
+  useEffect(() => {
+    if (gw.step === 'done') { setTo(''); setAmount('') }
+  }, [gw.step])
+
+  /*
     SMART ROUTING — the user picks a destination, not a mechanism.
       same chain (Arc -> Arc)  : plain wallet transfer. Instant, no Gateway
                                  balance consumed, and it's what Send always did.

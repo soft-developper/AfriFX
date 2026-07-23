@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useAccount } from 'wagmi'
 import {
   ArrowDown, Loader2, CheckCircle, AlertTriangle, ExternalLink, Info,
@@ -7,6 +7,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { useBridge } from '@/hooks/useBridge'
 import { cctpChains, chainByKey, isRouteSupported } from '@/lib/cctp-chains'
+import { useChainUsdcBalance } from '@/hooks/useChainUsdcBalance'
 
 /*
   Bridge UI for CCTP transfers.
@@ -16,6 +17,33 @@ import { cctpChains, chainByKey, isRouteSupported } from '@/lib/cctp-chains'
   so the copy at that point must never look like a plain error, or a user will
   think their money is gone when it isn't.
 */
+
+/*
+  The bridge is a multi-minute, multi-signature process. Rather than a paragraph
+  explaining CCTP, the card shows WHERE THE USER IS — each stage marked done,
+  active, or pending.
+
+  Stage order mirrors the hook's own steps so the two can't drift.
+*/
+const FLOW: { key: string; label: (from: string, to: string, amt: string) => string }[] = [
+  { key: 'approving', label: (f)         => `Approve USDC on ${f}` },
+  { key: 'burning',   label: (f, _t, a)  => `Burn ${a} USDC on ${f}` },
+  { key: 'attesting', label: ()          => 'Wait for Circle to attest' },
+  { key: 'minting',   label: (_f, t)     => `Mint on ${t}` },
+]
+
+const ORDER = ['creating', 'switching', 'approving', 'burning', 'attesting', 'minting', 'done']
+
+function stageState(stage: string, current: string): 'done' | 'active' | 'pending' {
+  if (current === 'done') return 'done'
+  const ci = ORDER.indexOf(current)
+  const si = ORDER.indexOf(stage)
+  if (ci < 0 || si < 0) return 'pending'
+  if (si < ci)  return 'done'
+  if (si === ci) return 'active'
+  return 'pending'
+}
+
 export function BridgeCard() {
   const { address, isConnected } = useAccount()
   const { step, bridgeId, burnTx, mintTx, error, inFlight, bridge, reset, env } = useBridge()
@@ -25,13 +53,28 @@ export function BridgeCard() {
   const [toKey,   setToKey]   = useState('base')
   const [amount,  setAmount]  = useState('')
 
+  // Balance on the SOURCE chain, so Max and the insufficient check are correct
+  // for whichever direction the user picks.
+  const { balance, loading: balLoading, refresh: refreshBalance } =
+    useChainUsdcBalance(fromKey)
+
+  /*
+    Clear the amount once a bridge completes, and re-read the balance.
+    Leaving the amount populated with the button live is how someone
+    accidentally bridges twice.
+  */
+  useEffect(() => {
+    if (step === 'done') { setAmount(''); refreshBalance() }
+  }, [step, refreshBalance])
+
   const from = chainByKey(fromKey)
   const to   = chainByKey(toKey)
   const routeOk = isRouteSupported(fromKey, toKey)
   const amt = Number(amount)
   const busy = ['creating','switching','approving','burning','attesting','minting'].includes(step)
+  const insufficient = amt > 0 && amt > balance
 
-  const canSubmit = isConnected && routeOk && amt > 0 && !busy
+  const canSubmit = isConnected && routeOk && amt > 0 && !busy && !insufficient
 
   function swapDirection() {
     setFromKey(toKey); setToKey(fromKey)
@@ -94,7 +137,24 @@ export function BridgeCard() {
       </select>
 
       {/* Amount */}
-      <label className="mb-1 block text-xs text-app-muted">Amount (USDC)</label>
+      <div className="mb-1 flex items-center justify-between">
+        <label className="text-xs text-app-muted">Amount (USDC)</label>
+        <span className="flex items-center gap-2 text-[11px]">
+          <span className="text-app-muted">
+            Balance:{' '}
+            <span className="font-mono text-app-text">
+              {balLoading ? '…' : balance.toFixed(2)}
+            </span>
+          </span>
+          <button
+            onClick={() => setAmount(String(balance))}
+            disabled={busy || balance <= 0}
+            className="text-app-accent-text hover:underline disabled:opacity-40"
+          >
+            Max
+          </button>
+        </span>
+      </div>
       <input
         type="number" inputMode="decimal" min="0" step="0.000001"
         value={amount}
@@ -106,6 +166,13 @@ export function BridgeCard() {
 
       {!routeOk && fromKey === toKey && (
         <p className="mb-3 text-xs text-amber-400">Source and destination must be different chains.</p>
+      )}
+
+      {insufficient && (
+        <p className="mb-3 flex items-center gap-1.5 rounded-lg bg-red-900/20 px-3 py-2 text-xs text-red-400">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          You only have {balance.toFixed(2)} USDC on {from?.name}
+        </p>
       )}
 
       {/* Action */}
@@ -142,6 +209,7 @@ export function BridgeCard() {
         >
           {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> Working…</>
                 : !isConnected ? 'Connect a wallet'
+                : insufficient ? 'Insufficient balance'
                 : 'Bridge USDC'}
         </Button>
       )}
@@ -199,11 +267,36 @@ export function BridgeCard() {
         )
       )}
 
-      <p className="mt-4 border-t border-app-border pt-3 text-[11px] leading-relaxed text-app-muted">
-        Powered by Circle&apos;s CCTP. USDC is burned on the source chain and native
-        USDC is minted on the destination — no wrapped tokens, no third-party
-        bridge custody. You sign both transactions yourself.
-      </p>
+      {/* Live flow. Replaces the old marketing blurb: what the user needs is
+          to know WHERE THEY ARE in a multi-minute, multi-signature process, not
+          a paragraph about CCTP. Each stage shows done / active / pending. */}
+      <div className="mt-4 border-t border-app-border pt-3">
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-app-muted">
+          Transfer steps
+        </p>
+        <div className="space-y-1.5">
+          {FLOW.map(f => {
+            const state = stageState(f.key, step)
+            return (
+              <div key={f.key} className="flex items-center gap-2">
+                <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+                  {state === 'done'
+                    ? <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
+                    : state === 'active'
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin text-app-accent-text" />
+                    : <span className="h-1.5 w-1.5 rounded-full bg-app-border" />}
+                </span>
+                <span className={`text-[11px] ${
+                  state === 'done'   ? 'text-app-muted line-through decoration-app-border'
+                  : state === 'active' ? 'text-app-text'
+                  : 'text-app-muted/60'}`}>
+                  {f.label(from?.name ?? 'source', to?.name ?? 'destination', amount || '0')}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }
