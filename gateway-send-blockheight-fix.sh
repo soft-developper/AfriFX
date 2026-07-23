@@ -1,3 +1,46 @@
+#!/bin/bash
+# ============================================================
+# AfriFX GATEWAY -- FIX: "maxBlockHeight is too low"
+#
+# *** FIRST, THE GOOD NEWS ***
+# The SIGNING WORKED. That means Web3Auth gives your users an EOA, not a smart
+# account -- which was the biggest open risk in this whole feature. Cross-chain
+# send is viable for real users. The EOA detection stays in as a safety net, but
+# it isn't going to fire.
+#
+# THE BUG
+# I set maxBlockHeight = currentBlock + 1,000,000. Circle wanted 54,485,435 and
+# got 54,275,825 -- short by ~210,000 blocks. maxBlockHeight has to clear the
+# wallet's 7-day withdrawalDelay measured in BLOCKS, and Arc produces blocks
+# about twice a second, so seven days is roughly 1.2 MILLION blocks. A hand-
+# picked buffer is easy to under-shoot, and mine did.
+#
+# THE FIX -- LET CIRCLE CORRECT US
+# Guessing a bigger number would work until the delay or block time changed. So
+# instead: the buffer starts higher (2M), and if Circle still rejects it, we
+# PARSE THE MINIMUM OUT OF THEIR OWN ERROR MESSAGE and retry once with that
+# value plus headroom.
+#     "expected at least 54485435"  ->  retry with 54,985,435
+# Tested against your exact error string: parses correctly, clears the minimum
+# with 500,000 blocks to spare.
+#
+# WHY THE RETRY RE-SIGNS: maxBlockHeight is INSIDE the signed burn intent, so a
+# corrected value needs a fresh signature -- we can't just resend the same
+# payload. The sign+request pair is therefore wrapped together, and you'll see
+# the wallet prompt a second time IF the first attempt is rejected. On success
+# it's a single prompt.
+#
+# This makes the flow self-correcting rather than dependent on a magic constant.
+#
+# Run from ~/AfriFX:  bash gateway-send-blockheight-fix.sh
+# ============================================================
+set -e
+echo ""
+echo "Fixing maxBlockHeight with self-correcting retry..."
+echo ""
+
+mkdir -p "afrifx-web/hooks"
+cat > "afrifx-web/hooks/useGatewaySend.ts" << 'AFX_EOF'
 'use client'
 // ============================================================
 // useGatewaySend — spend the unified balance on any supported chain.
@@ -298,3 +341,18 @@ export function useGatewaySend() {
 
   return { ...state, send, reset }
 }
+AFX_EOF
+echo "  afrifx-web/hooks/useGatewaySend.ts"
+
+echo ""
+echo "Done. Then:"
+echo "  cd afrifx-web && npx tsc --noEmit && npm run build"
+echo "  cd .. && git add -A && git commit -m 'Fix: Gateway maxBlockHeight self-correcting retry'"
+echo "  git push"
+echo ""
+echo "  Retry Arc -> Base Sepolia with a small amount."
+echo "  Expect ONE signature prompt if the first height is accepted, or TWO if"
+echo "  Circle corrects us (that second prompt is the retry, not an error)."
+echo ""
+echo "  If it fails again, paste the new message -- but it should now be a"
+echo "  DIFFERENT error, since this specific one is handled."
