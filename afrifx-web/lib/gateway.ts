@@ -151,31 +151,50 @@ export async function fetchGatewayBalances(
   address: string, env: GatewayEnv = GATEWAY_ENV,
 ): Promise<GatewayBalances | { error: string }> {
   try {
-    const url = `${gatewayApi(env)}/balances?token=USDC&depositor=${address}`
-    const res = await fetch(url, { headers: { accept: 'application/json' } })
-    if (!res.ok) return { error: `Gateway API ${res.status}` }
-    const data: any = await res.json()
-
-    // Accept several plausible shapes.
-    const entries: any[] =
-      data?.balances ?? data?.data?.balances ?? data?.data ?? []
-
     const chains = gatewayChains(env)
+
+    /*
+      POST, not GET.
+
+      An earlier version called GET /v1/balances?depositor=... and got a 404.
+      Circle's API reference is explicit: /v1/balances is a POST that takes a
+      `sources` array of { domain, depositor } pairs — one per chain you want
+      balances for — plus the token.
+
+      Response shape (from the reference):
+        { token: "USDC", balances: [ { domain, depositor, balance }, ... ] }
+    */
+    const res = await fetch(`${gatewayApi(env)}/balances`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({
+        token: 'USDC',
+        sources: chains.map(c => ({ domain: c.domain, depositor: address })),
+      }),
+    })
+
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '')
+      return { error: `Gateway API ${res.status}${detail ? `: ${detail.slice(0, 140)}` : ''}` }
+    }
+
+    const data: any = await res.json()
+    const entries: any[] = Array.isArray(data?.balances) ? data.balances : []
+
     const perChain = chains.map(c => {
-      const hit = (Array.isArray(entries) ? entries : []).find((e: any) =>
-        Number(e?.domain) === c.domain ||
-        String(e?.chain ?? '').toLowerCase() === c.sdkName.toLowerCase())
+      const hit = entries.find((e: any) => Number(e?.domain) === c.domain)
       return {
         key: c.key, name: c.name, domain: c.domain, finality: c.finality,
-        amount: Number(hit?.balance ?? hit?.available ?? 0) || 0,
+        amount: Number(hit?.balance ?? 0) || 0,
       }
     })
 
-    const total =
-      Number(data?.totalBalance ?? data?.total ?? 0) ||
-      perChain.reduce((s, c) => s + c.amount, 0)
-
-    return { token: 'USDC', total, perChain, raw: data }
+    return {
+      token: 'USDC',
+      total: perChain.reduce((sum, c) => sum + c.amount, 0),
+      perChain,
+      raw: data,
+    }
   } catch (err: any) {
     return { error: err?.message ?? 'Could not reach the Gateway API' }
   }

@@ -77,17 +77,21 @@ export function GatewayBalancePanel() {
         </button>
       </div>
 
-      {error ? (
-        <div className="rounded-lg border border-amber-700/40 bg-amber-900/10 p-3">
+      {/* A read failure is shown as a NOTICE above the balance, not instead of
+          it — the rest of the panel (and the deposit button) stays usable. */}
+      {error && (
+        <div className="mb-3 rounded-lg border border-amber-700/40 bg-amber-900/10 p-3">
           <p className="flex items-center gap-1.5 text-xs text-amber-400">
-            <AlertCircle className="h-3.5 w-3.5" /> Couldn&apos;t read the Gateway balance
+            <AlertCircle className="h-3.5 w-3.5" /> Couldn&apos;t read your Gateway balance
           </p>
           <p className="mt-1 text-[11px] text-amber-200/80">{error}</p>
           <p className="mt-1 text-[11px] text-amber-200/60">
-            This is a read failure only — no funds are affected.
+            Read-only problem — no funds are affected, and you can still deposit.
           </p>
         </div>
-      ) : (
+      )}
+
+      {(
         <>
           <div className="mb-4 rounded-lg bg-app-bg p-4">
             <p className="text-[10px] uppercase tracking-wide text-app-muted">
@@ -130,8 +134,11 @@ export function GatewayBalancePanel() {
         </>
       )}
 
-      {/* Deposit */}
-      {!error && (
+      {/* Deposit — deliberately NOT gated on the balance read succeeding.
+          Failing to READ your balance is no reason to prevent you DEPOSITING;
+          an earlier version hid this button behind !error, which meant one API
+          hiccup made the whole feature look absent. */}
+      {(
         <div className="mt-4">
           {showDeposit ? (
             <GatewayDepositForm onDone={() => { setShowDeposit(false); load() }} />
