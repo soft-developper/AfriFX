@@ -101,7 +101,7 @@ function InvoiceDetail() {
             <div className="rounded-xl border border-emerald-900/50 bg-emerald-900/20 p-5 text-center">
               <CheckCircle className="mx-auto mb-2 h-8 w-8 text-emerald-400" />
               <p className="font-medium text-emerald-400">Invoice paid!</p>
-              <p className="mt-1 text-xs text-emerald-600">
+              <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-600">
                 Paid {invoice.paid_at ? new Date(invoice.paid_at * 1000).toLocaleString() : ''}
               </p>
               {invoice.payment_tx_hash && (

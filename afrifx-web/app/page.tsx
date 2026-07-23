@@ -36,7 +36,7 @@ function LandingHeader() {
           <Link href="#features" className="hidden px-3 py-2 text-sm text-app-muted hover:text-app-text sm:block">Features</Link>
           <Link href="/about" className="hidden px-3 py-2 text-sm text-app-muted hover:text-app-text sm:block">About</Link>
           <Link href="/contact" className="hidden px-3 py-2 text-sm text-app-muted hover:text-app-text sm:block">Contact</Link>
-          {/* Theme switch — kept visible at every breakpoint (the text links
+          {/* Theme switch kept visible at every breakpoint (the text links
               hide on mobile, but the toggle is small enough to always fit). */}
           <ThemeToggle />
           <a

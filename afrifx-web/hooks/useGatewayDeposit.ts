@@ -1,6 +1,6 @@
 'use client'
 // ============================================================
-// useGatewayDeposit — deposit USDC into Circle's Gateway Wallet.
+// useGatewayDeposit deposit USDC into Circle's Gateway Wallet.
 //
 // STAGE 3. The user signs in their OWN wallet; nothing is custodial and no key
 // ever reaches a server.
@@ -16,7 +16,7 @@
 // impossible for this code to do it.
 //
 // AFTER DEPOSITING: funds are NOT instantly spendable. They must reach block
-// finality first — ~0.5s on Arc, but ~13-19 MINUTES on Base or Ethereum. The
+// finality first ~0.5s on Arc, but ~13-19 MINUTES on Base or Ethereum. The
 // UI must say so rather than leaving the user wondering.
 // ============================================================
 
@@ -121,7 +121,7 @@ export function useGatewayDeposit() {
     } catch (err: any) {
       let message = err?.shortMessage ?? err?.message ?? 'Deposit failed'
       if (/rpc request failed|fetch failed|failed to fetch/i.test(message)) {
-        message = 'Could not reach the network. Nothing was submitted — please try again.'
+        message = 'Could not reach the network. Nothing was submitted, please try again.'
       }
       setState(s => ({ ...s, step: 'error', error: message }))
     }

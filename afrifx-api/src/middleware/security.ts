@@ -4,13 +4,13 @@
 // AfriFX is a JSON API, not an HTML site, so the config is tuned for that:
 //   * We DON'T serve a browsable UI from here, so a strict Content-Security-
 //     Policy that assumes HTML/script tags would add risk of breakage without
-//     protecting anything real — the frontend (Vercel) sets its own CSP. We
+//     protecting anything real the frontend (Vercel) sets its own CSP. We
 //     keep a minimal CSP that just disallows this origin being used to load
 //     active content.
 //   * HSTS is ON so browsers pin HTTPS (Render terminates TLS in front of us).
 //   * We hide the framework fingerprint and turn off client-side MIME sniffing.
 //   * crossOriginResourcePolicy is relaxed to 'cross-origin' because the API is
-//     legitimately called from the frontend on a different origin — the strict
+//     legitimately called from the frontend on a different origin the strict
 //     default ('same-origin') would break those reads.
 // ============================================================
 

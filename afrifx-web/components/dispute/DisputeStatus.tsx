@@ -73,7 +73,7 @@ export function DisputeStatus({ disputeId, offerId, userAddress, userRole, usern
                 <p className="font-medium text-emerald-400">
                   Admin {assignment.admin_name} has accepted your dispute
                 </p>
-                <p className="mt-0.5 text-emerald-600">
+                <p className="mt-0.5 text-emerald-700 dark:text-emerald-600">
                   They will review the evidence and contact you below.
                   Upload your bank statement when requested.
                 </p>

@@ -20,7 +20,7 @@ interface Props {
 }
 
 // Advisory AI brief for the assigned admin. It SUMMARISES; the admin still
-// decides. Rendered as plain text — it can trigger no action.
+// decides. Rendered as plain text it can trigger no action.
 export function AiSummaryPanel({ disputeId, adminId }: Props) {
   const [summary,   setSummary]   = useState<DisputeSummary | null>(null)
   const [meta,      setMeta]      = useState<{ model?: string; evidenceCount?: number; createdAt?: number; cached?: boolean } | null>(null)
@@ -119,14 +119,14 @@ export function AiSummaryPanel({ disputeId, adminId }: Props) {
 
       {summary && (
         <div className="space-y-2.5">
-          {/* Injection warning — surfaced, never obeyed */}
+          {/* Injection warning surfaced, never obeyed */}
           {flagged && (
             <div className="rounded-md border border-amber-700/50 bg-amber-900/20 p-2.5">
               <p className="mb-1 flex items-center gap-1 text-xs font-semibold text-amber-400">
                 <ShieldAlert className="h-3.5 w-3.5" /> Possible manipulation attempt
               </p>
-              <p className="text-[11px] leading-snug text-amber-200/90">{summary.injection_flags}</p>
-              <p className="mt-1 text-[10px] text-amber-200/60">
+              <p className="text-[11px] leading-snug text-amber-800 dark:text-amber-200/90">{summary.injection_flags}</p>
+              <p className="mt-1 text-[10px] text-amber-700 dark:text-amber-200/60">
                 Text in the chat or evidence tried to instruct the AI. It was ignored and flagged here.
               </p>
             </div>
@@ -135,7 +135,7 @@ export function AiSummaryPanel({ disputeId, adminId }: Props) {
           {sections.map(([label, value]) => (
             <div key={label}>
               <p className="text-[11px] font-semibold uppercase tracking-wide text-app-muted">{label}</p>
-              <p className="text-xs leading-relaxed text-app-text">{value || '—'}</p>
+              <p className="text-xs leading-relaxed text-app-text">{value || '-'}</p>
             </div>
           ))}
 

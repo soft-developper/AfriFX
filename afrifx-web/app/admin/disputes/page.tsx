@@ -288,7 +288,7 @@ export default function AdminDisputesPage() {
                 {/* Chat expanded section */}
                 {isExpanded && admin && (isInReview || isOpen) && isMyCase && (
                   <div className="border-t border-app-border p-4">
-                    {/* AI case summary — advisory, admin decides */}
+                    {/* AI case summary advisory, admin decides */}
                     <div className="mb-4">
                       <AiSummaryPanel disputeId={id} adminId={admin.id} />
                     </div>

@@ -6,7 +6,7 @@ import type { ChatMessage } from '@/hooks/useChat'
 const QUICK_ACTION_LABELS: Record<string, { emoji: string; label: string; color: string }> = {
   payment_sent:     { emoji: '💸', label: 'Payment sent',         color: 'bg-blue-900/40 text-blue-300 border-blue-700/40'         },
   payment_received: { emoji: '✅', label: 'Payment received',     color: 'bg-emerald-900/40 text-emerald-300 border-emerald-700/40' },
-  need_more_time:   { emoji: '⏰', label: 'Need a bit more time', color: 'bg-amber-900/40 text-amber-300 border-amber-700/40'       },
+  need_more_time:   { emoji: '⏰', label: 'Need a bit more time', color: 'bg-amber-900/40 text-amber-800 dark:text-amber-300 border-amber-700/40'       },
   dispute_warning:  { emoji: '⚠️', label: 'Dispute raised',       color: 'bg-red-900/40 text-red-300 border-red-700/40'            },
   trade_complete:   { emoji: '🎉', label: 'Trade complete!',       color: 'bg-emerald-900/40 text-emerald-300 border-emerald-700/40' },
 }
@@ -108,7 +108,7 @@ export function MessageBubble({ msg, isMe, senderName }: Props) {
             : 'rounded-tl-sm bg-app-border text-app-text'
         }`}>
 
-          {/* Attachment — PDFs only for new uploads. Older image messages that
+          {/* Attachment PDFs only for new uploads. Older image messages that
               already exist in the DB still render, but every attachment now
               downloads in-page rather than opening the CDN in a new tab. */}
           {msg.media_url && (

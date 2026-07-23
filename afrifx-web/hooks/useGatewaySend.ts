@@ -1,6 +1,6 @@
 'use client'
 // ============================================================
-// useGatewaySend — spend the unified balance on any supported chain.
+// useGatewaySend spend the unified balance on any supported chain.
 //
 // THE FLOW (per Circle's technical guide):
 //   1. Build a TransferSpec + BurnIntent describing the transfer
@@ -14,12 +14,12 @@
 // *** CONSTRAINTS THAT SHAPE THIS CODE ***
 //   * ONLY EOA SIGNATURES. Circle: "SCA signatures such as EIP-1271 signatures
 //     can't be accepted. Burn intents must be signed by an EOA." If the user's
-//     wallet is a smart account, this will fail at the signing step — we detect
+//     wallet is a smart account, this will fail at the signing step we detect
 //     that and say so plainly rather than showing a cryptic error.
 //   * ATTESTATIONS EXPIRE AFTER 10 MINUTES, so the mint must follow promptly.
 //   * maxBlockHeight must be far enough ahead to exceed the wallet's
 //     withdrawalDelay, so we read the current block and add a generous buffer.
-//   * Same-chain transfers ARE supported and still mint-and-burn — but for
+//   * Same-chain transfers ARE supported and still mint-and-burn but for
 //     Arc->Arc we don't use Gateway at all (see useSmartSend), because a plain
 //     wallet transfer is instant and doesn't consume the unified balance.
 // ============================================================
@@ -46,7 +46,7 @@ const INITIAL: GatewaySendState = {
   step: 'idle', mintTx: null, error: null, needsEoa: false,
 }
 
-// GatewayMinter — only the method we call.
+// GatewayMinter only the method we call.
 const GATEWAY_MINTER_ABI = [
   {
     type: 'function', name: 'gatewayMint', stateMutability: 'nonpayable',
@@ -143,7 +143,7 @@ export function useGatewaySend() {
       /*
         maxBlockHeight must exceed the wallet's withdrawalDelay measured in
         BLOCKS on the source chain. Arc produces blocks about twice a second, so
-        seven days is roughly 1.2 MILLION blocks — a naive buffer is easy to
+        seven days is roughly 1.2 MILLION blocks, a naive buffer is easy to
         under-shoot, and our first attempt did exactly that (Circle wanted
         54,485,435 and got 54,275,825).
 
@@ -185,7 +185,7 @@ export function useGatewaySend() {
       /*
         Signing and the transfer request are wrapped together because a
         maxBlockHeight rejection means we must RE-SIGN with the corrected value
-        — the signature covers that field, so we can't just resend.
+       , the signature covers that field, so we can't just resend.
 
         Circle's 400 states the exact minimum it expects, so one retry using
         that number turns a hard failure into a transparent correction.
@@ -216,7 +216,7 @@ export function useGatewaySend() {
           if (/1271|smart account|not supported|unsupported/i.test(m)) {
             const e: any = new Error(
               'This wallet can\'t sign Gateway transfers. Gateway requires a ' +
-              'standard wallet (EOA) — smart contract accounts aren\'t supported.')
+              'standard wallet (EOA), smart contract accounts aren\'t supported.')
             e.__needsEoa = true
             throw e
           }
@@ -288,7 +288,7 @@ export function useGatewaySend() {
     } catch (err: any) {
       let message = err?.shortMessage ?? err?.message ?? 'Transfer failed'
       if (/rpc request failed|fetch failed|failed to fetch/i.test(message)) {
-        message = 'Could not reach the network. Nothing was transferred — please try again.'
+        message = 'Could not reach the network. Nothing was transferred, please try again.'
       }
       // Preserve the "wallet can't sign for Gateway" case so the UI can explain
       // it properly rather than showing a generic failure.

@@ -23,8 +23,8 @@ export function MediaUploadButton({ offerId, onUpload, disabled }: Props) {
 
     // PDF only. Bank receipts and statements are issued as PDFs; images are too
     // easily edited to be trusted as proof of payment, so they're rejected.
-    // The `accept` attribute is only a hint — users can bypass it in the file
-    // picker — so we validate here as well.
+    // The `accept` attribute is only a hint users can bypass it in the file
+    // picker so we validate here as well.
     const isPdf = file.type === 'application/pdf' ||
                   file.name.toLowerCase().endsWith('.pdf')
     if (!isPdf) {

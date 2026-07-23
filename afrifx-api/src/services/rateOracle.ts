@@ -126,7 +126,7 @@ function buildRates(raw: Record<string, number>, source: string): FXRate[] {
   const prev = Object.fromEntries(cachedRates.map(r => [r.pair, r.rate]))
   const now  = Date.now()
 
-  // raw contains "local units per USD" — use directly, falling back to the
+  // raw contains "local units per USD" use directly, falling back to the
   // hardcoded last-resort value when a feed omits a currency.
   // Driven by LOCAL_CURRENCIES so every supported currency gets a pair; adding
   // one to that list is all it takes for its rate to appear here.

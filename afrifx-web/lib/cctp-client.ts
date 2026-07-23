@@ -119,7 +119,7 @@ export async function getBurnFee(
 
       The margin is a PERCENTAGE OF THE FEE, not extra basis points on the
       amount. An earlier version added 100 bps to the rate, which on a 1 bps
-      fee meant authorising ~1% of the transfer as fees — a hundred times more
+      fee meant authorising ~1% of the transfer as fees, a hundred times more
       than necessary. maxFee is a ceiling the user is agreeing to pay, so it
       must be tight.
     */
@@ -128,7 +128,7 @@ export async function getBurnFee(
 
     return {
       minimumFeeBps: bps,
-      // Never 0 — a zero maxFee reverts the burn. Floor at 1 unit.
+      // Never 0 a zero maxFee reverts the burn. Floor at 1 unit.
       maxFeeUnits: withMargin > BigInt(0) ? withMargin : BigInt(1),
       isFast: false,
     }
@@ -155,7 +155,7 @@ export interface AttestationResult {
 /*
   Fetch the attestation for a burn, keyed by the SOURCE transaction hash.
 
-  Note the domain in the path is the SOURCE domain — a common mix-up is passing
+  Note the domain in the path is the SOURCE domain, a common mix-up is passing
   the destination.
 */
 export async function fetchAttestation(

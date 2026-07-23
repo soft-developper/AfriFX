@@ -13,7 +13,7 @@
 //     instructions;
 //   * the model is told explicitly to ignore any embedded instructions and to
 //     REPORT them in `injection_flags` instead of acting on them;
-//   * the output is JSON we parse and render as text — it can trigger no action
+//   * the output is JSON we parse and render as text it can trigger no action
 //     even if it tried.
 // This turns the biggest risk into a visible feature: attempts to manipulate
 // the AI are surfaced to the admin.
@@ -23,7 +23,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { db } from '../../db/client'
 import { sql } from 'drizzle-orm'
 
-// Local row-normaliser (matches the helper used across the codebase — libSQL
+// Local row-normaliser (matches the helper used across the codebase libSQL
 // returns either objects or positional arrays depending on the driver path).
 function parseRows(r: any): any[] {
   if (!r) return []
@@ -35,7 +35,7 @@ function parseRows(r: any): any[] {
 const MODEL = process.env.AI_TRIAGE_MODEL ?? 'claude-sonnet-4-6'
 
 // Cost control. Evidence PDFs (especially image scans) dominate token cost, so
-// keep these tight — most disputes have only 1-2 documents that matter.
+// keep these tight most disputes have only 1-2 documents that matter.
 // Overridable by env so you can tune without a redeploy.
 const MAX_PDFS      = Number(process.env.AI_TRIAGE_MAX_PDFS ?? 2)
 const MAX_PDF_BYTES = Number(process.env.AI_TRIAGE_MAX_PDF_BYTES ?? 3_000_000)  // 3 MB each
@@ -241,7 +241,7 @@ export async function generateDisputeSummary(disputeId: string): Promise<{
     return { ok: false, error: 'Model did not return valid JSON' }
   }
 
-  // Ensure every field exists (defensive — render never breaks).
+  // Ensure every field exists (defensive render never breaks).
   const summary: DisputeSummary = {
     timeline:        String(parsed.timeline        ?? ''),
     maker_position:  String(parsed.maker_position  ?? ''),

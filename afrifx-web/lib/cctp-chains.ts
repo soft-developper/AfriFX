@@ -2,7 +2,7 @@
 // CCTP (Circle Cross-Chain Transfer Protocol) chain registry.
 //
 // STAGE 1 of the bridge build: PURE CONFIG. No execution logic lives here, so
-// this file can't move money — it just describes the chains we support.
+// this file can't move money it just describes the chains we support.
 //
 // Source of truth (verified against Circle's docs, not guessed):
 //   https://developers.circle.com/cctp/concepts/supported-chains-and-domains
@@ -10,7 +10,7 @@
 //
 // KEY FACTS THAT SHAPE THIS FILE:
 //   * A CCTP "domain" is Circle's own chain identifier. It is NOT the EVM chain
-//     id — Arc's chain id is 5042002 but its CCTP domain is 26. Mixing these up
+//     id Arc's chain id is 5042002 but its CCTP domain is 26. Mixing these up
 //     is the classic CCTP integration bug, so both are stored explicitly.
 //   * CCTP V2 contract addresses are DETERMINISTIC: the same address is used on
 //     every chain within an environment. All testnets share one TokenMessengerV2
@@ -18,7 +18,7 @@
 //     rather than a per-chain address map.
 //   * Testnet and mainnet addresses DIFFER. Selected by NEXT_PUBLIC_CCTP_ENV.
 //   * Arc supports Standard Transfer. Circle marks Fast Transfer "N/A" for Arc
-//     because standard attestation there is already fast — it's not a gap.
+//     because standard attestation there is already fast it's not a gap.
 // ============================================================
 
 export type CctpEnv = 'testnet' | 'mainnet'
@@ -58,12 +58,12 @@ export function irisBase(env: CctpEnv = CCTP_ENV) {
 export interface CctpChain {
   key:        string   // our internal key
   name:       string   // display name
-  domain:     number   // CCTP domain — NOT the EVM chain id
+  domain:     number   // CCTP domain, NOT the EVM chain id
   chainId:    number   // EVM chain id (testnet or mainnet per env)
   usdc:       string   // USDC token address on that chain
   rpcUrl:     string
   explorer:   string
-  isHome?:    boolean  // Arc — our own chain
+  isHome?:    boolean  // Arc, our own chain
 }
 
 /*
@@ -78,7 +78,7 @@ const TESTNET_CHAINS: CctpChain[] = [
     /*
       Arc's USDC ERC-20 INTERFACE address (from Arc's official contract-address
       docs). Arc uses USDC as its native gas token, but CCTP's depositForBurn
-      needs an ERC-20 `burnToken` — this system contract is that interface, and
+      needs an ERC-20 `burnToken`, this system contract is that interface, and
       it exposes approve/allowance/transferFrom over the same native balance.
 
       It is HARDCODED rather than env-only on purpose: when it was missing, the
@@ -87,7 +87,7 @@ const TESTNET_CHAINS: CctpChain[] = [
       every Arc-source bridge is not worth the flexibility.
 
       NOTE ON DECIMALS: the native gas token uses 18 decimals, but this ERC-20
-      interface uses 6 — which is what CCTP amounts must use. Arc's docs
+      interface uses 6, which is what CCTP amounts must use. Arc's docs
       explicitly warn against mixing the two.
     */
     usdc: process.env.NEXT_PUBLIC_ARC_USDC ?? '0x3600000000000000000000000000000000000000',
@@ -173,7 +173,7 @@ export function homeChain(env: CctpEnv = CCTP_ENV): CctpChain {
 
 /*
   A route is only valid if BOTH ends are configured and they're different
-  chains. Callers should use this rather than assuming any pair works — an
+  chains. Callers should use this rather than assuming any pair works, an
   unconfigured RPC or USDC address is exactly the kind of gap that strands a
   transfer halfway.
 */

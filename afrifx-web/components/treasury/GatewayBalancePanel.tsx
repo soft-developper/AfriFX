@@ -10,11 +10,11 @@ import { fetchGatewayBalances, gatewayChains, isValidAddress } from '@/lib/gatew
 
   Gateway is permissionless and non-custodial, so this is a genuine user
   feature: any AfriFX user can hold one USDC balance spendable across chains.
-  AfriFX's own company treasury uses the same feature with its own wallet — it
+  AfriFX's own company treasury uses the same feature with its own wallet, it
   is not special-cased.
 
   Stage 2 of the Gateway work: this panel only LOOKS. It cannot deposit,
-  transfer or withdraw — those need a signer and are deliberately not wired up
+  transfer or withdraw, those need a signer and are deliberately not wired up
   yet.
 */
 export function GatewayBalancePanel() {
@@ -27,7 +27,7 @@ export function GatewayBalancePanel() {
   const [loading, setLoading] = useState(false)
 
   /*
-    The CONNECTED USER'S wallet — not a hardcoded company address. /treasury is
+    The CONNECTED USER'S wallet, not a hardcoded company address. /treasury is
     a per-user page, so each user sees their own unified balance. AfriFX's own
     company treasury is just another wallet using the same feature.
   */
@@ -45,7 +45,7 @@ export function GatewayBalancePanel() {
 
   useEffect(() => { load() }, [load])
 
-  // No wallet connected — explain rather than render an empty box.
+  // No wallet connected explain rather than render an empty box.
   if (!addr) {
     return (
       <div className="rounded-xl border border-app-border bg-app-surface p-5">
@@ -53,7 +53,7 @@ export function GatewayBalancePanel() {
           <Layers className="h-4 w-4 text-app-accent-text" /> Unified balance
         </h3>
         <p className="text-xs leading-relaxed text-app-muted">
-          Connect your wallet to see your Circle Gateway balance — a single USDC
+          Connect your wallet to see your Circle Gateway balance, a single USDC
           balance you can spend on any supported chain, without bridging first.
         </p>
       </div>
@@ -78,15 +78,15 @@ export function GatewayBalancePanel() {
       </div>
 
       {/* A read failure is shown as a NOTICE above the balance, not instead of
-          it — the rest of the panel (and the deposit button) stays usable. */}
+          it, the rest of the panel (and the deposit button) stays usable. */}
       {error && (
         <div className="mb-3 rounded-lg border border-amber-700/40 bg-amber-900/10 p-3">
           <p className="flex items-center gap-1.5 text-xs text-amber-400">
             <AlertCircle className="h-3.5 w-3.5" /> Couldn&apos;t read your Gateway balance
           </p>
-          <p className="mt-1 text-[11px] text-amber-200/80">{error}</p>
-          <p className="mt-1 text-[11px] text-amber-200/60">
-            Read-only problem — no funds are affected, and you can still deposit.
+          <p className="mt-1 text-[11px] text-amber-800 dark:text-amber-200/80">{error}</p>
+          <p className="mt-1 text-[11px] text-amber-700 dark:text-amber-200/60">
+            Read-only problem, no funds are affected, and you can still deposit.
           </p>
         </div>
       )}
@@ -98,7 +98,7 @@ export function GatewayBalancePanel() {
               Spendable on any chain
             </p>
             <p className="font-mono text-2xl text-app-text">
-              {loading && !data ? '—' : (data?.total ?? 0).toLocaleString(undefined, {
+              {loading && !data ? '-' : (data?.total ?? 0).toLocaleString(undefined, {
                 minimumFractionDigits: 2, maximumFractionDigits: 2,
               })}
               <span className="ml-1 text-sm text-app-muted">USDC</span>
@@ -138,7 +138,7 @@ export function GatewayBalancePanel() {
         </>
       )}
 
-      {/* Deposit — deliberately NOT gated on the balance read succeeding.
+      {/* Deposit deliberately NOT gated on the balance read succeeding.
           Failing to READ your balance is no reason to prevent you DEPOSITING;
           an earlier version hid this button behind !error, which meant one API
           hiccup made the whole feature look absent. */}

@@ -232,7 +232,7 @@ export function SwapCard() {
             <p className="mt-0.5 text-emerald-500">
               {lastTx.from} → {lastTx.to}
             </p>
-            <p className="mt-0.5 font-mono text-[10px] text-emerald-600">
+            <p className="mt-0.5 font-mono text-[10px] text-emerald-700 dark:text-emerald-600">
               {lastTx.hash.slice(0, 20)}… · View on ArcScan ↗
             </p>
           </div>

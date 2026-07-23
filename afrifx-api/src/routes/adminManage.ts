@@ -477,7 +477,7 @@ router.post('/disputes/:id/resolve', requirePermission(PERMISSIONS.RESOLVE_DISPU
 // GET /admin/manage/users search/list users
 router.get('/users', requirePermission(PERMISSIONS.MANAGE_USERS), async (req, res) => {
   const search = (req.query.search as string)?.toLowerCase()
-  // Sortable columns. Whitelisted — never interpolate user input into SQL.
+  // Sortable columns. Whitelisted never interpolate user input into SQL.
   const sortKey = String(req.query.sort ?? 'volume')
   const dir     = String(req.query.dir ?? 'desc').toLowerCase() === 'asc' ? 'ASC' : 'DESC'
 
@@ -494,7 +494,7 @@ router.get('/users', requirePermission(PERMISSIONS.MANAGE_USERS), async (req, re
 
   try {
     /*
-      ONE query instead of the old N+1 (it ran a separate COUNT per user — 50
+      ONE query instead of the old N+1 (it ran a separate COUNT per user, 50
       users meant 51 round trips). We LEFT JOIN an aggregate of each wallet's
       released trades so volume, counts, average size and last activity all come
       back in a single pass.

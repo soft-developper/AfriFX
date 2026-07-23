@@ -20,7 +20,7 @@ export function TimerBanner({ deadline, totalSeconds, phase, isMine }: TimerBann
     : isDanger
     ? { bg: 'bg-red-950/40',    border: 'border-red-500/40',   bar: 'bg-red-500',    text: 'text-red-300',    icon: 'text-red-400',    time: 'text-red-200'    }
     : isWarning
-    ? { bg: 'bg-amber-950/40',  border: 'border-amber-500/40', bar: 'bg-amber-400',  text: 'text-amber-300',  icon: 'text-amber-400',  time: 'text-amber-200'  }
+    ? { bg: 'bg-amber-950/40',  border: 'border-amber-500/40', bar: 'bg-amber-400',  text: 'text-amber-800 dark:text-amber-300',  icon: 'text-amber-400',  time: 'text-amber-200'  }
     : { bg: 'bg-app-surface',     border: 'border-app-border',    bar: 'bg-app-accent',  text: 'text-app-muted',  icon: 'text-app-accent-text',  time: 'text-app-text'  }
 
   const phaseLabel = phase === 'taker'

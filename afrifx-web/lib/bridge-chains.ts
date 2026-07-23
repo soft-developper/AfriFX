@@ -3,7 +3,7 @@
 //
 // WHY THIS EXISTS: wagmi was configured with ONLY Arc. A bridge needs the
 // user's wallet to sign on the SOURCE chain, which may be Base, Ethereum,
-// Arbitrum or Polygon — if those aren't in the wagmi config, switchChain()
+// Arbitrum or Polygon if those aren't in the wagmi config, switchChain()
 // fails and the burn simply can't happen. So they're defined here and added to
 // the config.
 //
@@ -31,7 +31,7 @@ export { arcTestnet }
   The chain list handed to wagmi. Arc stays FIRST so it remains the default
   network for the rest of the app.
 
-  Testnet and mainnet sets are separate — mixing them would let a user bridge
+  Testnet and mainnet sets are separate, mixing them would let a user bridge
   from Base Sepolia to Polygon mainnet, which fails in confusing ways.
 */
 export const TESTNET_CHAINS = [
@@ -50,7 +50,7 @@ export function activeChains() {
   RPC URL per chain id, so wagmi doesn't fall back to viem's DEFAULT PUBLIC RPCs.
   Those defaults are heavily rate-limited and often reject browser requests
   outright (CORS / 429), which surfaces in the UI as "RPC Request failed" with
-  NOTHING having failed on-chain — because the request never reached a node.
+  NOTHING having failed on-chain, because the request never reached a node.
 
   Each is overridable by env so you can drop in Alchemy/Infura keys for
   production without a code change.

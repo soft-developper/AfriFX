@@ -442,7 +442,7 @@ export async function notifyAdminsOfNewDispute(params: {
     //   * sub-admin            -> ONLY if currently on-duty (inside their
     //     scheduled window AND they clicked "resume duty" on their dashboard)
     // This stops off-duty sub-admins from being spammed with dispute alerts,
-    // and guarantees the general admin is always notified — especially when no
+    // and guarantees the general admin is always notified especially when no
     // sub-admin is on-duty.
     const recipients: { email: string; name: string }[] = []
     for (const admin of admins) {

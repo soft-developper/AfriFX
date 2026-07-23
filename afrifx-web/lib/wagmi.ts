@@ -30,7 +30,7 @@ export const wagmiConfig = getDefaultConfig({
   transports: Object.fromEntries(
     activeChains().map(c => [
       c.id,
-      // Explicit RPC per chain — viem's default public endpoints are
+      // Explicit RPC per chain viem's default public endpoints are
       // rate-limited and often blocked in-browser, which looks like
       // "RPC Request failed" even though nothing reached the chain.
       http(rpcUrlFor(c.id)),

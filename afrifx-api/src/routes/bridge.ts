@@ -83,7 +83,7 @@ router.post('/:id/burning', async (req, res) => {
 /*
   THE CRITICAL ENDPOINT. Once this is stored the funds are burned and the mint
   is owed. messageBytes + messageHash are what make the mint completable later
-  by anyone, so we REQUIRE them rather than accepting a bare tx hash — a burn
+  by anyone, so we REQUIRE them rather than accepting a bare tx hash, a burn
   recorded without them would be much harder to recover.
 */
 router.post('/:id/burned', async (req, res) => {

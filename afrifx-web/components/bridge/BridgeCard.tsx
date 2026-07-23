@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccount, useChainId, useSwitchChain } from 'wagmi'
 import {
   ArrowDown, Loader2, CheckCircle, AlertTriangle, ExternalLink, Info,
 } from 'lucide-react'
@@ -8,19 +8,20 @@ import { Button } from '@/components/ui/button'
 import { useBridge } from '@/hooks/useBridge'
 import { cctpChains, chainByKey, isRouteSupported } from '@/lib/cctp-chains'
 import { useChainUsdcBalance } from '@/hooks/useChainUsdcBalance'
+import { evmChainId } from '@/lib/bridge-chains'
 
 /*
   Bridge UI for CCTP transfers.
 
   The single most important job of this component is being HONEST about where
-  the money is. Once the burn lands, funds are mid-flight and the mint is owed —
+  the money is. Once the burn lands, funds are mid-flight and the mint is owed
   so the copy at that point must never look like a plain error, or a user will
   think their money is gone when it isn't.
 */
 
 /*
   The bridge is a multi-minute, multi-signature process. Rather than a paragraph
-  explaining CCTP, the card shows WHERE THE USER IS — each stage marked done,
+  explaining CCTP, the card shows WHERE THE USER IS, each stage marked done,
   active, or pending.
 
   Stage order mirrors the hook's own steps so the two can't drift.
@@ -46,6 +47,8 @@ function stageState(stage: string, current: string): 'done' | 'active' | 'pendin
 
 export function BridgeCard() {
   const { address, isConnected } = useAccount()
+  const activeChainId = useChainId()
+  const { switchChain, isPending: switching } = useSwitchChain()
   const { step, bridgeId, burnTx, mintTx, error, inFlight, waitedSec, bridge, reset, env } = useBridge()
 
   const chains = cctpChains()
@@ -168,6 +171,29 @@ export function BridgeCard() {
         <p className="mb-3 text-xs text-amber-400">Source and destination must be different chains.</p>
       )}
 
+      {/* Manual network switch. Auto-switching is unreliable across wallets,
+          so when the wallet isn't on the source chain we say so and give a
+          button, instead of only discovering it mid-transfer. */}
+      {isConnected && !!from && evmChainId(fromKey) !== undefined &&
+       activeChainId !== evmChainId(fromKey) && (
+        <div className="mb-3 rounded-lg border border-amber-700/40 bg-amber-900/10 p-2.5">
+          <p className="text-[11px] text-amber-800 dark:text-amber-200/90">
+            Your wallet is on a different network. Bridging from {from.name}
+            {' '}needs it selected.
+          </p>
+          <button
+            onClick={() => {
+              const id = evmChainId(fromKey)
+              if (id) switchChain({ chainId: id })
+            }}
+            disabled={switching || busy}
+            className="mt-1.5 rounded-md bg-app-accent px-2.5 py-1 text-[11px] font-medium text-app-on-accent hover:opacity-90 disabled:opacity-50"
+          >
+            {switching ? 'Switching…' : `Switch to ${from.name}`}
+          </button>
+        </div>
+      )}
+
       {insufficient && (
         <p className="mb-3 flex items-center gap-1.5 rounded-lg bg-red-900/20 px-3 py-2 text-xs text-red-400">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
@@ -180,7 +206,7 @@ export function BridgeCard() {
         <div className="rounded-lg border border-emerald-900/50 bg-emerald-900/20 p-4 text-center">
           <CheckCircle className="mx-auto mb-2 h-6 w-6 text-emerald-400" />
           <p className="text-sm font-medium text-emerald-400">Bridge complete</p>
-          <p className="mt-1 text-xs text-emerald-600">
+          <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-600">
             {amount} USDC arrived on {to?.name}
           </p>
           <div className="mt-3 flex flex-col gap-1 text-[11px]">
@@ -215,7 +241,7 @@ export function BridgeCard() {
       )}
 
       {/* Progress */}
-      {/* Errors — tone depends ENTIRELY on whether funds already moved */}
+      {/* Errors tone depends ENTIRELY on whether funds already moved */}
       {step === 'error' && error && (
         inFlight ? (
           // Burned but not minted. NOT a loss. Never show this as a plain error.
@@ -223,12 +249,12 @@ export function BridgeCard() {
             <p className="flex items-center gap-1.5 text-xs font-medium text-amber-400">
               <Info className="h-3.5 w-3.5" /> Transfer in progress
             </p>
-            <p className="mt-1 text-[11px] leading-relaxed text-amber-200/90">
+            <p className="mt-1 text-[11px] leading-relaxed text-amber-800 dark:text-amber-200/90">
               {error}
             </p>
-            <p className="mt-1.5 text-[11px] text-amber-200/70">
+            <p className="mt-1.5 text-[11px] text-amber-700 dark:text-amber-200/70">
               Your funds are burned on {from?.name} and the mint on {to?.name} is
-              still owed. It will be completed automatically — nothing is lost.
+              still owed. It will be completed automatically, nothing is lost.
             </p>
             {burnTx && (
               <a href={explorerTx(fromKey, burnTx)} target="_blank" rel="noopener noreferrer"
@@ -243,8 +269,8 @@ export function BridgeCard() {
             <p className="flex items-center gap-1.5 text-xs font-medium text-red-400">
               <AlertTriangle className="h-3.5 w-3.5" /> Transfer not started
             </p>
-            <p className="mt-1 text-[11px] leading-relaxed text-red-300/90">{error}</p>
-            <p className="mt-1.5 text-[11px] text-red-300/60">
+            <p className="mt-1 text-[11px] leading-relaxed text-red-800 dark:text-red-300/90">{error}</p>
+            <p className="mt-1.5 text-[11px] text-red-700 dark:text-red-300/60">
               No funds were moved. You can safely try again.
             </p>
             <Button size="sm" variant="outline" className="mt-2" onClick={reset}>Try again</Button>
@@ -277,7 +303,7 @@ export function BridgeCard() {
                   : 'text-app-muted/60'}`}>
                   {f.label(from?.name ?? 'source', to?.name ?? 'destination', amount || '0')}
                 </span>
-                {/* Elapsed time on the attestation step — it's the long one, and
+                {/* Elapsed time on the attestation step it's the long one, and
                     a silent spinner with no clock makes it feel broken. */}
                 {f.key === 'attesting' && state === 'active' && waitedSec > 0 && (
                   <span className="ml-auto font-mono text-[10px] text-app-muted">
@@ -296,7 +322,7 @@ export function BridgeCard() {
             onClick={reset}
             className="mt-2 text-[11px] text-app-muted underline underline-offset-2 hover:text-app-text"
           >
-            Stop waiting — this completes on its own
+            Stop waiting, this completes on its own
           </button>
         )}
       </div>

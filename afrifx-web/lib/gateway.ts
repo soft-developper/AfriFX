@@ -7,7 +7,7 @@
 // Gateway is a PRE-FUNDED UNIFIED BALANCE, not a faster bridge. You deposit
 // once, wait for finality once, then spend instantly (<500ms) on any supported
 // chain. Circle's own guidance is explicit that CCTP remains the better fit for
-// ad-hoc point-to-point transfers — which is what our user-facing bridge does.
+// ad-hoc point-to-point transfers which is what our user-facing bridge does.
 //
 // For AfriFX's TREASURY it's a strong fit, and one number makes it compelling:
 //
@@ -19,7 +19,7 @@
 // Because Arc finalises in about half a second, the "front-load the wait" cost
 // that makes Gateway awkward elsewhere barely exists for us. Treasury sits on
 // Arc, deposits near-instantly, and can then fund a Flutterwave payout on Base
-// in under a second — instead of a CCTP bridge with an attestation wait sitting
+// in under a second instead of a CCTP bridge with an attestation wait sitting
 // in the middle of a customer's payout.
 //
 // Verified against BOTH Circle's and Arc's official docs (they agree):
@@ -112,14 +112,14 @@ export function gatewayChainByDomain(domain: number, env: GatewayEnv = GATEWAY_E
   WHOSE balance are we showing?
 
   /treasury is a PER-USER page (it reads the connected wallet), so the Gateway
-  panel must show the CONNECTED USER'S OWN unified balance — never a hardcoded
+  panel must show the CONNECTED USER'S OWN unified balance, never a hardcoded
   company address. An earlier draft of this file used a single
   NEXT_PUBLIC_TREASURY_ADDRESS, which would have shown AfriFX's operational
   balance to every user: confusing, and a disclosure of company finances.
 
   Gateway is permissionless and non-custodial, so every user can have their own
   unified balance keyed to their own wallet. AfriFX's company treasury is simply
-  one more wallet — it isn't special-cased here.
+  one more wallet, it isn't special-cased here.
 */
 export function isValidAddress(a?: string | null): boolean {
   return !!a && /^0x[a-fA-F0-9]{40}$/.test(a)
@@ -158,8 +158,8 @@ export async function fetchGatewayBalances(
 
       An earlier version called GET /v1/balances?depositor=... and got a 404.
       Circle's API reference is explicit: /v1/balances is a POST that takes a
-      `sources` array of { domain, depositor } pairs — one per chain you want
-      balances for — plus the token.
+      `sources` array of { domain, depositor } pairs, one per chain you want
+      balances for, plus the token.
 
       Response shape (from the reference):
         { token: "USDC", balances: [ { domain, depositor, balance }, ... ] }
@@ -203,7 +203,7 @@ export async function fetchGatewayBalances(
 // ── Deposit (stage 3) ───────────────────────────────────────
 
 /*
-  GatewayWallet ABI — only the pieces we call.
+  GatewayWallet ABI, only the pieces we call.
 
   Signature confirmed from Circle's own integration guide:
       deposit(address token, uint256 amount)
@@ -276,7 +276,7 @@ export function assertNotPlainTransfer(fnName: string, to: string, env: GatewayE
   const wallet = gatewayContracts(env).wallet.toLowerCase()
   if (to.toLowerCase() === wallet && /^(transfer|transferFrom|send)$/i.test(fnName)) {
     throw new Error(
-      'Refusing to send USDC directly to the Gateway Wallet — a plain ERC-20 ' +
+      'Refusing to send USDC directly to the Gateway Wallet, a plain ERC-20 ' +
       'transfer to that contract permanently destroys the funds. Use deposit() instead.',
     )
   }

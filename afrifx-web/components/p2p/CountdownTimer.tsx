@@ -26,7 +26,7 @@ export function CountdownTimer({ deadline, totalSeconds, label }: CountdownTimer
       }
       <span>{label}</span>
       <span className={`ml-auto font-mono font-medium
-        ${isExpired || isDanger ? 'text-red-300' : isWarning ? 'text-amber-300' : 'text-app-text'}`}>
+        ${isExpired || isDanger ? 'text-red-300' : isWarning ? 'text-amber-800 dark:text-amber-300' : 'text-app-text'}`}>
         {formatted}
       </span>
     </div>

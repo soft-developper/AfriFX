@@ -138,7 +138,7 @@ export function TreasuryContent() {
         ))}
       </div>
 
-      {/* Circle Gateway unified balance — read-only for now. Sits above the
+      {/* Circle Gateway unified balance read-only for now. Sits above the
           existing panels because "how much can I actually spend, anywhere" is
           the first question when funding a payout. */}
       <div className="mb-4">

@@ -1,6 +1,6 @@
 'use client'
 // ============================================================
-// useChainUsdcBalance — read a wallet's USDC balance on ANY supported chain.
+// useChainUsdcBalance read a wallet's USDC balance on ANY supported chain.
 //
 // The app's existing useUSDCBalance is pinned to Arc, which is right for Send's
 // same-chain path but useless for the bridge, where the source chain changes.
@@ -44,7 +44,7 @@ export function useChainUsdcBalance(chainKey: string) {
         args: [address],
       })
       // USDC is 6 decimals on every supported chain, including Arc's ERC-20
-      // interface (the NATIVE token is 18 — mixing them is a known trap).
+      // interface (the NATIVE token is 18 mixing them is a known trap).
       setBalance(Number(raw as bigint) / 1_000_000)
     } catch {
       // A failed read shouldn't break the form; just show zero and let the user

@@ -11,7 +11,7 @@ import { chainByKey } from '@/lib/cctp-chains'
   Deposit USDC into Gateway.
 
   The honest bit this UI has to get right: a deposit is NOT instantly spendable.
-  It has to reach block finality first — about half a second on Arc, but 13-19
+  It has to reach block finality first, about half a second on Arc, but 13-19
   MINUTES on Base or Ethereum. Hiding that would leave users thinking the
   feature is broken, so the wait is stated up front, per chain, before they
   commit.
@@ -42,13 +42,13 @@ export function GatewayDepositForm({ onDone }: { onDone?: () => void }) {
         <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-400">
           <CheckCircle className="h-4 w-4" /> Deposit submitted
         </p>
-        <p className="mt-1 text-xs text-emerald-200/80">
+        <p className="mt-1 text-xs text-emerald-800 dark:text-emerald-200/80">
           {amount} USDC deposited from {chain?.name}.
         </p>
         {/* The wait is the thing people misunderstand, so say it plainly. */}
-        <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-amber-200/80">
+        <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-amber-800 dark:text-amber-200/80">
           <Clock className="mt-0.5 h-3 w-3 shrink-0" />
-          It becomes spendable once the deposit reaches finality on {chain?.name} —
+          It becomes spendable once the deposit reaches finality on {chain?.name}
           about {finality}. Your balance above updates automatically.
         </p>
         {depositTx && cctp && (
@@ -79,7 +79,7 @@ export function GatewayDepositForm({ onDone }: { onDone?: () => void }) {
       >
         {chains.map(c => (
           <option key={c.key} value={c.key}>
-            {c.name} — clears in {c.finality}
+            {c.name}, clears in {c.finality}
           </option>
         ))}
       </select>
@@ -119,10 +119,10 @@ export function GatewayDepositForm({ onDone }: { onDone?: () => void }) {
           <p className="flex items-center gap-1.5 text-[11px] font-medium text-red-400">
             <AlertTriangle className="h-3 w-3" /> Deposit not completed
           </p>
-          <p className="mt-1 text-[11px] text-red-300/90">{error}</p>
+          <p className="mt-1 text-[11px] text-red-800 dark:text-red-300/90">{error}</p>
           {approveTx && (
-            <p className="mt-1 text-[10px] text-red-300/60">
-              Your approval went through but the deposit didn&apos;t — no USDC left your
+            <p className="mt-1 text-[10px] text-red-700 dark:text-red-300/60">
+              Your approval went through but the deposit didn&apos;t, no USDC left your
               wallet. You can safely retry.
             </p>
           )}

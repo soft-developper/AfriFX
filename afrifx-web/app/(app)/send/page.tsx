@@ -48,7 +48,7 @@ function SendPageInner() {
     Clear the form once a cross-chain send completes.
 
     The same-chain path clears immediately after submitting, but a cross-chain
-    send finishes asynchronously — so without this the recipient and amount sat
+    send finishes asynchronously, so without this the recipient and amount sat
     there with the button still live, inviting an accidental second send of the
     same amount. For a money form that's a real hazard, not just untidiness.
   */
@@ -57,7 +57,7 @@ function SendPageInner() {
   }, [gw.step])
 
   /*
-    SMART ROUTING — the user picks a destination, not a mechanism.
+    SMART ROUTING, the user picks a destination, not a mechanism.
       same chain (Arc -> Arc)  : plain wallet transfer. Instant, no Gateway
                                  balance consumed, and it's what Send always did.
       cross-chain              : spend the unified Gateway balance.
@@ -136,7 +136,7 @@ function SendPageInner() {
           </select>
         </div>
 
-        {/* Balance — which one depends on the route */}
+        {/* Balance which one depends on the route */}
         <div className="mb-4 flex items-center justify-between text-xs">
           <span className="flex items-center gap-1.5 text-app-muted">
             {isCrossChain ? <><Layers className="h-3 w-3" /> Unified balance</> : 'Wallet balance'}
@@ -145,7 +145,7 @@ function SendPageInner() {
         </div>
 
         {isCrossChain && gwTotal === 0 && (
-          <div className="mb-3 rounded-lg bg-amber-900/20 px-3 py-2 text-[11px] text-amber-300">
+          <div className="mb-3 rounded-lg bg-amber-900/20 px-3 py-2 text-[11px] text-amber-800 dark:text-amber-300">
             Cross-chain sends spend your unified balance, which is empty. Add funds
             from the Treasury page first.
           </div>
@@ -240,9 +240,9 @@ function SendPageInner() {
             <p className="flex items-center gap-1.5 text-xs font-medium text-red-400">
               <AlertCircle className="h-3.5 w-3.5" /> Transfer not completed
             </p>
-            <p className="mt-1 text-[11px] text-red-300/90">{gw.error}</p>
+            <p className="mt-1 text-[11px] text-red-800 dark:text-red-300/90">{gw.error}</p>
             {gw.needsEoa && (
-              <p className="mt-1.5 text-[11px] text-red-300/70">
+              <p className="mt-1.5 text-[11px] text-red-700 dark:text-red-300/70">
                 Same-chain sends on Arc still work normally.
               </p>
             )}
@@ -252,7 +252,7 @@ function SendPageInner() {
           </div>
         )}
 
-        {/* Success — same-chain */}
+        {/* Success same-chain */}
         {isSuccess && txHash && (
           <a href={`https://testnet.arcscan.app/tx/${txHash}`}
             target="_blank" rel="noopener noreferrer"
@@ -261,7 +261,7 @@ function SendPageInner() {
           </a>
         )}
 
-        {/* Success — cross-chain */}
+        {/* Success cross-chain */}
         {gw.step === 'done' && gw.mintTx && (
           <div className="mt-3 rounded-lg bg-emerald-900/20 px-3 py-2">
             <p className="flex items-center gap-2 text-xs text-emerald-400">

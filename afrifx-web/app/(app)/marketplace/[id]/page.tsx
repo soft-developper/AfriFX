@@ -78,7 +78,7 @@ export default function OfferDetailPage() {
 
   // Once a trade finishes (USDC released) we briefly show the completed state,
   // then send the user to "My trades" so they aren't stranded on a static page.
-  // BUT only when the trade completes WHILE WE'RE WATCHING — if it was already
+  // BUT only when the trade completes WHILE WE'RE WATCHING if it was already
   // released when the page opened, the user came from My Trades to REVIEW it, so
   // we must NOT bounce them straight back out.
   const [redirectIn, setRedirectIn] = useState<number | null>(null)
@@ -153,7 +153,7 @@ export default function OfferDetailPage() {
     if (!offer) return
 
     // Record, exactly once, whether the trade was ALREADY released the first
-    // time we saw the offer. If so, this is a review from My Trades — no redirect.
+    // time we saw the offer. If so, this is a review from My Trades no redirect.
     if (wasReleasedOnLoadRef.current === null) {
       wasReleasedOnLoadRef.current = offer.status === 'released'
     }
@@ -449,7 +449,7 @@ export default function OfferDetailPage() {
                 <div className="rounded-lg border border-emerald-900/50 bg-emerald-900/20 p-4 text-center">
                   <CheckCircle className="mx-auto mb-2 h-6 w-6 text-emerald-400" />
                   <p className="text-sm font-medium text-emerald-400">Trade complete</p>
-                  <p className="mt-1 text-xs text-emerald-600">USDC released to buyer</p>
+                  <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-600">USDC released to buyer</p>
                   {redirectIn != null && (
                     <div className="mt-3 border-t border-emerald-900/40 pt-3">
                       <p className="text-xs text-app-muted">

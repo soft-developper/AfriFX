@@ -309,8 +309,8 @@ export function CorridorCard() {
                 Received ~{quote?.step2.toAmount.toFixed(2)} {to}
               </p>
               <div className="mt-1.5 flex items-center gap-1">
-                <Hash className="h-3 w-3 text-emerald-600" />
-                <span className="font-mono text-[10px] text-emerald-600">
+                <Hash className="h-3 w-3 text-emerald-700 dark:text-emerald-600" />
+                <span className="font-mono text-[10px] text-emerald-700 dark:text-emerald-600">
                   {corridorId}
                 </span>
               </div>

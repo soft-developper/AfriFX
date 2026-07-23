@@ -18,7 +18,7 @@ interface BridgeRow {
 }
 
 /*
-  Without this list, a bridge that outlives the page is INVISIBLE — the user has
+  Without this list, a bridge that outlives the page is INVISIBLE, the user has
   burned funds and no way to see what became of them. On an Ethereum-source
   bridge that's the normal case, not an edge case: finality alone takes 13-19
   minutes, far longer than anyone will sit and watch a spinner.
@@ -112,9 +112,9 @@ export function BridgeHistory() {
               </div>
 
               {r.status !== 'completed' && r.status !== 'failed' && r.burn_tx && (
-                <p className="mt-1.5 text-[10px] leading-relaxed text-amber-200/70">
-                  Funds are burned and recorded. The mint completes automatically —
-                  nothing is lost.
+                <p className="mt-1.5 text-[10px] leading-relaxed text-amber-700 dark:text-amber-200/70">
+                  Funds are burned and recorded. The mint completes
+                  automatically, nothing is lost.
                 </p>
               )}
             </div>

@@ -1,6 +1,6 @@
 'use client'
 // ============================================================
-// useBridge — the CCTP flow, driven by the USER'S OWN WALLET.
+// useBridge the CCTP flow, driven by the USER'S OWN WALLET.
 //
 // STAGE 3b. This is where real money moves, so the discipline is:
 //   RECORD FIRST, THEN ACT, THEN RECORD THE RESULT.
@@ -11,13 +11,13 @@
 //
 // THE ONE MOMENT THAT MATTERS: the instant the burn confirms, we POST the burn
 // tx hash to /bridge/:id/burned BEFORE doing anything else. After that point
-// the funds are burned and the mint is owed — if we lost the tx hash there,
+// the funds are burned and the mint is owed if we lost the tx hash there,
 // recovery would be far harder. Everything else is best-effort; that write is
 // not.
 // ============================================================
 
 import { useState, useCallback } from 'react'
-import { useAccount, useWriteContract, useSwitchChain, useConfig } from 'wagmi'
+import { useAccount, useWriteContract, useSwitchChain, useConfig, useChainId } from 'wagmi'
 import { getPublicClient } from 'wagmi/actions'
 import {
   cctpContracts, irisBase, chainByKey, addressToBytes32, CCTP_ENV,
@@ -40,7 +40,7 @@ export interface BridgeState {
   burnTx:   string | null
   mintTx:   string | null
   error:    string | null
-  /** Burned but not yet minted — funds are in flight and the mint is owed. */
+  /** Burned but not yet minted funds are in flight and the mint is owed. */
   inFlight: boolean
   /** Seconds spent waiting for Circle, so the UI isn't a black box. */
   waitedSec: number
@@ -57,7 +57,7 @@ const POLL_MS       = 5_000
   Five minutes of ACTIVE waiting, not thirty. Ethereum Sepolia needs ~13-19 min
   to finalise before Circle will even attest, so a spinner that waits the whole
   time makes a working transfer look broken. We wait a sensible while, then hand
-  off to the reconciler — which was always the design.
+  off to the reconciler, which was always the design.
 */
 const POLL_MAX_MIN  = 5
 
@@ -78,9 +78,10 @@ export function useBridge() {
   const { address } = useAccount()
   const { writeContractAsync } = useWriteContract()
   const { switchChainAsync }   = useSwitchChain()
+  const activeChainId = useChainId()
   /*
     We deliberately do NOT use usePublicClient() here. It returns a client for
-    whatever chain wagmi currently considers active — but this hook SWITCHES
+    whatever chain wagmi currently considers active, but this hook SWITCHES
     CHAINS mid-flow, so that client can end up pointed at the wrong chain when
     we wait for a receipt, which surfaces as "RPC Request failed" without any
     on-chain failure. Instead we fetch a client pinned to the exact chain for
@@ -123,10 +124,27 @@ export function useBridge() {
       // ── 2. Make sure the wallet is on the SOURCE chain ───
       const srcChainId = evmChainId(from.key)
       if (!srcChainId) throw new Error(`No EVM chain id configured for ${from.name}`)
+      /*
+        Some wallets RESOLVE switchChain without actually changing network, so
+        trusting the promise isn't enough. We attempt the switch, then verify by
+        reading the chain back. If it didn't take, we say exactly which network
+        to select manually rather than failing with a confusing downstream error.
+      */
       setState(s => ({ ...s, step: 'switching' }))
-      await switchChainAsync({ chainId: srcChainId }).catch(() => {
-        throw new Error(`Please switch your wallet to ${from.name} and try again`)
-      })
+      try {
+        await switchChainAsync({ chainId: srcChainId })
+      } catch {
+        throw new Error(
+          `Please switch your wallet to ${from.name} manually, then try again.`)
+      }
+
+      const srcClient = getPublicClient(config, { chainId: srcChainId })
+      const actualId  = await srcClient?.getChainId().catch(() => undefined)
+      if (actualId && actualId !== srcChainId) {
+        throw new Error(
+          `Your wallet is still on a different network. Please select ` +
+          `${from.name} manually, then try again.`)
+      }
 
       const contracts = cctpContracts()
       const messenger = contracts.tokenMessenger as `0x${string}`
@@ -188,7 +206,7 @@ export function useBridge() {
 
       /*
         *** THE CRITICAL WRITE ***
-        Funds are now burned. Persist the tx hash immediately — everything
+        Funds are now burned. Persist the tx hash immediately, everything
         downstream depends on it, and without it recovery is much harder.
         We deliberately await this and let a failure surface loudly.
       */
@@ -219,7 +237,7 @@ export function useBridge() {
           att = await fetchAttestation(irisBase(), from.domain, burnTx as string)
           if (att.status === 'complete') break
         } catch {
-          // swallow and retry — the burn is safe either way
+          // swallow and retry the burn is safe either way
         }
         setState(s => ({ ...s, waitedSec: Math.floor((Date.now() - startedAt) / 1000) }))
         await new Promise(r => setTimeout(r, POLL_MS))
@@ -228,7 +246,7 @@ export function useBridge() {
         // NOT a loss: the burn is recorded and the reconciler will finish it.
         throw new Error(
           'Circle is still attesting this transfer. Your USDC is burned and ' +
-          'safely recorded — the mint completes automatically, and you can close ' +
+          'safely recorded, the mint completes automatically, and you can close ' +
           'this page. Check "Recent bridges" below for the final status.')
       }
       await api(`/bridge/${bridgeId}/attested`, { attestation: att.attestation })
@@ -237,9 +255,13 @@ export function useBridge() {
       setState(s => ({ ...s, step: 'minting' }))
       const dstChainId = evmChainId(to.key)
       if (!dstChainId) throw new Error(`No EVM chain id configured for ${to.name}`)
-      await switchChainAsync({ chainId: dstChainId }).catch(() => {
-        throw new Error(`Please switch your wallet to ${to.name} to finish the transfer`)
-      })
+      try {
+        await switchChainAsync({ chainId: dstChainId })
+      } catch {
+        throw new Error(
+          `Please switch your wallet to ${to.name} manually to finish the transfer. ` +
+          `Your funds are safe, the mint is still owed.`)
+      }
 
       const mintTx = await writeContractAsync({
         address: contracts.messageTransmitter as `0x${string}`,
@@ -257,7 +279,7 @@ export function useBridge() {
       let message = err?.shortMessage ?? err?.message ?? 'Bridge failed'
 
       /*
-        "RPC Request failed" is unhelpful and alarming — it means the request
+        "RPC Request failed" is unhelpful and alarming, it means the request
         never reached a node (rate-limited public endpoint, CORS, or the wallet
         being on a chain we have no transport for). Say that, since the user's
         next step is completely different from a real on-chain failure.
@@ -265,7 +287,7 @@ export function useBridge() {
       if (/rpc request failed|fetch failed|failed to fetch|network request/i.test(message)) {
         message =
           'Could not reach the network. This is usually a busy public RPC ' +
-          'endpoint rather than a problem with your transfer — nothing was ' +
+          'endpoint rather than a problem with your transfer, nothing was ' +
           'submitted to the chain. Please try again in a moment.'
       }
 

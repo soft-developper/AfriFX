@@ -180,7 +180,7 @@ export function PayrollExecuteContent() {
         <div className="mb-4 rounded-xl border border-emerald-900/50 bg-emerald-900/20 p-4 text-center">
           <CheckCircle className="mx-auto mb-2 h-8 w-8 text-emerald-400" />
           <p className="text-sm font-medium text-emerald-400">All payments sent successfully!</p>
-          <p className="mt-1 text-xs text-emerald-600">
+          <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-600">
             ${formatAmount(batch!.total_amount)} USDC distributed to {sentCount} recipients
           </p>
         </div>
