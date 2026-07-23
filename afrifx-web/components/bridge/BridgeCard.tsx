@@ -46,7 +46,7 @@ function stageState(stage: string, current: string): 'done' | 'active' | 'pendin
 
 export function BridgeCard() {
   const { address, isConnected } = useAccount()
-  const { step, bridgeId, burnTx, mintTx, error, inFlight, bridge, reset, env } = useBridge()
+  const { step, bridgeId, burnTx, mintTx, error, inFlight, waitedSec, bridge, reset, env } = useBridge()
 
   const chains = cctpChains()
   const [fromKey, setFromKey] = useState('arc')
@@ -215,21 +215,6 @@ export function BridgeCard() {
       )}
 
       {/* Progress */}
-      {busy && (
-        <div className="mt-3 rounded-lg bg-app-bg p-3">
-          <p className="flex items-center gap-2 text-xs text-app-text">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            {stepLabel[step] ?? 'Working…'}
-          </p>
-          {inFlight && (
-            <p className="mt-1.5 text-[11px] text-app-muted">
-              Your USDC has been burned on {from?.name} and will be minted on {to?.name}.
-              You can safely close this page — the transfer completes on its own.
-            </p>
-          )}
-        </div>
-      )}
-
       {/* Errors — tone depends ENTIRELY on whether funds already moved */}
       {step === 'error' && error && (
         inFlight ? (
@@ -292,10 +277,28 @@ export function BridgeCard() {
                   : 'text-app-muted/60'}`}>
                   {f.label(from?.name ?? 'source', to?.name ?? 'destination', amount || '0')}
                 </span>
+                {/* Elapsed time on the attestation step — it's the long one, and
+                    a silent spinner with no clock makes it feel broken. */}
+                {f.key === 'attesting' && state === 'active' && waitedSec > 0 && (
+                  <span className="ml-auto font-mono text-[10px] text-app-muted">
+                    {Math.floor(waitedSec / 60)}:{String(waitedSec % 60).padStart(2, '0')}
+                  </span>
+                )}
               </div>
             )
           })}
         </div>
+
+        {/* Once the burn lands the funds are safe and the mint is owed, so the
+            user should never feel trapped by a spinner. */}
+        {inFlight && waitedSec > 45 && (
+          <button
+            onClick={reset}
+            className="mt-2 text-[11px] text-app-muted underline underline-offset-2 hover:text-app-text"
+          >
+            Stop waiting — this completes on its own
+          </button>
+        )}
       </div>
     </div>
   )

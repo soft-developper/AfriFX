@@ -42,16 +42,24 @@ export interface BridgeState {
   error:    string | null
   /** Burned but not yet minted — funds are in flight and the mint is owed. */
   inFlight: boolean
+  /** Seconds spent waiting for Circle, so the UI isn't a black box. */
+  waitedSec: number
 }
 
 const INITIAL: BridgeState = {
   step: 'idle', bridgeId: null, burnTx: null, mintTx: null,
-  error: null, inFlight: false,
+  error: null, inFlight: false, waitedSec: 0,
 }
 
 // Iris allows 40 req/s and blocks for 5 minutes if breached, so poll gently.
 const POLL_MS       = 5_000
-const POLL_MAX_MIN  = 30
+/*
+  Five minutes of ACTIVE waiting, not thirty. Ethereum Sepolia needs ~13-19 min
+  to finalise before Circle will even attest, so a spinner that waits the whole
+  time makes a working transfer look broken. We wait a sensible while, then hand
+  off to the reconciler — which was always the design.
+*/
+const POLL_MAX_MIN  = 5
 
 async function api(path: string, body?: unknown) {
   const res = await fetch(`${API}${path}`, {
@@ -196,17 +204,32 @@ export function useBridge() {
 
       // ── 5. Wait for Circle's attestation ─────────────────
       setState(s => ({ ...s, step: 'attesting' }))
-      const deadline = Date.now() + POLL_MAX_MIN * 60_000
-      let att = await fetchAttestation(irisBase(), from.domain, burnTx as string)
-      while (att.status !== 'complete' && Date.now() < deadline) {
+      const startedAt = Date.now()
+      const deadline  = startedAt + POLL_MAX_MIN * 60_000
+
+      /*
+        Poll DEFENSIVELY. Previously fetchAttestation() was called unguarded
+        inside this loop, so one transient network error escaped it entirely and
+        the spinner ran forever with no explanation. Each attempt is wrapped, and
+        elapsed time is published so the UI can show a clock.
+      */
+      let att: Awaited<ReturnType<typeof fetchAttestation>> = { status: 'pending' }
+      while (Date.now() < deadline) {
+        try {
+          att = await fetchAttestation(irisBase(), from.domain, burnTx as string)
+          if (att.status === 'complete') break
+        } catch {
+          // swallow and retry — the burn is safe either way
+        }
+        setState(s => ({ ...s, waitedSec: Math.floor((Date.now() - startedAt) / 1000) }))
         await new Promise(r => setTimeout(r, POLL_MS))
-        att = await fetchAttestation(irisBase(), from.domain, burnTx as string)
       }
       if (att.status !== 'complete' || !att.message || !att.attestation) {
         // NOT a loss: the burn is recorded and the reconciler will finish it.
         throw new Error(
-          'Attestation is taking longer than expected. Your funds are safe and ' +
-          'the transfer will complete automatically — you can close this page.')
+          'Circle is still attesting this transfer. Your USDC is burned and ' +
+          'safely recorded — the mint completes automatically, and you can close ' +
+          'this page. Check "Recent bridges" below for the final status.')
       }
       await api(`/bridge/${bridgeId}/attested`, { attestation: att.attestation })
 
