@@ -12,7 +12,7 @@ import { ShieldCheck, Zap, Coins } from 'lucide-react'
 export const metadata = {
   title: 'AfriFX, Stablecoin FX & cross-border payments on Arc',
   description:
-    'Convert between USDC and African currencies, send across borders, and trade peer-to-peer, settled on the Arc blockchain in under a second.',
+    'Trade USDC against 13 African currencies, bridge funds across Arc, Ethereum and Base, and settle peer-to-peer on-chain.',
 }
 
 export default function LandingPage() {
@@ -71,9 +71,9 @@ function Hero() {
         </h1>
 
         <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-app-muted sm:text-lg">
-          AfriFX is a decentralized FX and cross-border payments platform. Convert between USDC
-          and African currencies, send across borders, and trade peer-to-peer, all on the Arc
-          blockchain, with fees paid in USDC.
+          AfriFX is a decentralized FX and cross-border payments platform. Trade USDC against
+          13 African currencies, move funds between Arc, Ethereum, Base and more, and settle
+          peer-to-peer, with fees paid in USDC.
         </p>
 
         <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -94,7 +94,7 @@ function Hero() {
         {/* Trust row */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-app-muted">
           <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-app-accent-text" /> Non-custodial</span>
-          <span className="inline-flex items-center gap-1.5"><Zap className="h-4 w-4 text-app-accent-text" /> Settled on Arc</span>
+          <span className="inline-flex items-center gap-1.5"><Zap className="h-4 w-4 text-app-accent-text" /> Multi-chain USDC</span>
           <span className="inline-flex items-center gap-1.5"><Coins className="h-4 w-4 text-app-accent-text" /> Fees in USDC</span>
         </div>
 

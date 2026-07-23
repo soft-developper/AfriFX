@@ -25,21 +25,21 @@ const GROUPS: Group[] = [
     features: [
       {
         icon: ArrowLeftRight,
-        name: 'Convert',
-        overview: 'Swap between USDC and African currencies at live rates, with fees shown upfront and settled on-chain.',
+        name: 'Trade',
+        overview: 'Swap between USDC and 13 African currencies at live rates, with fees shown upfront and settled on-chain.',
         useCase: 'A freelancer paid in USDC converts to NGN the moment a client pays, locking the rate instantly.',
       },
       {
         icon: Globe,
-        name: 'Corridor',
-        overview: 'A two-step cross-border route (e.g. NGN → USDC → KES) that bridges two African currencies through USDC in one flow.',
-        useCase: 'Send money from Nigeria to Kenya without a bank wire, the corridor handles both legs and confirms each on-chain.',
+        name: 'Bridge',
+        overview: 'Move native USDC between Arc and Ethereum, Base, Arbitrum or Polygon using Circle CCTP. No wrapped tokens, no third-party custody.',
+        useCase: 'Bring USDC from Ethereum onto Arc to trade, or move it back out, signing every step from your own wallet.',
       },
       {
         icon: Send,
         name: 'Send',
-        overview: 'Transfer USDC directly to any wallet address on Arc, with a balance check so you never overspend.',
-        useCase: 'Pay a supplier in seconds by sending USDC straight to their wallet, no intermediary.',
+        overview: 'Send USDC to any address on any supported chain. Same-chain transfers go direct, cross-chain draws on your unified balance.',
+        useCase: 'Pay a supplier on Base while your funds sit on Arc, in one step, with no bridging beforehand.',
       },
     ],
   },
@@ -86,8 +86,8 @@ const GROUPS: Group[] = [
       {
         icon: Building2,
         name: 'Treasury',
-        overview: 'Automate conversions with rules, manage funds, and keep a clear view of business balances.',
-        useCase: 'Set a rule to auto-convert incoming USDC to local currency above a threshold, so cash is always ready.',
+        overview: 'One unified USDC balance spendable across chains, plus rules that auto-convert to local currency.',
+        useCase: 'Hold funds once and pay out on whichever chain a partner needs, without bridging first.',
       },
       {
         icon: CreditCard,
@@ -116,7 +116,7 @@ const GROUPS: Group[] = [
       {
         icon: History,
         name: 'History',
-        overview: 'Every conversion and corridor swap, with real on-chain status, settled, pending, or failed.',
+        overview: 'Every trade, bridge and transfer, with real on-chain status, settled, pending, or failed.',
         useCase: 'Check whether last night’s conversion actually settled on-chain, with the transaction hash to verify.',
       },
       {

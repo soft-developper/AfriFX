@@ -12,14 +12,14 @@ const STEPS = [
   {
     n: '02',
     icon: ArrowLeftRight,
-    title: 'Convert at live rates',
-    body: 'Swap between USDC and African currencies with fees shown upfront, settled on Arc in seconds.',
+    title: 'Trade at live rates',
+    body: 'Swap between USDC and 13 African currencies with fees shown upfront, settled on Arc in seconds.',
   },
   {
     n: '03',
     icon: Send,
-    title: 'Send across borders',
-    body: 'Move value to any wallet, pay an invoice, or trade peer-to-peer, every step confirmed on-chain.',
+    title: 'Send across chains',
+    body: 'Move value to any wallet on any supported chain, pay an invoice, or trade peer-to-peer, every step confirmed on-chain.',
   },
 ]
 
