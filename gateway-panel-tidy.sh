@@ -1,3 +1,36 @@
+#!/bin/bash
+# ============================================================
+# AfriFX GATEWAY -- tidy the balance panel
+#
+# 1) PER-CHAIN LIST IS NOW COLLAPSIBLE, collapsed by default.
+#    Gateway keeps adding chains, so that list only ever grows. The unified
+#    figure is the number that matters day to day; the per-chain breakdown is
+#    there when you want it, one click away.
+#
+# 2) REMOVED THE OPERATOR-FACING FOOTER -- the finality explainer, the 7-day
+#    withdrawal warning, the Circle docs link and the "testnet, wallet 0x0077..."
+#    line. Those were written for whoever RUNS the treasury, not for users, and
+#    they made the panel read like documentation.
+#
+#    NOTE: the finality information is NOT gone from the product -- it still
+#    appears in the DEPOSIT FORM, per chain, at the moment the user picks a
+#    source chain. That's where it actually affects a decision ("this deposit
+#    will take 13-19 minutes"). Keeping it there and dropping it from the panel
+#    is the right split.
+#
+# 3) Dropped the now-unused imports.
+#
+# Typechecks clean, builds clean.
+#
+# Run from ~/AfriFX:  bash gateway-panel-tidy.sh
+# ============================================================
+set -e
+echo ""
+echo "Tidying the Gateway balance panel..."
+echo ""
+
+mkdir -p "afrifx-web/components/treasury"
+cat > "afrifx-web/components/treasury/GatewayBalancePanel.tsx" << 'AFX_EOF'
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { Layers, RefreshCw, AlertCircle, Plus, ChevronDown, ChevronUp } from 'lucide-react'
@@ -160,3 +193,11 @@ export function GatewayBalancePanel() {
     </div>
   )
 }
+AFX_EOF
+echo "  afrifx-web/components/treasury/GatewayBalancePanel.tsx"
+
+echo ""
+echo "Done. Then:"
+echo "  cd afrifx-web && npx tsc --noEmit && npm run build"
+echo "  cd .. && git add -A && git commit -m 'Gateway panel: collapsible chains, remove operator copy'"
+echo "  git push"
