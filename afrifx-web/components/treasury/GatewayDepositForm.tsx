@@ -4,6 +4,7 @@ import { useAccount } from 'wagmi'
 import { Loader2, CheckCircle, AlertTriangle, Clock, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGatewayDeposit } from '@/hooks/useGatewayDeposit'
+import { useChainUsdcBalance } from '@/hooks/useChainUsdcBalance'
 import { gatewayChains } from '@/lib/gateway'
 import { chainByKey } from '@/lib/cctp-chains'
 
@@ -28,7 +29,18 @@ export function GatewayDepositForm({ onDone }: { onDone?: () => void }) {
   const cctp    = chainByKey(chainKey)
   const amt     = Number(amount)
   const busy    = ['switching', 'approving', 'depositing'].includes(step)
-  const canGo   = isConnected && amt > 0 && !busy
+
+  /*
+    Balance on the chain being deposited FROM.
+
+    Without this the deposit could fail at the deposit() step AFTER the user had
+    already paid gas on approve(), which is the worst kind of failure: costly
+    and confusing. Checking up front turns it into a disabled button.
+  */
+  const { balance, loading: balLoading } = useChainUsdcBalance(chainKey)
+  const insufficient = amt > 0 && amt > balance
+
+  const canGo   = isConnected && amt > 0 && !busy && !insufficient
 
   const stepLabel: Record<string, string> = {
     switching:  `Switch your wallet to ${chain?.name ?? 'the chain'}`,
@@ -90,7 +102,24 @@ export function GatewayDepositForm({ onDone }: { onDone?: () => void }) {
           : `Deposits from ${chain?.name} take ${chain?.finality} to become spendable.`}
       </p>
 
-      <label className="mb-1 block text-[11px] text-app-muted">Amount (USDC)</label>
+      <div className="mb-1 flex items-center justify-between">
+        <label className="text-[11px] text-app-muted">Amount (USDC)</label>
+        <span className="flex items-center gap-2 text-[11px]">
+          <span className="text-app-muted">
+            Balance:{' '}
+            <span className="font-mono text-app-text">
+              {balLoading ? '...' : balance.toFixed(2)}
+            </span>
+          </span>
+          <button
+            onClick={() => setAmount(String(balance))}
+            disabled={busy || balance <= 0}
+            className="text-app-accent-text hover:underline disabled:opacity-40"
+          >
+            Max
+          </button>
+        </span>
+      </div>
       <input
         type="number" inputMode="decimal" min="0" step="0.000001"
         value={amount}
@@ -100,10 +129,18 @@ export function GatewayDepositForm({ onDone }: { onDone?: () => void }) {
         className="mb-3 w-full rounded-lg border border-app-border bg-app-surface px-3 py-2 font-mono text-sm text-app-text outline-none placeholder:text-app-border disabled:opacity-50"
       />
 
+      {insufficient && (
+        <p className="mb-3 flex items-center gap-1.5 rounded-lg bg-red-900/20 px-3 py-2 text-[11px] text-red-800 dark:text-red-300">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          You only have {balance.toFixed(2)} USDC on {chain?.name}
+        </p>
+      )}
+
       <Button className="w-full" disabled={!canGo}
         onClick={() => deposit({ chainKey, amount: amt })}>
         {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> Working…</>
               : !isConnected ? 'Connect a wallet'
+              : insufficient ? 'Insufficient balance'
               : 'Deposit'}
       </Button>
 
