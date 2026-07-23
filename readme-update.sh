@@ -1,3 +1,48 @@
+#!/bin/bash
+# ============================================================
+# AfriFX -- README brought up to date
+#
+# The README described an earlier version of the product. For the first thing a
+# developer, partner or investor reads, that matters.
+#
+# CORRECTED
+#   * "five African currency corridors" -> the real 13 currencies, named.
+#   * The whole "Multi-Corridor Swaps" phase retitled to "FX Trading", since
+#     Corridor no longer exists as a feature. Explains instead that every pair
+#     routes through USDC, which is what actually happens.
+#   * taker/maker replaced with buyer/seller throughout the prose, matching the
+#     UI rename. (The DATABASE fields are still taker_/maker_ and were not
+#     touched; this is documentation only.)
+#   * Intro now mentions that USDC bridges in and out of Arc, so funds aren't
+#     trapped on one chain.
+#   * Live Platform section lists the bridged chains.
+#
+# ADDED (shipped features that weren't documented at all)
+#   * Phase 11, Cross-Chain Bridge. Explains burn-and-mint vs wrapped tokens,
+#     and is HONEST about the risk: a burn is irreversible until the mint, so it
+#     describes how state is persisted before signing and why an interrupted
+#     transfer is recoverable rather than lost.
+#   * Phase 12, Unified Balance via Circle Gateway, including why Arc's ~0.5s
+#     finality makes it a natural home for the balance.
+#   * Phase 13, AI Dispute Triage, stated plainly as ADVISORY ONLY, with the
+#     prompt-injection handling described rather than glossed over.
+#   * Feature bullets updated: 13 currencies, bridging, unified balance, PDF
+#     payment proof, duty rosters.
+#
+# Also removed every em-dash, matching the convention we settled on for the
+# codebase.
+#
+# Deliberately NOT claimed: fiat on/off-ramp, Flutterwave, or mainnet. Those
+# aren't shipped, and a README that oversells is worse than one that's stale.
+#
+# Run from ~/AfriFX:  bash readme-update.sh
+# ============================================================
+set -e
+echo ""
+echo "Updating README..."
+echo ""
+
+cat > "README.md" << 'AFX_EOF'
 # AfriFX, Stablecoin-Powered Cross-Border Payments on Arc
 
 AfriFX is a decentralised foreign exchange and cross-border payments platform built on the Arc blockchain. It enables individuals and businesses across Africa to move money across borders using USDC stablecoins as the settlement layer, with real local currency amounts on both ends. USDC can be bridged in and out of Arc from Ethereum, Base, Arbitrum and Polygon, so funds are never trapped on a single chain. Every transaction is settled on-chain, transparent, and traceable on ArcScan.
@@ -137,3 +182,13 @@ See `.env.example` and `.env.local.example` for the full list of required enviro
 ---
 
 *Built on Arc Testnet · Powered by USDC · Bridged with Circle CCTP and Gateway · Settled on-chain*
+AFX_EOF
+echo "  README.md"
+
+echo ""
+echo "Done. Then:"
+echo "  git add -A && git commit -m 'README: 13 currencies, bridge, unified balance, AI triage'"
+echo "  git push"
+echo ""
+echo "  Worth reading it through on GitHub afterwards, since it renders there"
+echo "  and it's the first thing anyone evaluating the project will see."
