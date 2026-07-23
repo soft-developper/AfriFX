@@ -180,3 +180,92 @@ export async function fetchGatewayBalances(
     return { error: err?.message ?? 'Could not reach the Gateway API' }
   }
 }
+
+// ── Deposit (stage 3) ───────────────────────────────────────
+
+/*
+  GatewayWallet ABI — only the pieces we call.
+
+  Signature confirmed from Circle's own integration guide:
+      deposit(address token, uint256 amount)
+  The resulting balance belongs to the FUNCTION CALLER, which is what we want:
+  the connected user deposits for themselves.
+*/
+export const GATEWAY_WALLET_ABI = [
+  {
+    type: 'function', name: 'deposit', stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'token',  type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [],
+  },
+  {
+    // Deposit crediting SOMEONE ELSE's balance. Not used by the UI, but
+    // included so the ABI is complete and the difference is documented:
+    // `deposit` credits msg.sender, `depositFor` credits `depositor`.
+    type: 'function', name: 'depositFor', stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'token',     type: 'address' },
+      { name: 'depositor', type: 'address' },
+      { name: 'amount',    type: 'uint256' },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function', name: 'availableBalance', stateMutability: 'view',
+    inputs: [
+      { name: 'token',     type: 'address' },
+      { name: 'depositor', type: 'address' },
+    ],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+] as const
+
+export const GATEWAY_ERC20_ABI = [
+  {
+    type: 'function', name: 'approve', stateMutability: 'nonpayable',
+    inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }],
+    outputs: [{ name: '', type: 'bool' }],
+  },
+  {
+    type: 'function', name: 'allowance', stateMutability: 'view',
+    inputs: [{ name: 'owner', type: 'address' }, { name: 'spender', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    type: 'function', name: 'balanceOf', stateMutability: 'view',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+] as const
+
+/*
+  *** THE MOST DANGEROUS MISTAKE IN GATEWAY ***
+
+  Circle's docs: "Directly transferring USDC to the Gateway Wallet contract with
+  a standard ERC-20 transfer will result in loss of that USDC."
+
+  There is no recovery. So this guard exists to make that mistake structurally
+  impossible from our code: any call that would send USDC to the GatewayWallet
+  via `transfer` is rejected before it can be signed.
+
+  Deposits MUST go through the wallet contract's deposit() method, which is what
+  useGatewayDeposit does.
+*/
+export function assertNotPlainTransfer(fnName: string, to: string, env: GatewayEnv = GATEWAY_ENV) {
+  const wallet = gatewayContracts(env).wallet.toLowerCase()
+  if (to.toLowerCase() === wallet && /^(transfer|transferFrom|send)$/i.test(fnName)) {
+    throw new Error(
+      'Refusing to send USDC directly to the Gateway Wallet — a plain ERC-20 ' +
+      'transfer to that contract permanently destroys the funds. Use deposit() instead.',
+    )
+  }
+}
+
+// USDC is 6 decimals on every Gateway chain.
+export function usdcToUnits(amount: number): bigint {
+  const [whole, frac = ''] = String(amount).split('.')
+  const padded = (frac + '000000').slice(0, 6)
+  return BigInt(whole || '0') * BigInt(1000000) + BigInt(padded || '0')
+}

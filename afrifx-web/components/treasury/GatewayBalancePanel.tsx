@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { Layers, RefreshCw, AlertCircle, Info, ExternalLink } from 'lucide-react'
+import { Layers, RefreshCw, AlertCircle, Info, ExternalLink, Plus } from 'lucide-react'
+import { GatewayDepositForm } from './GatewayDepositForm'
 import { useAccount } from 'wagmi'
 import {
   fetchGatewayBalances, gatewayChains, isValidAddress,
@@ -20,6 +21,7 @@ import {
   yet.
 */
 export function GatewayBalancePanel() {
+  const [showDeposit, setShowDeposit] = useState(false)
   const [data, setData]       = useState<any>(null)
   const [error, setError]     = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -126,6 +128,22 @@ export function GatewayBalancePanel() {
             ))}
           </div>
         </>
+      )}
+
+      {/* Deposit */}
+      {!error && (
+        <div className="mt-4">
+          {showDeposit ? (
+            <GatewayDepositForm onDone={() => { setShowDeposit(false); load() }} />
+          ) : (
+            <button
+              onClick={() => setShowDeposit(true)}
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-app-border py-2 text-xs text-app-muted hover:border-app-accent hover:text-app-text"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add funds
+            </button>
+          )}
+        </div>
       )}
 
       {/* The two things anyone operating this must know. */}
