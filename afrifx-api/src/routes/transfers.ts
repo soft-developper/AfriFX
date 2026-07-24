@@ -17,6 +17,7 @@ import { startTransfer, advanceTransfer } from '../services/ramp/engine'
 import { handleProviderWebhook } from '../services/ramp/webhook'
 import { getTransfer, getLegs, listTransfersBySender } from '../services/ramp/repository'
 import { getProvider, listProviders } from '../services/ramp/registry'
+import { compareProviders, providerCapabilities } from '../services/ramp/compare'
 import { flutterwaveConfigured } from '../services/ramp/providers/flutterwave-auth'
 import type { SenderMode, PayoutMethod, ChainKey } from '../services/ramp/types'
 
@@ -50,6 +51,46 @@ router.get('/health', async (_req, res) => {
   }
 
   res.json(out)
+})
+
+// ── Provider comparison ────────────────────────────────────
+/*
+  GET /transfers/providers
+    What ramps exist and what each can serve. Cheap, no network calls to
+    providers, so it's safe to call on page load.
+
+  POST /transfers/quotes
+    Ask every CAPABLE provider for a live quote and return them ALL, including
+    any that failed. Deliberately unranked: the best rate is often not the
+    fastest, and choosing for the user would mean quietly steering them.
+*/
+router.get('/providers', async (_req, res) => {
+  try { res.json(await providerCapabilities()) }
+  catch (err: any) { res.status(500).json({ error: err.message }) }
+})
+
+router.post('/quotes', async (req, res) => {
+  const { usdcAmount, destCurrency, country, method } = req.body
+  if (!usdcAmount || Number(usdcAmount) <= 0) {
+    return res.status(400).json({ error: 'A positive usdcAmount is required' })
+  }
+  if (!destCurrency) return res.status(400).json({ error: 'destCurrency is required' })
+  if (!country)      return res.status(400).json({ error: 'country is required' })
+
+  try {
+    const quotes = await compareProviders({
+      usdcAmount: Number(usdcAmount),
+      destCurrency, country, method,
+    })
+    res.json({
+      usdcAmount: Number(usdcAmount), destCurrency, country,
+      quotes,
+      // Surfaced so the UI can say "2 of 3 providers responded" rather than
+      // silently showing a short list.
+      available: quotes.filter(q => q.ok).length,
+      total:     quotes.length,
+    })
+  } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
 // ── Start a transfer ───────────────────────────────────────

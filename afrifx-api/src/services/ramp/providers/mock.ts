@@ -20,6 +20,20 @@ import { randomUUID } from 'crypto'
 export class MockProvider implements FiatRampProvider {
   readonly key = 'mock'
 
+  // Declared so the comparison layer can be exercised end to end before a
+  // second real provider is signed up.
+  async capabilities() {
+    return {
+      key: this.key,
+      displayName: 'Test provider',
+      countries:  ['NG', 'GH', 'KE', 'ZA', 'UG'],
+      currencies: ['NGN', 'GHS', 'KES', 'ZAR', 'UGX'],
+      methods:    ['bank', 'mobile_money'] as ('bank' | 'mobile_money')[],
+      configured: true,
+      note: 'Sandbox provider for testing. Not a real payout route.',
+    }
+  }
+
   async supportedChains(): Promise<ChainKey[]> {
     // Mirror HoneyCoin: no Arc, settles on major EVM chains.
     return ['eth', 'arb', 'base', 'matic', 'bsc', 'optimism']
@@ -42,12 +56,20 @@ export class MockProvider implements FiatRampProvider {
     // A plausible fake rate; e.g. 1 USDC ~ 130 KES / 1600 NGN, else 1.
     const table: Record<string, number> = { KES: 130, NGN: 1600, GHS: 15, ZAR: 18, UGX: 3700 }
     const rate = table[params.destCurrency] ?? 1
+    const destAmount = +(params.usdcAmount * rate).toFixed(2)
+    // A flat-ish fee so the comparison UI has something realistic to display,
+    // and so "best rate" and "best net amount" can visibly diverge.
+    const feeDest = +(destAmount * 0.005).toFixed(2)
     return {
       quoteId:   `mock_q_${randomUUID().slice(0, 8)}`,
       rate,
       expiresAt: Math.floor(Date.now() / 1000) + 3600, // 1h window, like HoneyCoin
       usdcAmount: params.usdcAmount,
-      destAmount: +(params.usdcAmount * rate).toFixed(2),
+      destAmount,
+      feeDest,
+      netDest: +(destAmount - feeDest).toFixed(2),
+      etaSeconds: 120,
+      etaLabel: 'about 2 minutes',
     }
   }
 

@@ -28,6 +28,59 @@ export interface RampQuote {
   expiresAt:  number      // unix seconds
   usdcAmount: number
   destAmount: number
+
+  /*
+    COMPARISON FIELDS.
+
+    A user choosing between providers needs more than a rate. The headline rate
+    can be the best while the NET amount received is the worst, once fees are
+    applied, so fees are surfaced separately rather than silently folded in.
+
+    All optional so existing providers keep compiling; the comparison UI shows
+    "not disclosed" where a provider doesn't report one.
+  */
+  /** Provider fee, expressed in the DESTINATION currency. */
+  feeDest?:    number
+  /** Provider fee taken from the USDC side, if it works that way instead. */
+  feeUsdc?:    number
+  /** What the recipient actually receives after fees, in dest currency. */
+  netDest?:    number
+  /** Typical delivery time in seconds, for an honest speed comparison. */
+  etaSeconds?: number
+  /** Free-text delivery estimate when a number would be misleading. */
+  etaLabel?:   string
+}
+
+/*
+  What a provider can actually do. Declared rather than discovered, so we never
+  ask a provider for a quote it cannot serve, and never show a user an option
+  that will fail at execution time.
+*/
+export interface ProviderCapabilities {
+  key:          string
+  displayName:  string
+  /** ISO-2 country codes this provider can pay out in. */
+  countries:    string[]
+  /** Destination currencies supported, e.g. ['NGN','KES']. */
+  currencies:   string[]
+  methods:      PayoutMethod[]
+  /** False when credentials are missing, so it's listed but not offered. */
+  configured:   boolean
+  /** Optional note shown in the UI, e.g. 'Bank transfers only in Nigeria'. */
+  note?:        string
+}
+
+/*
+  One provider's answer in a comparison. Deliberately carries the ERROR case:
+  if a provider times out or rejects the pair, the user should see "unavailable"
+  rather than that provider silently vanishing from the list.
+*/
+export interface ProviderQuote {
+  provider:    string
+  displayName: string
+  ok:          boolean
+  quote?:      RampQuote
+  error?:      string
 }
 
 export interface PayoutRecipient {

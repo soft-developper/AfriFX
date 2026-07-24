@@ -114,6 +114,24 @@ async function flw<T = any>(req: FlwRequest): Promise<T> {
 export class FlutterwaveProvider implements FiatRampProvider {
   readonly key = 'flutterwave'
 
+  /*
+    Declared capabilities, so we never offer a user a route this provider can't
+    actually serve. Currencies and countries reflect Flutterwave's African
+    payout coverage; the list is deliberately conservative and can grow as each
+    corridor is tested end to end.
+  */
+  async capabilities() {
+    return {
+      key: this.key,
+      displayName: 'Flutterwave',
+      countries:  ['NG', 'GH', 'KE', 'ZA', 'UG', 'TZ', 'RW', 'ZM'],
+      currencies: ['NGN', 'GHS', 'KES', 'ZAR', 'UGX', 'TZS', 'RWF', 'ZMW'],
+      methods:    ['bank', 'mobile_money'] as ('bank' | 'mobile_money')[],
+      configured: !!process.env.FLUTTERWAVE_CLIENT_ID,
+      note: 'Bank transfers and mobile money across 8 African markets.',
+    }
+  }
+
   // Chains Flutterwave settles USDC on. Arc is absent, hence the CCTP bridge.
   async supportedChains(): Promise<ChainKey[]> {
     return ['base', 'eth', 'matic']
