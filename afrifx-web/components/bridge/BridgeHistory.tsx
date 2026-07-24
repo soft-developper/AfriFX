@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useAccount } from 'wagmi'
 import { CheckCircle, Clock, AlertTriangle, ExternalLink, RefreshCw, Loader2 } from 'lucide-react'
 import { useCompleteBridge } from '@/hooks/useCompleteBridge'
+import { useAttestationStatus, finalityHint } from '@/hooks/useAttestationStatus'
 import { chainByKey } from '@/lib/cctp-chains'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
@@ -30,6 +31,15 @@ export function BridgeHistory() {
   const [loading, setLoading] = useState(false)
   const finish = useCompleteBridge()
 
+  /*
+    Which unfinished bridges are actually mintable yet? Showing a Complete
+    button before Circle has attested only produces a failed click, so we check
+    first and show a waiting state instead.
+  */
+  const pending = rows.filter(r =>
+    r.status !== 'completed' && r.status !== 'failed' && !!r.burn_tx)
+  const { status: attest } = useAttestationStatus(pending)
+
   const load = useCallback(async () => {
     if (!address) { setRows([]); return }
     setLoading(true)
@@ -54,7 +64,7 @@ export function BridgeHistory() {
     const pending = rows.some(r =>
       ['attesting', 'minting', 'stranded', 'burning'].includes(r.status))
     if (!pending) return
-    const t = setInterval(load, 15_000)
+    const t = setInterval(load, 20_000)
     return () => clearInterval(t)
   }, [rows, load])
 
@@ -126,19 +136,33 @@ export function BridgeHistory() {
                       and destinationCaller is bytes32(0), so this always works,
                       however long it has been. */}
                   <p className="text-[10px] leading-relaxed text-amber-700 dark:text-amber-200/70">
-                    Your USDC is burned and recorded. Nothing is lost, but the final
-                    step needs your signature to release it on {chainByKey(r.to_chain)?.name ?? r.to_chain}.
+                    {attest[r.id] === 'waiting'
+                      ? `Your USDC is burned and recorded. Circle is still confirming the ` +
+                        `${chainByKey(r.from_chain)?.name ?? r.from_chain} transaction, after ` +
+                        `which you can release it on ${chainByKey(r.to_chain)?.name ?? r.to_chain}.`
+                      : `Your USDC is burned and recorded. Nothing is lost, but the final ` +
+                        `step needs your signature to release it on ${chainByKey(r.to_chain)?.name ?? r.to_chain}.`}
                   </p>
 
-                  <button
-                    onClick={() => finish.complete(r)}
-                    disabled={finish.busyId === r.id}
-                    className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-app-accent px-2.5 py-1 text-[11px] font-medium text-app-on-accent hover:opacity-90 disabled:opacity-50"
-                  >
-                    {finish.busyId === r.id
-                      ? <><Loader2 className="h-3 w-3 animate-spin" /> Completing...</>
-                      : 'Complete transfer'}
-                  </button>
+                  {/* Only offer the action once Circle can actually serve the
+                      attestation. 'unknown' means we could not reach Circle, so
+                      we still allow the attempt rather than blocking the user. */}
+                  {attest[r.id] === 'waiting' ? (
+                    <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-app-bg px-2.5 py-1 text-[11px] text-app-muted">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Waiting for Circle to attest, {finalityHint(r.from_chain)}
+                    </p>
+                  ) : (
+                    <button
+                      onClick={() => finish.complete(r)}
+                      disabled={finish.busyId === r.id}
+                      className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-app-accent px-2.5 py-1 text-[11px] font-medium text-app-on-accent hover:opacity-90 disabled:opacity-50"
+                    >
+                      {finish.busyId === r.id
+                        ? <><Loader2 className="h-3 w-3 animate-spin" /> Completing...</>
+                        : 'Complete transfer'}
+                    </button>
+                  )}
 
                   {finish.busyId === r.id && finish.step === 'checking' && (
                     <p className="mt-1 text-[10px] text-app-muted">Checking with Circle...</p>
