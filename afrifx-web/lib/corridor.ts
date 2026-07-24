@@ -127,3 +127,31 @@ export function buildCorridorQuote(
     estimatedAt: now,
   }
 }
+
+/*
+  Currency to payout country (ISO-2).
+
+  Ramp providers quote and pay out per COUNTRY, not per currency, so a cash-out
+  needs this mapping. The CFA francs are the awkward case: XOF and XAF each
+  cover several countries, so we pick the largest market as a sensible default
+  and let the user correct it if we ever expose a country selector.
+*/
+export const CURRENCY_COUNTRY: Record<string, string> = {
+  NGN: 'NG',   // Nigeria
+  GHS: 'GH',   // Ghana
+  KES: 'KE',   // Kenya
+  ZAR: 'ZA',   // South Africa
+  EGP: 'EG',   // Egypt
+  UGX: 'UG',   // Uganda
+  TZS: 'TZ',   // Tanzania
+  RWF: 'RW',   // Rwanda
+  ZMW: 'ZM',   // Zambia
+  ETB: 'ET',   // Ethiopia
+  MZN: 'MZ',   // Mozambique
+  XOF: 'SN',   // West African CFA, defaulting to Senegal
+  XAF: 'CM',   // Central African CFA, defaulting to Cameroon
+}
+
+export function countryForCurrency(ccy: string): string | undefined {
+  return CURRENCY_COUNTRY[ccy]
+}

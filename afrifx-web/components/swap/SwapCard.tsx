@@ -7,7 +7,8 @@ import { RateDisplay } from './RateDisplay'
 import { Button } from '@/components/ui/button'
 import { useRate } from '@/hooks/useFXRate'
 import { useSwap } from '@/hooks/useSwap'
-import { LOCAL_CURRENCIES } from '@/lib/corridor'  // single source of truth
+import { LOCAL_CURRENCIES, countryForCurrency } from '@/lib/corridor'
+import { CashOutCard } from './CashOutCard'  // single source of truth
 import { useArcTransaction } from '@/hooks/useArcTransaction'
 import { useUSDCBalance } from '@/hooks/useUSDCBalance'
 import { SPREAD_BPS } from '@/lib/contracts'
@@ -26,6 +27,15 @@ export function SwapCard() {
 
   // Always resolve the LOCAL/USDC pair regardless of direction
   const localCurrency = toCurrency === 'USDC' ? fromCurrency : toCurrency
+
+  /*
+    Is this a cash-out? Only when spending USDC to receive a LOCAL currency,
+    and only when we know which country to pay out in. Without a country a
+    provider cannot quote, so we fall back to the original flow rather than
+    showing a form that cannot succeed.
+  */
+  const cashOutCountry = toCurrency !== 'USDC' ? countryForCurrency(toCurrency) : undefined
+  const isCashOut = fromCurrency === 'USDC' && toCurrency !== 'USDC' && !!cashOutCountry
   const pair = `${localCurrency}/USDC`
 
   const { rate: fxRate, isLoading: rateLoading } = useRate(pair)
@@ -189,6 +199,22 @@ export function SwapCard() {
         isLoading={rateLoading || rate === 0}
       />
 
+      {/*
+        USDC to LOCAL CURRENCY is a real cash-out: it has to reach someone's
+        bank account or mobile money. The old path just moved USDC to a vault
+        and recorded a row, delivering nothing, so that direction now uses the
+        payout flow instead. USDC-in (fiat to USDC) still uses the original
+        path, since that leg is unchanged.
+      */}
+      {isCashOut ? (
+        <div className="mt-4 border-t border-app-border pt-4">
+          <CashOutCard
+            usdcAmount={parseFloat(fromAmount) || 0}
+            destCurrency={toCurrency}
+            country={cashOutCountry!}
+          />
+        </div>
+      ) : (
       <Button
         className="mt-4 w-full"
         size="lg"
@@ -209,6 +235,7 @@ export function SwapCard() {
           `Convert ${parseFloat(fromAmount).toLocaleString()} ${fromCurrency} → ${toCurrency}`
         )}
       </Button>
+      )}
 
       {/* Error state */}
       {error && (
