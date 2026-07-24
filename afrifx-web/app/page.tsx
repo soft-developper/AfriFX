@@ -12,7 +12,7 @@ import { ShieldCheck, Zap, Coins } from 'lucide-react'
 export const metadata = {
   title: 'AfriFX, Stablecoin FX & cross-border payments on Arc',
   description:
-    'Trade USDC against 13 African currencies, bridge funds across Arc, Ethereum and Base, and settle peer-to-peer on-chain.',
+    'Trade USDC for local currency peer-to-peer with on-chain escrow, bridge funds across Arc, Ethereum and Base, and track live African FX rates.',
 }
 
 export default function LandingPage() {
@@ -71,9 +71,9 @@ function Hero() {
         </h1>
 
         <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-app-muted sm:text-lg">
-          AfriFX is a decentralized FX and cross-border payments platform. Trade USDC against
-          13 African currencies, move funds between Arc, Ethereum, Base and more, and settle
-          peer-to-peer, with fees paid in USDC.
+          AfriFX is a decentralized FX and cross-border payments platform. Trade USDC for
+          local currency peer-to-peer with on-chain escrow, move funds between Arc, Ethereum,
+          Base and more, and track live rates across 13 African currencies.
         </p>
 
         <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">

@@ -26,8 +26,8 @@ const GROUPS: Group[] = [
       {
         icon: ArrowLeftRight,
         name: 'Trade',
-        overview: 'Swap between USDC and 13 African currencies at live rates, with fees shown upfront and settled on-chain.',
-        useCase: 'A freelancer paid in USDC converts to NGN the moment a client pays, locking the rate instantly.',
+        overview: 'Live rates between USDC and 13 African currencies, with fees shown upfront before you commit.',
+        useCase: 'A freelancer paid in USDC checks the live NGN rate and sees exactly what a conversion would cost.',
       },
       {
         icon: Globe,

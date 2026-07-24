@@ -12,8 +12,8 @@ const STEPS = [
   {
     n: '02',
     icon: ArrowLeftRight,
-    title: 'Trade at live rates',
-    body: 'Swap between USDC and 13 African currencies with fees shown upfront, settled on Arc in seconds.',
+    title: 'Check live rates',
+    body: 'See live rates across 13 African currencies with fees shown upfront, before you commit to anything.',
   },
   {
     n: '03',
