@@ -53,15 +53,27 @@ router.post('/', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
-// PATCH /transactions/:hash update status (called after on-chain confirmation)
+/*
+  PATCH /transactions/:hash, update status after on-chain confirmation.
+
+  IMPORTANT DISTINCTION. A confirmed on-chain transfer means the USDC left the
+  user's wallet. For a USDC to fiat conversion that is NOT the same as the
+  conversion being SETTLED: settled should mean the recipient actually received
+  their money, which happens later, via a payout provider.
+
+  Calling that 'settled' told users their money had arrived when it had not.
+  So an on-chain confirmation now records 'funded' for fiat-bound conversions,
+  and only the payout completing marks them 'settled'. Callers can still pass an
+  explicit status for other cases.
+*/
 router.patch('/:hash', async (req, res) => {
   const { status } = req.body
   const now        = Math.floor(Date.now() / 1000)
   try {
     await db.run(
       sql`UPDATE transactions
-          SET status     = ${status ?? 'settled'},
-              settled_at = ${now}
+          SET status     = ${status ?? 'funded'},
+              settled_at = ${status === 'settled' ? now : null}
           WHERE arc_tx_hash = ${req.params.hash}
              OR id          = ${req.params.hash}`
     )

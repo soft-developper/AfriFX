@@ -18,6 +18,7 @@ import { handleProviderWebhook } from '../services/ramp/webhook'
 import { getTransfer, getLegs, listTransfersBySender } from '../services/ramp/repository'
 import { getProvider, listProviders } from '../services/ramp/registry'
 import { compareProviders, providerCapabilities } from '../services/ramp/compare'
+import { startCashOut } from '../services/cashout'
 import { flutterwaveConfigured } from '../services/ramp/providers/flutterwave-auth'
 import type { SenderMode, PayoutMethod, ChainKey } from '../services/ramp/types'
 
@@ -91,6 +92,37 @@ router.post('/quotes', async (req, res) => {
       total:     quotes.length,
     })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
+})
+
+// ── Cash out: USDC to fiat, actually delivered ─────────────
+/*
+  POST /transfers/cashout
+
+  This is what "Convert USDC to NGN" should call. Unlike the old flow, which
+  wrote a database row and delivered nothing, this creates a REAL payout through
+  a provider and tracks it through the orchestrator.
+
+  It REQUIRES recipient details, because you cannot pay someone fiat without
+  knowing where to send it. Refusing up front is far better than accepting the
+  USDC and discovering the gap afterwards.
+*/
+router.post('/cashout', async (req, res) => {
+  try {
+    const result = await startCashOut(req.body)
+    if (!result.ok) {
+      // 422 for "we understood you but cannot serve this route", so the UI can
+      // distinguish a bad request from an unavailable corridor.
+      return res.status(result.noProvider ? 422 : 400).json({ error: result.error })
+    }
+    res.status(201).json({
+      transferId: result.transferId,
+      provider:   result.provider,
+      status:     'in_progress',
+    })
+  } catch (err: any) {
+    console.error('[CashOut]', err?.message)
+    res.status(500).json({ error: err.message })
+  }
 })
 
 // ── Start a transfer ───────────────────────────────────────
