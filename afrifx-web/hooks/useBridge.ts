@@ -246,8 +246,9 @@ export function useBridge() {
         // NOT a loss: the burn is recorded and the reconciler will finish it.
         throw new Error(
           'Circle is still attesting this transfer. Your USDC is burned and ' +
-          'safely recorded, the mint completes automatically, and you can close ' +
-          'this page. Check "Recent bridges" below for the final status.')
+          'safely recorded, so nothing is lost, but the final step needs your ' +
+          'signature. You can close this page and finish it any time from ' +
+          '"Recent bridges" below.')
       }
       await api(`/bridge/${bridgeId}/attested`, { attestation: att.attestation })
 

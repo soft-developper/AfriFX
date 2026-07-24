@@ -254,7 +254,8 @@ export function BridgeCard() {
             </p>
             <p className="mt-1.5 text-[11px] text-amber-700 dark:text-amber-200/70">
               Your funds are burned on {from?.name} and the mint on {to?.name} is
-              still owed. It will be completed automatically, nothing is lost.
+              still owed. Nothing is lost: finish it any time from Recent bridges
+              below, using the Complete transfer button.
             </p>
             {burnTx && (
               <a href={explorerTx(fromKey, burnTx)} target="_blank" rel="noopener noreferrer"
@@ -322,7 +323,7 @@ export function BridgeCard() {
             onClick={reset}
             className="mt-2 text-[11px] text-app-muted underline underline-offset-2 hover:text-app-text"
           >
-            Stop waiting, this completes on its own
+            Stop waiting, finish it later from Recent bridges
           </button>
         )}
       </div>

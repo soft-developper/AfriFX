@@ -1,7 +1,8 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { useAccount } from 'wagmi'
-import { CheckCircle, Clock, AlertTriangle, ExternalLink, RefreshCw } from 'lucide-react'
+import { CheckCircle, Clock, AlertTriangle, ExternalLink, RefreshCw, Loader2 } from 'lucide-react'
+import { useCompleteBridge } from '@/hooks/useCompleteBridge'
 import { chainByKey } from '@/lib/cctp-chains'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
@@ -27,6 +28,7 @@ export function BridgeHistory() {
   const { address } = useAccount()
   const [rows, setRows]       = useState<BridgeRow[]>([])
   const [loading, setLoading] = useState(false)
+  const finish = useCompleteBridge()
 
   const load = useCallback(async () => {
     if (!address) { setRows([]); return }
@@ -40,6 +42,11 @@ export function BridgeHistory() {
   }, [address])
 
   useEffect(() => { load() }, [load])
+
+  // Refresh once a manual completion lands, so the row flips to Complete.
+  useEffect(() => {
+    if (finish.step === 'done') { load(); finish.reset() }
+  }, [finish.step, load, finish])
 
   // Poll while anything is still moving, so a completed mint appears without a
   // manual refresh.
@@ -112,10 +119,34 @@ export function BridgeHistory() {
               </div>
 
               {r.status !== 'completed' && r.status !== 'failed' && r.burn_tx && (
-                <p className="mt-1.5 text-[10px] leading-relaxed text-amber-700 dark:text-amber-200/70">
-                  Funds are burned and recorded. The mint completes
-                  automatically, nothing is lost.
-                </p>
+                <div className="mt-1.5">
+                  {/* HONEST copy. The mint does NOT happen on its own: the
+                      platform holds no key (non-custodial by design), so the
+                      owner of the funds finishes it. Attestations never expire
+                      and destinationCaller is bytes32(0), so this always works,
+                      however long it has been. */}
+                  <p className="text-[10px] leading-relaxed text-amber-700 dark:text-amber-200/70">
+                    Your USDC is burned and recorded. Nothing is lost, but the final
+                    step needs your signature to release it on {chainByKey(r.to_chain)?.name ?? r.to_chain}.
+                  </p>
+
+                  <button
+                    onClick={() => finish.complete(r)}
+                    disabled={finish.busyId === r.id}
+                    className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-app-accent px-2.5 py-1 text-[11px] font-medium text-app-on-accent hover:opacity-90 disabled:opacity-50"
+                  >
+                    {finish.busyId === r.id
+                      ? <><Loader2 className="h-3 w-3 animate-spin" /> Completing...</>
+                      : 'Complete transfer'}
+                  </button>
+
+                  {finish.busyId === r.id && finish.step === 'checking' && (
+                    <p className="mt-1 text-[10px] text-app-muted">Checking with Circle...</p>
+                  )}
+                  {finish.error && finish.busyId === null && (
+                    <p className="mt-1 text-[10px] text-red-700 dark:text-red-300">{finish.error}</p>
+                  )}
+                </div>
               )}
             </div>
           )
