@@ -1,0 +1,22 @@
+-- ============================================================
+-- Payroll multichain payout support.
+--
+-- Adds a per-batch destination chain so a payroll batch can pay
+-- out on any Circle Gateway-supported chain (Arc, Base, Ethereum,
+-- Arbitrum, Polygon), not only Arc.
+--
+--   dest_chain = 'arc'  -> existing behaviour: direct USDC transfer
+--                          on Arc with a Memo reference (unchanged).
+--   dest_chain = other  -> spend the owner's unified Gateway balance
+--                          and mint to each recipient on that chain.
+--
+-- One chain per batch (not per recipient): every recipient in a
+-- batch is paid on the same chain, so the column lives on the
+-- BATCH row. Recipients inherit it at execute time.
+--
+-- Run as an individual statement (turso shell stops on first error).
+-- If the column already exists this will error harmlessly; ignore
+-- "duplicate column name" and move on.
+-- ============================================================
+
+ALTER TABLE payroll_batches ADD COLUMN dest_chain TEXT NOT NULL DEFAULT 'arc';

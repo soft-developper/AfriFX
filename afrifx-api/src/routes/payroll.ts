@@ -20,9 +20,17 @@ function normBatch(row: any) {
       currency: row[5], recipient_count: Number(row[6]),
       status: row[7], executed_at: row[8] ? Number(row[8]) : null,
       created_at: Number(row[9]),
+      // dest_chain was added later via ALTER TABLE, so it lands at the end.
+      // Older rows created before the migration have no value: default 'arc'.
+      dest_chain: row[10] ?? 'arc',
     }
   }
-  return { ...row, total_amount: Number(row.total_amount), recipient_count: Number(row.recipient_count) }
+  return {
+    ...row,
+    total_amount: Number(row.total_amount),
+    recipient_count: Number(row.recipient_count),
+    dest_chain: row.dest_chain ?? 'arc',
+  }
 }
 
 function normRecipient(row: any) {
@@ -53,9 +61,17 @@ router.get('/batches', async (req, res) => {
 
 // POST /payroll/batches create batch
 router.post('/batches', async (req, res) => {
-  const { walletAddress, name, description, recipients, currency = 'USDC' } = req.body
+  const { walletAddress, name, description, recipients, currency = 'USDC', destChain = 'arc' } = req.body
   if (!walletAddress || !name || !recipients?.length) {
     return res.status(400).json({ error: 'walletAddress, name and recipients required' })
+  }
+
+  // Only the chains AfriFX settles on are valid payout targets. Anything
+  // else is rejected rather than stored and failing silently at execute time.
+  const ALLOWED_CHAINS = ['arc', 'base', 'ethereum', 'arbitrum', 'polygon']
+  const chain = String(destChain).toLowerCase()
+  if (!ALLOWED_CHAINS.includes(chain)) {
+    return res.status(400).json({ error: `Unsupported payout chain: ${destChain}` })
   }
 
   const batchId     = randomUUID()
@@ -66,11 +82,11 @@ router.post('/batches', async (req, res) => {
     await db.run(
       sql`INSERT INTO payroll_batches
           (id, wallet_address, name, description, total_amount,
-           currency, recipient_count, created_at)
+           currency, recipient_count, created_at, dest_chain)
           VALUES
           (${batchId}, ${walletAddress.toLowerCase()}, ${name},
            ${description ?? null}, ${totalAmount}, ${currency},
-           ${recipients.length}, ${now})`
+           ${recipients.length}, ${now}, ${chain})`
     )
 
     for (const r of recipients) {

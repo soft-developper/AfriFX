@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { useAccount, useWriteContract, usePublicClient } from 'wagmi'
 import Link from 'next/link'
@@ -13,6 +13,11 @@ import { MEMO_ADDRESS, MEMO_ABI } from '@/lib/memo'
 import { arcTestnet } from '@/lib/arc-chain'
 import { formatAmount } from '@/lib/utils'
 import { parseUnits } from 'viem'
+import { useGatewaySend } from '@/hooks/useGatewaySend'
+import { fetchGatewayBalances, gatewayChains } from '@/lib/gateway'
+import { chainByKey } from '@/lib/cctp-chains'
+
+const HOME = 'arc'
 import {
   ArrowLeft, CheckCircle, XCircle, Loader2,
   ExternalLink, Play, AlertCircle, Clock,
@@ -25,11 +30,30 @@ export function PayrollExecuteContent() {
   const updateRecipient  = useUpdateRecipient()
   const { writeContractAsync } = useWriteContract()
   const publicClient = usePublicClient({ chainId: arcTestnet.id })
+  const gw = useGatewaySend()
 
   const [executing,    setExecuting]    = useState(false)
   const [currentIdx,   setCurrentIdx]   = useState(0)
   const [errorMsg,     setErrorMsg]     = useState<string | null>(null)
   const [done,         setDone]         = useState(false)
+  const [gwBalance,    setGwBalance]    = useState<number | null>(null)
+
+  // Which chain does this batch pay out on? Falls back to Arc for batches
+  // created before the multichain migration.
+  const destChain   = batch?.dest_chain ?? HOME
+  const isCrossChain = destChain !== HOME
+  const chainMeta   = gatewayChains().find(c => c.key === destChain)
+  const chainCctp   = chainByKey(destChain)
+
+  // For cross-chain batches, load the owner's unified Gateway balance so we
+  // can warn before they start rather than fail partway through.
+  useEffect(() => {
+    if (!address || !isCrossChain) return
+    fetchGatewayBalances(address).then(res => {
+      if ('error' in res) { setGwBalance(null); return }
+      setGwBalance(res.total)
+    })
+  }, [address, isCrossChain, gw.step])
 
   if (!batch) return (
     <div className="flex h-64 items-center justify-center">
@@ -41,6 +65,15 @@ export function PayrollExecuteContent() {
   const sentCount  = recipients.filter(r => r.status === 'sent').length
   const pct        = recipients.length > 0 ? Math.round((sentCount / recipients.length) * 100) : 0
 
+  // Explorer base for the batch's chain (per-chain, not hardcoded ArcScan).
+  const explorerBase = chainCctp?.explorer ?? 'https://testnet.arcscan.app'
+
+  // Total still owed on this batch, used to check the unified balance covers it.
+  const remainingTotal = recipients
+    .filter(r => r.status !== 'sent')
+    .reduce((s, r) => s + Number(r.amount), 0)
+  const insufficientGw = isCrossChain && gwBalance !== null && gwBalance < remainingTotal
+
   async function executePayroll() {
     if (!address || executing) return
     setExecuting(true)
@@ -51,7 +84,41 @@ export function PayrollExecuteContent() {
     for (let i = 0; i < pending.length; i++) {
       const recipient = pending[i]
       setCurrentIdx(i)
+      const who = recipient.name ?? recipient.wallet_address.slice(0, 10)
+
       try {
+        if (isCrossChain) {
+          // ── Cross-chain: spend the unified Gateway balance ──
+          // Each payment is signed, attested and minted on the destination
+          // chain individually. gw.send returns the outcome so we can mark
+          // this recipient before moving to the next one.
+          const result = await gw.send({
+            fromKey:   HOME,          // unified balance is funded from Arc
+            toKey:     destChain,
+            amount:    recipient.amount,
+            recipient: recipient.wallet_address,
+          })
+
+          if (result?.ok) {
+            await updateRecipient.mutateAsync({
+              id: recipient.id, batchId: batch!.id, status: 'sent', txHash: result.mintTx,
+            })
+          } else {
+            await updateRecipient.mutateAsync({
+              id: recipient.id, batchId: batch!.id, status: 'failed',
+            })
+            setErrorMsg(`Payment to ${who} failed: ${result?.error ?? 'Gateway transfer failed'}`)
+            // A wallet that can't sign Gateway transfers will fail on every
+            // recipient, so stop rather than prompt uselessly N more times.
+            if (result?.needsEoa) {
+              setErrorMsg('This wallet can\'t sign Gateway transfers. Cross-chain payroll needs a standard wallet (EOA).')
+              break
+            }
+          }
+          continue
+        }
+
+        // ── Arc (home): direct USDC transfer with a Memo, unchanged ──
         const usdcRaw = parseUnits(recipient.amount.toFixed(6), USDC_DECIMALS)
         const memoId  = buildMemoId(`payroll-${batch!.id}-${recipient.id}`)
 
@@ -106,7 +173,7 @@ export function PayrollExecuteContent() {
             status:  'failed',
             txHash:  hash,
           })
-          setErrorMsg(`Payment to ${recipient.name ?? recipient.wallet_address.slice(0,10)} reverted on-chain`)
+          setErrorMsg(`Payment to ${who} reverted on-chain`)
         }
       } catch (err: any) {
         const msg = err?.shortMessage ?? err?.message ?? 'Transaction failed'
@@ -115,7 +182,7 @@ export function PayrollExecuteContent() {
           batchId: batch!.id,
           status:  'failed',
         })
-        setErrorMsg(`Payment to ${recipient.name ?? recipient.wallet_address.slice(0,10)} failed: ${msg}`)
+        setErrorMsg(`Payment to ${who} failed: ${msg}`)
         // Continue with next recipients
       }
     }
@@ -146,6 +213,7 @@ export function PayrollExecuteContent() {
           </div>
           <p className="text-xs text-app-muted">
             {batch.recipient_count} recipients · ${formatAmount(batch!.total_amount)} USDC
+            · Paid on {chainMeta?.name ?? destChain}
             · Created {new Date(batch!.created_at * 1000).toLocaleDateString()}
           </p>
         </div>
@@ -236,7 +304,7 @@ export function PayrollExecuteContent() {
                     {formatAmount(r.amount)} USDC
                   </p>
                   {r.tx_hash && (
-                    <a href={`https://testnet.arcscan.app/tx/${r.tx_hash}`}
+                    <a href={`${explorerBase}/tx/${r.tx_hash}`}
                       target="_blank" rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-[10px] text-app-accent-text hover:underline">
                       View tx <ExternalLink className="h-2.5 w-2.5" />
@@ -257,6 +325,10 @@ export function PayrollExecuteContent() {
                 ['Recipients', String(batch.recipient_count)],
                 ['Total',      `${formatAmount(batch!.total_amount)} USDC`],
                 ['Sent',       `${sentCount} / ${batch.recipient_count}`],
+                ['Payout on',  chainMeta?.name ?? destChain],
+                ...(isCrossChain
+                  ? [['Unified balance', gwBalance === null ? '…' : `${gwBalance.toFixed(2)} USDC`] as [string, string]]
+                  : []),
               ].map(([l,v]) => (
                 <div key={l} className="flex justify-between">
                   <span className="text-app-muted">{l}</span>
@@ -265,10 +337,21 @@ export function PayrollExecuteContent() {
               ))}
             </div>
 
+            {/* Cross-chain batches spend the unified Gateway balance. If it
+                won't cover what's left, say so before any wallet prompts. */}
+            {insufficientGw && (
+              <div className="mt-3 flex items-start gap-1.5 rounded-lg bg-amber-900/20 px-3 py-2 text-[11px] text-amber-800 dark:text-amber-300">
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                Your unified balance ({gwBalance?.toFixed(2)} USDC) is less than the
+                {' '}{formatAmount(remainingTotal)} USDC still owed. Add funds on the
+                Treasury page before starting.
+              </div>
+            )}
+
             {batch!.status !== 'completed' && (
               <Button className="mt-4 w-full" size="lg"
                 onClick={executePayroll}
-                disabled={executing || done || sentCount === recipients.length}>
+                disabled={executing || done || sentCount === recipients.length || insufficientGw}>
                 {executing
                   ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</>
                   : sentCount > 0
@@ -276,6 +359,13 @@ export function PayrollExecuteContent() {
                   : <><Play className="h-4 w-4" /> Start payroll</>
                 }
               </Button>
+            )}
+
+            {isCrossChain && executing && (
+              <p className="mt-2 flex items-center gap-1.5 text-[11px] text-app-muted">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Approve each payment in your wallet. It signs, then mints on {chainMeta?.name ?? destChain}.
+              </p>
             )}
 
             {batch!.status === 'completed' && (
@@ -286,7 +376,9 @@ export function PayrollExecuteContent() {
             )}
 
             <p className="mt-2 text-center text-[10px] text-app-muted">
-              Each payment is sent individually on Arc with a unique Memo reference
+              {isCrossChain
+                ? `Each payment spends your unified balance and mints on ${chainMeta?.name ?? destChain}`
+                : 'Each payment is sent individually on Arc with a unique Memo reference'}
             </p>
           </div>
         </div>

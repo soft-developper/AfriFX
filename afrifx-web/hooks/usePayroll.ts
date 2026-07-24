@@ -26,6 +26,7 @@ export interface PayrollBatch {
   currency:        string
   recipient_count: number
   status:          'draft' | 'processing' | 'completed' | 'failed'
+  dest_chain:      string
   executed_at:     number | null
   created_at:      number
   recipients?:     PayrollRecipient[]
@@ -62,7 +63,7 @@ export function useCreateBatch() {
   const { address } = useAccount()
   return useMutation({
     mutationFn: async (data: {
-      name: string; description?: string
+      name: string; description?: string; destChain?: string
       recipients: { name?: string; walletAddress: string; amount: number }[]
     }) => {
       const res = await fetch(`${API}/payroll/batches`, {

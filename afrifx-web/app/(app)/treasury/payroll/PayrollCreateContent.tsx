@@ -6,8 +6,11 @@ import { Input } from '@/components/ui/input'
 import { useCreateBatch } from '@/hooks/usePayroll'
 import { useUSDCBalance } from '@/hooks/useUSDCBalance'
 import { formatAmount } from '@/lib/utils'
-import { ArrowLeft, Plus, Trash2, Upload, Users, FileText, AlertCircle, CheckCircle } from 'lucide-react'
+import { gatewayChains } from '@/lib/gateway'
+import { ArrowLeft, Plus, Trash2, Upload, Users, FileText, AlertCircle, CheckCircle, Layers } from 'lucide-react'
 import Link from 'next/link'
+
+const HOME = 'arc'
 
 interface Recipient {
   name:          string
@@ -27,6 +30,7 @@ export function PayrollCreateContent() {
 
   const [batchName,    setBatchName]    = useState('')
   const [description,  setDescription]  = useState('')
+  const [destChain,    setDestChain]    = useState(HOME)
   const [activeTab,    setActiveTab]    = useState<'manual'|'csv'>('manual')
   const [recipients,   setRecipients]   = useState<Recipient[]>([
     { name: '', walletAddress: '', amount: '' }
@@ -130,6 +134,7 @@ export function PayrollCreateContent() {
     const result = await createBatch.mutateAsync({
       name:        batchName,
       description: description || undefined,
+      destChain,
       recipients:  valid.map(r => ({
         name:          r.name || undefined,
         walletAddress: r.walletAddress,
@@ -174,6 +179,27 @@ export function PayrollCreateContent() {
                 <label className="mb-1 block text-xs text-app-muted">Description (optional)</label>
                 <Input placeholder="e.g. Monthly contractor payments"
                   value={description} onChange={e => setDescription(e.target.value)} />
+              </div>
+              <div>
+                <label className="mb-1 flex items-center gap-1.5 text-xs text-app-muted">
+                  <Layers className="h-3 w-3" /> Payout chain
+                </label>
+                <select
+                  value={destChain}
+                  onChange={e => setDestChain(e.target.value)}
+                  className="w-full rounded-lg border border-app-border bg-app-bg px-3 py-2.5 text-sm text-app-text outline-none"
+                >
+                  {gatewayChains().map(c => (
+                    <option key={c.key} value={c.key}>
+                      {c.name}{c.isHome ? ' · home' : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-[11px] text-app-muted">
+                  {destChain === HOME
+                    ? 'Paid directly on Arc from your wallet balance, one signature per recipient.'
+                    : 'Paid from your unified Gateway balance. Fund it on the Treasury page first. Each recipient is signed and minted on the destination chain.'}
+                </p>
               </div>
             </div>
           </div>

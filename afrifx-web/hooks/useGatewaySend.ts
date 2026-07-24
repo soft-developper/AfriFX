@@ -285,6 +285,10 @@ export function useGatewaySend() {
         ?.waitForTransactionReceipt({ hash: mintTx as `0x${string}` })
 
       setState(s => ({ ...s, step: 'done', mintTx: mintTx as string }))
+      // Also RETURN the result. The Send page reads state and ignores this,
+      // but a caller running many transfers in a loop (payroll) can't rely on
+      // async state between iterations, so it awaits this outcome instead.
+      return { ok: true as const, mintTx: mintTx as string }
     } catch (err: any) {
       let message = err?.shortMessage ?? err?.message ?? 'Transfer failed'
       if (/rpc request failed|fetch failed|failed to fetch/i.test(message)) {
@@ -293,6 +297,7 @@ export function useGatewaySend() {
       // Preserve the "wallet can't sign for Gateway" case so the UI can explain
       // it properly rather than showing a generic failure.
       setState(s => ({ ...s, step: 'error', error: message, needsEoa: !!err?.__needsEoa }))
+      return { ok: false as const, error: message, needsEoa: !!err?.__needsEoa }
     }
   }, [address, signTypedDataAsync, writeContractAsync, switchChainAsync, config])
 
