@@ -39,15 +39,23 @@ export default function SignInPage() {
   const [busy,  setBusy]  = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const enter = useCallback(async (userToken: string, encryptionKey: string) => {
+  const enter = useCallback(async (
+    userToken: string, encryptionKey: string,
+    social?: { email?: string; name?: string },
+  ) => {
     setBusy('Signing you in')
     try {
       const res = await fetch(`${API}/auth/session`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Send the email when we know it, so accounts created via the
-        // code flow have one without asking again later.
-        body: JSON.stringify({ userToken, email: email.trim() || undefined }),
+        // Send whatever identity we have: the address they typed for the
+        // code flow, or the one Google gave us. Without this a Google
+        // account is created with no email and gets no mail at all.
+        body: JSON.stringify({
+          userToken,
+          email: social?.email ?? email.trim() ?? undefined,
+          name:  social?.name,
+        }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setError(data.error ?? 'Could not sign you in'); setBusy(null); return }
@@ -92,7 +100,7 @@ export default function SignInPage() {
         setError('Sign-in was cancelled or failed. Try again.')
         return
       }
-      void enter(result.userToken, result.encryptionKey)
+      void enter(result.userToken, result.encryptionKey, { email: result.email, name: result.name })
     }).catch(() => setError('Could not load sign-in. Refresh and try again.'))
 
     return () => { cancelled = true }

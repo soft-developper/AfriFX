@@ -46,6 +46,16 @@ export type AuthIntent = 'signin' | 'signup'
 export interface CircleLoginResult {
   userToken:     string
   encryptionKey: string
+  /**
+   * Email from the social provider, when it gives us one.
+   *
+   * Google returns this in oAuthInfo.socialUserInfo. Without it a
+   * Google sign-in creates an account with no address, so welcome mail,
+   * invoice reminders and trade alerts have nowhere to go.
+   */
+  email?:        string
+  /** Display name from the provider, used to prefill the profile form. */
+  name?:         string
 }
 
 /** Cached SDK instance. One per page load is enough. */
@@ -80,7 +90,13 @@ export async function getSdk(
     (err: unknown, result: any) => {
       if (!onLogin) return
       if (err || !result?.userToken) return onLogin(err ?? new Error('Sign-in failed'), null)
-      onLogin(null, { userToken: result.userToken, encryptionKey: result.encryptionKey })
+      const social = result?.oAuthInfo?.socialUserInfo
+      onLogin(null, {
+        userToken:     result.userToken,
+        encryptionKey: result.encryptionKey,
+        email:         social?.email,
+        name:          social?.name,
+      })
     },
   )
 

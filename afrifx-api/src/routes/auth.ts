@@ -58,6 +58,43 @@ function publicAccount(row: any) {
   }
 }
 
+/**
+ * Send the welcome email if this account has an address and has never
+ * been sent one. Guarded by welcome_sent_at so a repeat sign-in cannot
+ * spam the user, and never allowed to fail a sign-in.
+ */
+async function maybeSendWelcome(accountId: string): Promise<void> {
+  try {
+    const rows = parseRows(await db.run(sql`
+      SELECT email, username, first_name, welcome_sent_at
+      FROM accounts WHERE id = ${accountId} LIMIT 1
+    `))
+    const r = rows[0]
+    if (!r) return
+
+    const mail = val(r, 'email', 0) as string | null
+    const sent = val(r, 'welcome_sent_at', 3)
+    if (!mail || sent) return
+
+    const username = (val(r, 'username', 1) as string | null) ?? mail.split('@')[0]
+    const display  = (val(r, 'first_name', 2) as string | null) ?? username
+
+    await sendEmail({
+      to:      mail,
+      subject: `Welcome to ${BRAND.name}`,
+      html:    welcomeEmail({ username, displayName: display }).html,
+    })
+
+    await db.run(sql`
+      UPDATE accounts SET welcome_sent_at = ${Math.floor(Date.now() / 1000)}
+      WHERE id = ${accountId}
+    `)
+  } catch (err: any) {
+    // A missing welcome email must never block someone signing in.
+    console.error('[auth] welcome email failed:', err?.message)
+  }
+}
+
 const SELECT_PUBLIC = sql`
   SELECT id, email, username, first_name, last_name,
          wallet_address, status, created_at
@@ -234,7 +271,7 @@ router.get('/available', async (req, res) => {
 // wallet, so the first screen asks for nothing but a sign-in method.
 // ══════════════════════════════════════════════════════════
 router.post('/session', async (req, res) => {
-  const { userToken, email } = req.body ?? {}
+  const { userToken, email, name } = req.body ?? {}
 
   let circleUser
   try {
@@ -257,11 +294,17 @@ router.post('/session', async (req, res) => {
       const id  = randomUUID()
       const now = Math.floor(Date.now() / 1000)
 
+      // Prefill the name from the social provider when it gave us one,
+      // so the profile form starts filled in rather than blank.
+      const parts = normalizeName(String(name ?? '')).split(' ').filter(Boolean)
+      const first = parts.length ? parts[0] : null
+      const last  = parts.length > 1 ? parts.slice(1).join(' ') : null
+
       await db.run(sql`
         INSERT INTO accounts
-          (id, email, circle_user_id, status, created_at, updated_at)
+          (id, email, first_name, last_name, circle_user_id, status, created_at, updated_at)
         VALUES
-          (${id}, ${mail}, ${circleUser.id}, 'pending', ${now}, ${now})
+          (${id}, ${mail}, ${first}, ${last}, ${circleUser.id}, 'pending', ${now}, ${now})
       `)
       rows = parseRows(await db.run(sql`${SELECT_PUBLIC} WHERE id = ${id} LIMIT 1`))
     }
@@ -280,6 +323,11 @@ router.post('/session', async (req, res) => {
         .catch(() => {})  // another account may already own it
     }
     await db.run(sql`UPDATE accounts SET last_login_at = ${now} WHERE id = ${account.id}`)
+
+    // Welcome mail, exactly once, the first time we know where to send it.
+    // That is usually now, but for a Google sign-in with no email in the
+    // OAuth response it happens on a later visit once the address exists.
+    await maybeSendWelcome(String(account.id))
 
     const session = await createSession(
       String(account.id), req.ip, req.headers['user-agent'] as string)
