@@ -40,7 +40,7 @@ function LandingHeader() {
               hide on mobile, but the toggle is small enough to always fit). */}
           <ThemeToggle />
           <a
-            href="/signin"
+            href="/signin" target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-xl bg-app-accent px-4 py-2 text-sm font-semibold text-app-on-accent transition-transform hover:scale-[1.03]"
           >
             Launch app <ArrowUpRight className="h-4 w-4" />
@@ -78,7 +78,7 @@ function Hero() {
 
         <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <a
-            href="/signin"
+            href="/signin" target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-xl bg-app-accent px-6 py-3 text-base font-semibold text-app-on-accent transition-transform hover:scale-[1.03]"
           >
             Launch app <ArrowUpRight className="h-5 w-5" />
@@ -122,7 +122,7 @@ function LandingFooter() {
               <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-app-muted">Product</p>
               <ul className="space-y-2 text-sm">
                 <li><Link href="#features" className="text-app-text hover:text-app-accent-text">Features</Link></li>
-                <li><a href="/signin" className="text-app-text hover:text-app-accent-text">Launch app</a></li>
+                <li><a href="/signin" target="_blank" rel="noopener noreferrer" className="text-app-text hover:text-app-accent-text">Launch app</a></li>
               </ul>
             </div>
             <div>

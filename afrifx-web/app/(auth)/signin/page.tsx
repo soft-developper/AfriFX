@@ -2,63 +2,75 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { ArrowLeftRight, Mail, AlertCircle, Loader2, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   getSdk, startGoogleLogin, sendEmailCode, openCodeEntry,
-  consumeIntent, clearAuthCookies, circleConfigured,
+  clearAuthCookies, circleConfigured,
 } from '@/lib/circle'
 import { persistSession, type Account } from '@/hooks/useAuth'
+import { provisionWallet } from '@/hooks/useWalletProvisioning'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 
 type Stage = 'choose' | 'email' | 'sent'
 
+/**
+ * The single door into the app.
+ *
+ * There is no separate sign-up. You pick a sign-in method; if it's your
+ * first time we make the account, create your wallet, and send you on to
+ * choose a username. If you've been here before you land on the
+ * dashboard. Nothing is asked for up front.
+ */
 export default function SignInPage() {
   const router = useRouter()
 
-  const [stage,   setStage]   = useState<Stage>('choose')
-  const [email,   setEmail]   = useState('')
-  const [busy,    setBusy]    = useState<string | null>(null)
-  const [error,   setError]   = useState<string | null>(null)
+  const [stage, setStage] = useState<Stage>('choose')
+  const [email, setEmail] = useState('')
+  const [busy,  setBusy]  = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  /**
-   * Trade a Circle userToken for our session.
-   *
-   * A 404 means they authenticated fine but have no account here yet, so
-   * send them to sign-up rather than showing an error: they did nothing
-   * wrong, they just haven't finished signing up.
-   */
-  const exchange = useCallback(async (userToken: string) => {
+  const enter = useCallback(async (userToken: string, encryptionKey: string) => {
     setBusy('Signing you in')
     try {
-      const res = await fetch(`${API}/auth/login`, {
+      const res = await fetch(`${API}/auth/session`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ userToken }),
+        // Send the email when we know it, so accounts created via the
+        // code flow have one without asking again later.
+        body: JSON.stringify({ userToken, email: email.trim() || undefined }),
       })
       const data = await res.json().catch(() => ({}))
-
-      if (res.status === 404) {
-        sessionStorage.setItem('pending_user_token', userToken)
-        router.push('/signup')
-        return
-      }
       if (!res.ok) { setError(data.error ?? 'Could not sign you in'); setBusy(null); return }
 
       persistSession(data.token, data.account as Account)
       clearAuthCookies()
+
+      // First time in: make the wallet before letting them through, so
+      // the dashboard is never reached in a half-provisioned state.
+      if (data.needsWallet) {
+        try {
+          await provisionWallet(userToken, encryptionKey, setBusy)
+        } catch (e: any) {
+          setError(`${e?.message ?? 'Wallet setup did not finish'} You are signed in, so you can retry.`)
+          setBusy(null)
+          return
+        }
+      }
+
+      // ProfileGuard sends anyone without a profile to /profile/setup,
+      // so the dashboard is the right destination either way.
       router.push('/dashboard')
     } catch {
       setError('Could not reach the server. Check your connection and try again.')
       setBusy(null)
     }
-  }, [router])
+  }, [email, router])
 
-  // Register the SDK callback on mount. Google sends the browser away and
-  // back, so this has to be listening before the user ever clicks anything.
+  // Registered on mount: Google sends the browser away and back, so the
+  // callback has to be listening before anything is clicked.
   useEffect(() => {
     if (!circleConfigured()) {
       setError('Sign-in is not configured yet. Set NEXT_PUBLIC_CIRCLE_APP_ID.')
@@ -73,14 +85,11 @@ export default function SignInPage() {
         setError('Sign-in was cancelled or failed. Try again.')
         return
       }
-      void exchange(result.userToken)
+      void enter(result.userToken, result.encryptionKey)
     }).catch(() => setError('Could not load sign-in. Refresh and try again.'))
 
-    // Returning from a Google redirect that began on the sign-up form.
-    if (consumeIntent() === 'signup') router.replace('/signup')
-
     return () => { cancelled = true }
-  }, [exchange, router])
+  }, [enter])
 
   async function onGoogle() {
     setError(null); setBusy('Opening Google')
@@ -90,18 +99,9 @@ export default function SignInPage() {
 
   async function onSendCode() {
     setError(null); setBusy('Sending your code')
-    try {
-      await sendEmailCode(email.trim())
-      setStage('sent')
-    } catch (e: any) {
-      setError(e?.message ?? 'Could not send the code')
-    } finally { setBusy(null) }
-  }
-
-  async function onEnterCode() {
-    setError(null)
-    try { await openCodeEntry() }
-    catch { setError('Could not open the code window. Try sending a new code.') }
+    try { await sendEmailCode(email.trim()); setStage('sent') }
+    catch (e: any) { setError(e?.message ?? 'Could not send the code') }
+    finally { setBusy(null) }
   }
 
   return (
@@ -119,7 +119,7 @@ export default function SignInPage() {
       <div className="w-full max-w-sm rounded-2xl border border-app-border bg-app-surface p-6">
         <h2 className="mb-1 text-base font-semibold text-app-text">Sign in</h2>
         <p className="mb-5 text-xs text-app-muted">
-          Use the same method you signed up with.
+          New here? Signing in creates your account. No wallet or seed phrase needed.
         </p>
 
         {error && (
@@ -175,7 +175,7 @@ export default function SignInPage() {
             <p className="text-xs text-app-muted">
               We sent a code to <span className="text-app-text">{email}</span>. It expires shortly.
             </p>
-            <Button className="w-full" onClick={onEnterCode}>Enter code</Button>
+            <Button className="w-full" onClick={() => openCodeEntry()}>Enter code</Button>
             <button onClick={() => { setStage('email'); setError(null) }}
               className="w-full text-xs text-app-muted hover:text-app-text">
               Use a different email
@@ -183,13 +183,6 @@ export default function SignInPage() {
           </div>
         )}
       </div>
-
-      <p className="mt-5 text-xs text-app-muted">
-        New here?{' '}
-        <Link href="/signup" className="text-app-accent-text hover:underline">
-          Create an account
-        </Link>
-      </p>
     </div>
   )
 }

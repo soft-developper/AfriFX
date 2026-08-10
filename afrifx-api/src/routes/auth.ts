@@ -226,16 +226,15 @@ router.get('/available', async (req, res) => {
 })
 
 // ══════════════════════════════════════════════════════════
-// POST /auth/signup
-// Body: { userToken, firstName, lastName, username, email }
+// POST /auth/session   { userToken, email? }
+//
+// The single door. There is no separate sign-up: whoever authenticates
+// with Circle either has an account here or gets one made for them.
+// Details (username, name) are collected afterwards, once they have a
+// wallet, so the first screen asks for nothing but a sign-in method.
 // ══════════════════════════════════════════════════════════
-router.post('/signup', async (req, res) => {
-  const { userToken, firstName, lastName, username, email } = req.body ?? {}
-
-  const errors = validateSignup({ firstName, lastName, username, email })
-  if (Object.keys(errors).length) {
-    return res.status(400).json({ error: 'Please check the form', fields: errors })
-  }
+router.post('/session', async (req, res) => {
+  const { userToken, email } = req.body ?? {}
 
   let circleUser
   try {
@@ -245,117 +244,56 @@ router.post('/signup', async (req, res) => {
     return res.status(e.status ?? 401).json({ error: e.message, code: 'circle_auth' })
   }
 
-  const uname = normalizeUsername(username)
-  const mail  = normalizeEmail(email)
-  const first = normalizeName(firstName)
-  const last  = normalizeName(lastName)
-
-  if (await isReserved(uname)) {
-    return res.status(409).json({
-      error: 'Please check the form',
-      fields: { username: 'That username is not available' },
-    })
-  }
+  const mail = email ? normalizeEmail(email) : null
 
   try {
-    // If this Circle identity already has an account, this is really a
-    // sign-in. Return the existing account rather than erroring, so a
-    // user who taps "sign up" twice isn't stuck.
-    const existing = parseRows(await db.run(
+    let rows = parseRows(await db.run(
       sql`${SELECT_PUBLIC} WHERE circle_user_id = ${circleUser.id} LIMIT 1`))
-    if (existing.length) {
-      const account = publicAccount(existing[0])
-      const session = await createSession(
-        String(account.id), req.ip, req.headers['user-agent'] as string)
-      return res.json({ account, token: session.token, expiresAt: session.expiresAt, existing: true })
-    }
 
-    const id  = randomUUID()
-    const now = Math.floor(Date.now() / 1000)
-
-    await db.run(sql`
-      INSERT INTO accounts
-        (id, email, username, first_name, last_name,
-         circle_user_id, status, created_at, updated_at)
-      VALUES
-        (${id}, ${mail}, ${uname}, ${first}, ${last},
-         ${circleUser.id}, 'pending', ${now}, ${now})
-    `)
-
-    const rows = parseRows(await db.run(sql`${SELECT_PUBLIC} WHERE id = ${id} LIMIT 1`))
-    const account = publicAccount(rows[0])
-    const session = await createSession(id, req.ip, req.headers['user-agent'] as string)
-
-    // Welcome mail is informational only. The address is already proven
-    // by Circle, so a failure here must not block the signup.
-    sendEmail({
-      to:      mail,
-      subject: `Welcome to ${BRAND.name}`,
-      html:    welcomeEmail({ username: uname, displayName: first }).html,
-    }).catch((e: any) => console.error('[auth] welcome email failed:', e?.message))
-
-    res.status(201).json({ account, token: session.token, expiresAt: session.expiresAt })
-  } catch (err: any) {
-    // Turn the race between the availability check and the insert into a
-    // useful field error rather than a 500.
-    const msg = String(err?.message ?? '')
-    if (/UNIQUE constraint failed/i.test(msg)) {
-      if (msg.includes('accounts.username')) {
-        return res.status(409).json({ error: 'Please check the form', fields: { username: 'That username is taken' } })
-      }
-      if (msg.includes('accounts.email')) {
-        return res.status(409).json({ error: 'Please check the form', fields: { email: 'An account already uses that email' } })
-      }
-      if (msg.includes('accounts.circle_user_id')) {
-        return res.status(409).json({ error: 'That sign-in is already linked to an account. Try signing in instead.' })
-      }
-    }
-    console.error('[auth] signup failed:', msg)
-    res.status(500).json({ error: 'Could not create your account. Please try again.' })
-  }
-})
-
-// ══════════════════════════════════════════════════════════
-// POST /auth/login   Body: { userToken }
-// ══════════════════════════════════════════════════════════
-router.post('/login', async (req, res) => {
-  const { userToken } = req.body ?? {}
-
-  let circleUser
-  try {
-    circleUser = await verifyUserToken(userToken)
-  } catch (err: any) {
-    const e = err as CircleAuthError
-    return res.status(e.status ?? 401).json({ error: e.message, code: 'circle_auth' })
-  }
-
-  try {
-    const rows = parseRows(await db.run(
-      sql`${SELECT_PUBLIC} WHERE circle_user_id = ${circleUser.id} LIMIT 1`))
+    let isNew = false
 
     if (!rows.length) {
-      // Authenticated with Circle but no account here yet: the client
-      // should send them to the signup form, keeping the same userToken.
-      return res.status(404).json({
-        error: 'No account found for this sign-in. Create one to continue.',
-        code:  'no_account',
-      })
+      isNew = true
+      const id  = randomUUID()
+      const now = Math.floor(Date.now() / 1000)
+
+      await db.run(sql`
+        INSERT INTO accounts
+          (id, email, circle_user_id, status, created_at, updated_at)
+        VALUES
+          (${id}, ${mail}, ${circleUser.id}, 'pending', ${now}, ${now})
+      `)
+      rows = parseRows(await db.run(sql`${SELECT_PUBLIC} WHERE id = ${id} LIMIT 1`))
     }
 
     const account = publicAccount(rows[0])
+
     if (account.status === 'suspended') {
       return res.status(403).json({ error: 'This account is suspended.', code: 'suspended' })
     }
 
     const now = Math.floor(Date.now() / 1000)
+    // Backfill the email if we learned it on a later sign-in (Google does
+    // not always give us one on the first pass).
+    if (mail && !account.email) {
+      await db.run(sql`UPDATE accounts SET email = ${mail}, updated_at = ${now} WHERE id = ${account.id}`)
+        .catch(() => {})  // another account may already own it
+    }
     await db.run(sql`UPDATE accounts SET last_login_at = ${now} WHERE id = ${account.id}`)
 
     const session = await createSession(
       String(account.id), req.ip, req.headers['user-agent'] as string)
 
-    res.json({ account, token: session.token, expiresAt: session.expiresAt })
+    res.json({
+      account,
+      token:     session.token,
+      expiresAt: session.expiresAt,
+      isNew,
+      // What the client still has to do before the dashboard is usable.
+      needsWallet: !account.walletAddress,
+    })
   } catch (err: any) {
-    console.error('[auth] login failed:', err?.message)
+    console.error('[auth] session failed:', err?.message)
     res.status(500).json({ error: 'Could not sign you in. Please try again.' })
   }
 })
