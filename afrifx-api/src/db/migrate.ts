@@ -36,17 +36,12 @@
  */
 
 import { createClient } from '@libsql/client'
-import { readdirSync, readFileSync } from 'node:fs'
-import { createHash } from 'node:crypto'
-import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import * as dotenv from 'dotenv'
+import {
+  loadMigrations, splitStatements, isAlreadyApplied, type Migration,
+} from './migrate-lib'
 
 dotenv.config()
-
-const MIGRATIONS_DIR = join(
-  dirname(fileURLToPath(import.meta.url)), '..', '..', 'migrations',
-)
 
 const client = createClient({
   url:       process.env.TURSO_DATABASE_URL ?? 'file:local.db',
@@ -54,105 +49,6 @@ const client = createClient({
 })
 
 // ── helpers ────────────────────────────────────────────────
-
-interface Migration {
-  version:  string   // '0001'
-  name:     string   // 'baseline_core'
-  file:     string   // '0001_baseline_core.sql'
-  sql:      string
-  checksum: string
-}
-
-function loadMigrations(): Migration[] {
-  const files = readdirSync(MIGRATIONS_DIR)
-    .filter(f => f.endsWith('.sql'))
-    .sort()
-
-  return files.map(file => {
-    const m = /^(\d{4})_(.+)\.sql$/.exec(file)
-    if (!m) {
-      throw new Error(
-        `Migration "${file}" is misnamed. Expected NNNN_snake_case.sql`,
-      )
-    }
-    const sql = readFileSync(join(MIGRATIONS_DIR, file), 'utf8')
-    return {
-      version:  m[1],
-      name:     m[2],
-      file,
-      sql,
-      checksum: createHash('sha256').update(sql).digest('hex').slice(0, 16),
-    }
-  })
-}
-
-/**
- * Split a migration into individual statements.
- *
- * Naive `sql.split(';')` breaks on semicolons inside string literals and
- * comments, so we scan character by character and only treat `;` as a
- * terminator when we're not inside a quote or a comment.
- */
-function splitStatements(sql: string): string[] {
-  const out: string[] = []
-  let buf = ''
-  let inSingle = false, inDouble = false
-  let inLineComment = false, inBlockComment = false
-
-  for (let i = 0; i < sql.length; i++) {
-    const c = sql[i]
-    const next = sql[i + 1]
-
-    if (inLineComment) {
-      if (c === '\n') inLineComment = false
-      buf += c
-      continue
-    }
-    if (inBlockComment) {
-      if (c === '*' && next === '/') { inBlockComment = false; buf += c + next; i++; continue }
-      buf += c
-      continue
-    }
-    if (!inSingle && !inDouble) {
-      if (c === '-' && next === '-') { inLineComment = true;  buf += c + next; i++; continue }
-      if (c === '/' && next === '*') { inBlockComment = true; buf += c + next; i++; continue }
-    }
-
-    if (c === "'" && !inDouble) {
-      // '' is an escaped quote inside a string, not a terminator
-      if (inSingle && next === "'") { buf += c + next; i++; continue }
-      inSingle = !inSingle
-      buf += c
-      continue
-    }
-    if (c === '"' && !inSingle) { inDouble = !inDouble; buf += c; continue }
-
-    if (c === ';' && !inSingle && !inDouble) {
-      if (buf.trim()) out.push(buf.trim())
-      buf = ''
-      continue
-    }
-    buf += c
-  }
-
-  if (buf.trim()) out.push(buf.trim())
-
-  // Drop fragments that are only comments/whitespace, they aren't executable
-  return out.filter(s => {
-    const stripped = s
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/--[^\n]*/g, '')
-      .trim()
-    return stripped.length > 0
-  })
-}
-
-/** SQLite cannot express "ADD COLUMN IF NOT EXISTS", so re-adding is a no-op. */
-function isAlreadyApplied(err: any): boolean {
-  const msg = String(err?.message ?? err).toLowerCase()
-  return msg.includes('duplicate column name')
-      || msg.includes('already exists')
-}
 
 async function ensureMigrationsTable() {
   await client.execute(`

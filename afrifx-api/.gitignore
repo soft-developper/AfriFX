@@ -5,3 +5,11 @@ dist/
 !.env.example
 *.log
 *.tsbuildinfo
+
+# Local scratch databases: the migration runner defaults to file:local.db,
+# and the integration tests write a temp db under tests/.
+local.db
+*.db
+*.db-wal
+*.db-shm
+tests/.tmp-*

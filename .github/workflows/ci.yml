@@ -39,6 +39,11 @@ jobs:
       - name: Typecheck
         run: npx tsc --noEmit
 
+      # Tests run before the build: a failing test should stop the pipeline
+      # whether or not the code happens to compile.
+      - name: Test
+        run: npm test
+
       - name: Build
         run: npm run build
 
