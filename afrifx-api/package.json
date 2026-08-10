@@ -6,7 +6,10 @@
     "dev": "tsx src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "db:push": "drizzle-kit push"
+    "db:push": "echo 'db:push is DISABLED. src/db/schema.ts describes only 5 of ~29 real tables, so drizzle-kit push would offer to DROP the other 24. Use: npm run migrate' && exit 1",
+    "migrate": "tsx src/db/migrate.ts",
+    "migrate:status": "tsx src/db/migrate.ts status",
+    "migrate:mark": "tsx src/db/migrate.ts mark"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.112.4",
