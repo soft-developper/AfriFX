@@ -1,0 +1,171 @@
+'use client'
+
+/**
+ * Circle Web SDK wrapper.
+ *
+ * The SDK is browser-only and pulls in Node built-ins, so it is always
+ * loaded with a dynamic import inside a client component. Importing it
+ * at module scope breaks the Next.js server build.
+ *
+ * Social login sends the browser away to Google and back, which wipes
+ * React state. The tokens needed to finish the handshake are therefore
+ * kept in cookies, not state, so they survive the round trip.
+ */
+
+import { setCookie, getCookie, deleteCookie } from 'cookies-next'
+
+const API    = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+const APP_ID = process.env.NEXT_PUBLIC_CIRCLE_APP_ID ?? ''
+const GOOGLE = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ''
+
+const COOKIE = {
+  deviceToken:   'circle_device_token',
+  encryptionKey: 'circle_device_encryption_key',
+  /** Set when the user came from the sign-up form, so we know where to send them back. */
+  intent:        'circle_auth_intent',
+} as const
+
+export type AuthIntent = 'signin' | 'signup'
+
+export interface CircleLoginResult {
+  userToken:     string
+  encryptionKey: string
+}
+
+/** Cached SDK instance. One per page load is enough. */
+let sdk: any = null
+let deviceIdCache: string | null = null
+
+/**
+ * Get (and cache) the SDK. `onLogin` fires after a social redirect
+ * completes, which is why it must be supplied at construction time
+ * rather than at the moment the button is clicked.
+ */
+export async function getSdk(
+  onLogin?: (err: unknown, result: CircleLoginResult | null) => void,
+): Promise<any> {
+  if (sdk) return sdk
+
+  const { W3SSdk } = await import('@circle-fin/w3s-pw-web-sdk')
+
+  sdk = new W3SSdk(
+    {
+      appSettings:  { appId: APP_ID },
+      loginConfigs: {
+        deviceToken:         (getCookie(COOKIE.deviceToken) as string) ?? '',
+        deviceEncryptionKey: (getCookie(COOKIE.encryptionKey) as string) ?? '',
+        google: {
+          clientId:            GOOGLE,
+          redirectUri:         typeof window !== 'undefined' ? window.location.origin : '',
+          selectAccountPrompt: true,
+        },
+      },
+    },
+    (err: unknown, result: any) => {
+      if (!onLogin) return
+      if (err || !result?.userToken) return onLogin(err ?? new Error('Sign-in failed'), null)
+      onLogin(null, { userToken: result.userToken, encryptionKey: result.encryptionKey })
+    },
+  )
+
+  return sdk
+}
+
+/**
+ * The SDK's device id identifies this browser to Circle.
+ *
+ * Without calling getDeviceId() first, challenge execution silently does
+ * nothing, so this is always fetched before anything else.
+ */
+export async function getDeviceId(): Promise<string> {
+  if (deviceIdCache) return deviceIdCache
+
+  const cached = localStorage.getItem('circle_device_id')
+  if (cached) { deviceIdCache = cached; return cached }
+
+  const instance = await getSdk()
+  const id: string = await instance.getDeviceId()
+  localStorage.setItem('circle_device_id', id)
+  deviceIdCache = id
+  return id
+}
+
+/** Start Google sign-in. The browser leaves the page and comes back. */
+export async function startGoogleLogin(intent: AuthIntent): Promise<void> {
+  const deviceId = await getDeviceId()
+
+  const res = await fetch(`${API}/auth/circle/device-token`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ deviceId }),
+  })
+  if (!res.ok) {
+    throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not start Google sign-in')
+  }
+  const { deviceToken, deviceEncryptionKey } = await res.json()
+
+  // Survive the OAuth redirect.
+  setCookie(COOKIE.deviceToken, deviceToken)
+  setCookie(COOKIE.encryptionKey, deviceEncryptionKey)
+  setCookie(COOKIE.intent, intent)
+
+  const instance = await getSdk()
+  instance.updateConfigs({
+    appSettings:  { appId: APP_ID },
+    loginConfigs: {
+      deviceToken,
+      deviceEncryptionKey,
+      google: {
+        clientId:            GOOGLE,
+        redirectUri:         window.location.origin,
+        selectAccountPrompt: true,
+      },
+    },
+  })
+
+  const { SocialLoginProvider } = await import('@circle-fin/w3s-pw-web-sdk/dist/src/types')
+  instance.performLogin(SocialLoginProvider.GOOGLE)
+}
+
+/** Ask Circle to email a code. Returns nothing; the code arrives by email. */
+export async function sendEmailCode(email: string): Promise<void> {
+  const deviceId = await getDeviceId()
+
+  const res = await fetch(`${API}/auth/circle/email-otp`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ deviceId, email }),
+  })
+  if (!res.ok) {
+    throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not send the code')
+  }
+  const { deviceToken, deviceEncryptionKey, otpToken } = await res.json()
+
+  const instance = await getSdk()
+  instance.updateConfigs({
+    appSettings:  { appId: APP_ID },
+    loginConfigs: { deviceToken, deviceEncryptionKey, otpToken, email: { email } },
+  })
+}
+
+/** Open Circle's hosted code-entry window. Result arrives via the getSdk callback. */
+export async function openCodeEntry(): Promise<void> {
+  const instance = await getSdk()
+  instance.verifyOtp()
+}
+
+/** Which flow the user was in before a social redirect took them away. */
+export function consumeIntent(): AuthIntent | null {
+  const v = getCookie(COOKIE.intent) as AuthIntent | undefined
+  return v === 'signin' || v === 'signup' ? v : null
+}
+
+/** Clear the handshake cookies once we no longer need them. */
+export function clearAuthCookies(): void {
+  deleteCookie(COOKIE.deviceToken)
+  deleteCookie(COOKIE.encryptionKey)
+  deleteCookie(COOKIE.intent)
+}
+
+/** True when the app has the config it needs to talk to Circle at all. */
+export const circleConfigured = () => Boolean(APP_ID)

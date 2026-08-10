@@ -11,6 +11,8 @@
  * from the client and is otherwise just an opaque string.
  */
 
+import { randomUUID } from 'crypto'
+
 const CIRCLE_BASE_URL = process.env.CIRCLE_BASE_URL ?? 'https://api.circle.com'
 
 export interface CircleUser {
@@ -27,6 +29,49 @@ export class CircleAuthError extends Error {
     super(message)
     this.name = 'CircleAuthError'
   }
+}
+
+/**
+ * Start a social-login session.
+ *
+ * The Web SDK generates a deviceId in the browser; we exchange it for
+ * short-lived tokens the SDK needs to run the Google OAuth handshake.
+ * This has to happen server-side because it needs the API key.
+ */
+export async function createSocialDeviceToken(deviceId: string) {
+  return circlePost('/v1/w3s/users/social/token', { deviceId })
+}
+
+/** Ask Circle to email a one-time code, and get the tokens to verify it. */
+export async function requestEmailOtp(deviceId: string, email: string) {
+  return circlePost('/v1/w3s/users/email/token', { deviceId, email })
+}
+
+/** Shared POST helper for the endpoints above. */
+async function circlePost(path: string, body: Record<string, unknown>) {
+  const apiKey = process.env.CIRCLE_API_KEY
+  if (!apiKey) throw new CircleAuthError('CIRCLE_API_KEY is not configured', 500)
+
+  let res: Response
+  try {
+    res = await fetch(`${CIRCLE_BASE_URL}${path}`, {
+      method:  'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization:  `Bearer ${apiKey}`,
+      },
+      // Circle requires a unique idempotency key per request.
+      body: JSON.stringify({ idempotencyKey: randomUUID(), ...body }),
+    })
+  } catch {
+    throw new CircleAuthError('Could not reach Circle. Please try again.', 503)
+  }
+
+  const payload: any = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new CircleAuthError(payload?.message ?? 'Circle rejected the request', 502)
+  }
+  return payload?.data ?? {}
 }
 
 /**

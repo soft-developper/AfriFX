@@ -17,7 +17,9 @@ import { Router } from 'express'
 import { db } from '../db/client'
 import { sql } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
-import { verifyUserToken, CircleAuthError } from '../services/circleAuth'
+import {
+  verifyUserToken, createSocialDeviceToken, requestEmailOtp, CircleAuthError,
+} from '../services/circleAuth'
 import {
   createSession, revokeSession, requireAccount, bearerFrom,
 } from '../lib/accountAuth'
@@ -65,6 +67,42 @@ async function isReserved(username: string): Promise<boolean> {
   ))
   return rows.length > 0
 }
+
+// ══════════════════════════════════════════════════════════
+// Circle session bootstrap.
+//
+// These proxy Circle endpoints that need the API key, so the key stays
+// on the server. The browser calls these, then drives the rest of the
+// handshake with the Web SDK.
+// ══════════════════════════════════════════════════════════
+
+// POST /auth/circle/device-token   { deviceId }
+router.post('/circle/device-token', async (req, res) => {
+  const { deviceId } = req.body ?? {}
+  if (!deviceId) return res.status(400).json({ error: 'deviceId is required' })
+  try {
+    res.json(await createSocialDeviceToken(String(deviceId)))
+  } catch (err: any) {
+    const e = err as CircleAuthError
+    res.status(e.status ?? 502).json({ error: e.message })
+  }
+})
+
+// POST /auth/circle/email-otp      { deviceId, email }
+router.post('/circle/email-otp', async (req, res) => {
+  const { deviceId, email } = req.body ?? {}
+  if (!deviceId) return res.status(400).json({ error: 'deviceId is required' })
+
+  const emailErr = validateEmail(email ?? '')
+  if (emailErr) return res.status(400).json({ error: emailErr, fields: { email: emailErr } })
+
+  try {
+    res.json(await requestEmailOtp(String(deviceId), normalizeEmail(email)))
+  } catch (err: any) {
+    const e = err as CircleAuthError
+    res.status(e.status ?? 502).json({ error: e.message })
+  }
+})
 
 // ══════════════════════════════════════════════════════════
 // GET /auth/available?username=..&email=..
