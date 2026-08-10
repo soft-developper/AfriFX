@@ -6,6 +6,7 @@ import { securityHeaders }        from './middleware/security'
 import { corsMiddleware }         from './middleware/cors'
 import { rateLimitMiddleware }    from './middleware/rateLimit'
 import { errorHandler }           from './middleware/errorHandler'
+import authRouter                 from './routes/auth'
 import ratesRouter                from './routes/rates'
 import transactionsRouter         from './routes/transactions'
 import userRouter                 from './routes/user'
@@ -59,6 +60,7 @@ app.use(rateLimitMiddleware)
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: Date.now() }))
 
+app.use('/auth',           authRouter)
 app.use('/rates',          ratesRouter)
 app.use('/transactions',   maintenanceGuard('convert'),     transactionsRouter)
 app.use('/user',           userRouter)
