@@ -25,6 +25,22 @@ const COOKIE = {
   intent:        'circle_auth_intent',
 } as const
 
+/**
+ * Where Google sends the browser back to.
+ *
+ * This must be the sign-in page, NOT the site root. The root is the
+ * landing page, and the SDK callback that finishes the handshake only
+ * exists on /signin - returning to '/' silently drops the login and
+ * leaves the user looking at the marketing page.
+ *
+ * Whatever this returns must also be listed in Google Cloud Console
+ * under Authorized redirect URIs, exactly.
+ */
+export function signInUrl(): string {
+  if (typeof window === 'undefined') return ''
+  return `${window.location.origin}/signin`
+}
+
 export type AuthIntent = 'signin' | 'signup'
 
 export interface CircleLoginResult {
@@ -56,7 +72,7 @@ export async function getSdk(
         deviceEncryptionKey: (getCookie(COOKIE.encryptionKey) as string) ?? '',
         google: {
           clientId:            GOOGLE,
-          redirectUri:         typeof window !== 'undefined' ? window.location.origin : '',
+          redirectUri:         typeof window !== 'undefined' ? signInUrl() : '',
           selectAccountPrompt: true,
         },
       },
@@ -117,7 +133,7 @@ export async function startGoogleLogin(intent: AuthIntent): Promise<void> {
       deviceEncryptionKey,
       google: {
         clientId:            GOOGLE,
-        redirectUri:         window.location.origin,
+        redirectUri:         signInUrl(),
         selectAccountPrompt: true,
       },
     },

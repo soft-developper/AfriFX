@@ -9,7 +9,7 @@ import {
   getSdk, startGoogleLogin, sendEmailCode, openCodeEntry,
   clearAuthCookies, circleConfigured,
 } from '@/lib/circle'
-import { persistSession, type Account } from '@/hooks/useAuth'
+import { persistSession, useAuth, type Account } from '@/hooks/useAuth'
 import { provisionWallet } from '@/hooks/useWalletProvisioning'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
@@ -26,6 +26,13 @@ type Stage = 'choose' | 'email' | 'sent'
  */
 export default function SignInPage() {
   const router = useRouter()
+  const { account, loading } = useAuth()
+
+  // Already signed in (e.g. opened /signin from a bookmark, or bounced
+  // here by the guard after the session was restored): don't ask again.
+  useEffect(() => {
+    if (!loading && account) router.replace('/dashboard')
+  }, [loading, account, router])
 
   const [stage, setStage] = useState<Stage>('choose')
   const [email, setEmail] = useState('')
