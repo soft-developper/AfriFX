@@ -204,7 +204,7 @@ export interface CircleTransaction {
   amounts?:    string[]
 }
 
-/** Read a transaction back after the user approved it. */
+/** Read a transaction back by its Circle transaction id. */
 export async function getTransaction(
   userToken: string, transactionId: string,
 ): Promise<CircleTransaction> {
@@ -217,5 +217,47 @@ export async function getTransaction(
     txHash:     t.txHash,
     blockchain: t.blockchain,
     amounts:    t.amounts,
+  }
+}
+
+/**
+ * Find the transaction produced by a transfer challenge.
+ *
+ * The transfer endpoint returns a challengeId, NOT a transaction id, and
+ * the two are different identifiers - polling /transactions/{challengeId}
+ * never resolves. Circle's guidance is to poll the transaction LIST for
+ * the user instead, so this finds the newest outbound transaction to the
+ * expected destination that appeared after the transfer was started.
+ *
+ * `since` is epoch seconds; it stops an older transfer to the same
+ * address from being mistaken for this one.
+ */
+export async function findRecentTransfer(params: {
+  userToken:          string
+  walletId:           string
+  destinationAddress: string
+  since:              number
+}): Promise<CircleTransaction | null> {
+  const data = await circleFetch(
+    `/v1/w3s/transactions?walletIds=${encodeURIComponent(params.walletId)}&pageSize=20`,
+    params.userToken)
+
+  const list = (data.transactions ?? []) as any[]
+  const want = params.destinationAddress.toLowerCase()
+
+  const match = list.find(t => {
+    if (String(t.destinationAddress ?? '').toLowerCase() !== want) return false
+    const created = Date.parse(String(t.createDate ?? '')) / 1000
+    // Allow a little clock skew between us and Circle.
+    return !Number.isFinite(created) || created >= params.since - 120
+  })
+
+  if (!match) return null
+  return {
+    id:         String(match.id),
+    state:      String(match.state ?? 'UNKNOWN'),
+    txHash:     match.txHash,
+    blockchain: match.blockchain,
+    amounts:    match.amounts,
   }
 }

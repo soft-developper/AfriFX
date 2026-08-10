@@ -25,7 +25,7 @@ import {
 } from '../lib/accountAuth'
 import {
   initializeUserWallet, listUserWallets, pickPrimaryWallet,
-  getPrimaryWalletId, getTokenId, createTransfer, getTransaction,
+  getPrimaryWalletId, getTokenId, createTransfer, getTransaction, findRecentTransfer,
 } from '../services/circleWallets'
 import {
   validateSignup, normalizeEmail, normalizeUsername, normalizeName,
@@ -248,6 +248,30 @@ router.post('/wallet/tx/transfer', requireAccount, async (req, res) => {
       amount: String(amount),
     })
     res.json({ challengeId })
+  } catch (err: any) {
+    const e = err as CircleAuthError
+    res.status(e.status ?? 502).json({ error: e.message })
+  }
+})
+
+// GET /auth/wallet/tx/find?userToken=..&to=..&since=..
+//
+// A transfer challenge does not give us a transaction id, so the client
+// asks us to locate the resulting transaction instead.
+router.get('/wallet/tx/find', requireAccount, async (req, res) => {
+  const userToken = String(req.query.userToken ?? '')
+  const to        = String(req.query.to ?? '')
+  const since     = Number(req.query.since ?? 0)
+  if (!userToken) return res.status(400).json({ error: 'userToken is required' })
+  if (!to)        return res.status(400).json({ error: 'to is required' })
+
+  try {
+    const walletId = await getPrimaryWalletId(userToken)
+    const tx = await findRecentTransfer({
+      userToken, walletId, destinationAddress: to, since,
+    })
+    // Not an error: Circle may not have indexed it yet.
+    res.json(tx ?? { state: 'PENDING' })
   } catch (err: any) {
     const e = err as CircleAuthError
     res.status(e.status ?? 502).json({ error: e.message })

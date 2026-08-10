@@ -31,6 +31,7 @@ function SendPageInner() {
   const [sending, setSending] = useState(false)
   const [txStep,  setTxStep]  = useState<string | null>(null)
   const [txError, setTxError] = useState<string | null>(null)
+  const [txNote,  setTxNote]  = useState<string | null>(null)
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>()
   const { isSuccess }       = useWaitForTransactionReceipt({ hash: txHash })
 
@@ -98,10 +99,17 @@ function SendPageInner() {
 
     // Same-chain: a Circle wallet transfer. The user approves it on
     // their device, so there is no connected wallet to sign with.
-    setSending(true); setTxError(null)
+    setSending(true); setTxError(null); setTxNote(null)
     try {
       const result = await sendUsdc({ to, amount }, setTxStep)
-      if (result.txHash) setTxHash(result.txHash as `0x${string}`)
+      if (result.txHash) {
+        setTxHash(result.txHash as `0x${string}`)
+      } else {
+        // Approved and broadcast, but Circle hasn't surfaced the hash yet.
+        // Say so plainly rather than ending in silence, which reads as a
+        // failure even though the money has almost certainly moved.
+        setTxNote('Sent. It is confirming on-chain and will appear in your activity shortly.')
+      }
       setTo(''); setAmount('')
     } catch (err: any) {
       setTxError(err instanceof NeedsReauthError
@@ -241,6 +249,13 @@ function SendPageInner() {
           <p className="mt-2 flex items-center gap-1.5 text-[11px] text-app-muted">
             <Loader2 className="h-3 w-3 animate-spin" /> {txStep}…
           </p>
+        )}
+
+        {txNote && !isCrossChain && (
+          <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-emerald-900/20 px-3 py-2 text-[11px] text-emerald-500">
+            <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>{txNote}</span>
+          </div>
         )}
 
         {txError && !isCrossChain && (

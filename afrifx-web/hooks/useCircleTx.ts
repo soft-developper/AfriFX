@@ -81,6 +81,10 @@ export async function sendUsdc(
   const session = getSigningSession()
   if (!session) throw new NeedsReauthError()
 
+  // Recorded before we start so we can tell this transfer apart from an
+  // earlier one to the same address.
+  const startedAt = Date.now()
+
   onStep?.('Preparing the transfer')
 
   const res = await apiFetch('/auth/wallet/tx/transfer', {
@@ -101,25 +105,47 @@ export async function sendUsdc(
 
   onStep?.('Confirming on-chain')
 
-  // The challenge returns as soon as the user approves; the transaction
-  // is still being broadcast, so poll until it settles.
-  const challengeId = String(data.challengeId)
-  for (let i = 0; i < 30; i++) {
+  // The transfer endpoint returns a challengeId, which is NOT a
+  // transaction id - polling /transactions/{challengeId} never resolves.
+  // Ask the server to locate the transaction this challenge produced.
+  const since = Math.floor(startedAt / 1000)
+  let consecutiveErrors = 0
+
+  for (let i = 0; i < 40; i++) {
     await new Promise(r => setTimeout(r, 2000))
 
     const s = getSigningSession()
     if (!s) throw new NeedsReauthError()
 
-    const r2 = await apiFetch(
-      `/auth/wallet/tx/${encodeURIComponent(challengeId)}?userToken=${encodeURIComponent(s.userToken)}`)
-    if (!r2.ok) continue
+    const qs = new URLSearchParams({
+      userToken: s.userToken,
+      to:        params.to,
+      since:     String(since),
+    })
+    const r2 = await apiFetch(`/auth/wallet/tx/find?${qs}`)
+
+    if (!r2.ok) {
+      // Don't spin silently on a persistent failure: surface it rather
+      // than leaving the user watching a spinner forever.
+      if (++consecutiveErrors >= 5) {
+        throw new Error(
+          'Lost track of the transfer while confirming it. It may still have gone through \u2014 check your balance before retrying.',
+        )
+      }
+      continue
+    }
+    consecutiveErrors = 0
 
     const tx = await r2.json().catch(() => ({}))
     if (DONE.includes(tx.state))   return { txHash: tx.txHash, state: tx.state }
     if (FAILED.includes(tx.state)) throw new Error(`Transfer ${String(tx.state).toLowerCase()}`)
+
+    // Once we have a hash the money is on-chain, even if Circle hasn't
+    // marked it COMPLETE yet. Show it rather than making them wait.
+    if (tx.txHash) return { txHash: tx.txHash, state: tx.state ?? 'SENT' }
   }
 
-  // Approved and broadcast, just slow. Do not call this a failure: the
-  // money may well have moved.
+  // Approved and broadcast, just slow. Not a failure: the money may well
+  // have moved, so say so honestly instead of reporting an error.
   return { state: 'PENDING' }
 }
