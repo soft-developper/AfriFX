@@ -160,6 +160,29 @@ export function consumeIntent(): AuthIntent | null {
   return v === 'signin' || v === 'signup' ? v : null
 }
 
+/**
+ * Run a Circle challenge and wait for the user to approve it.
+ *
+ * Wallet creation happens here, on the user's device. Their keyshare is
+ * generated locally and never reaches our servers, which is what makes
+ * the wallet user-controlled rather than custodial.
+ *
+ * setAuthentication must be called first or execute silently does nothing.
+ */
+export async function executeChallenge(
+  challengeId: string, userToken: string, encryptionKey: string,
+): Promise<void> {
+  const instance = await getSdk()
+  instance.setAuthentication({ userToken, encryptionKey })
+
+  await new Promise<void>((resolve, reject) => {
+    instance.execute(challengeId, (err: any) => {
+      if (err) reject(new Error(err?.message ?? 'You cancelled the request'))
+      else resolve()
+    })
+  })
+}
+
 /** Clear the handshake cookies once we no longer need them. */
 export function clearAuthCookies(): void {
   deleteCookie(COOKIE.deviceToken)

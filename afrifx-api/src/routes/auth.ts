@@ -24,6 +24,9 @@ import {
   createSession, revokeSession, requireAccount, bearerFrom,
 } from '../lib/accountAuth'
 import {
+  initializeUserWallet, listUserWallets, pickPrimaryWallet,
+} from '../services/circleWallets'
+import {
   validateSignup, normalizeEmail, normalizeUsername, normalizeName,
   validateUsername, validateEmail,
 } from '../lib/accountValidation'
@@ -101,6 +104,78 @@ router.post('/circle/email-otp', async (req, res) => {
   } catch (err: any) {
     const e = err as CircleAuthError
     res.status(e.status ?? 502).json({ error: e.message })
+  }
+})
+
+// ══════════════════════════════════════════════════════════
+// WALLET PROVISIONING (Phase 2)
+//
+// Wallet creation needs the user's consent on their own device, so it
+// is a handshake: we ask Circle to start it, the browser executes the
+// challenge, then we read back the address and store it.
+// ══════════════════════════════════════════════════════════
+
+// POST /auth/wallet/initialize   { userToken }   (signed in)
+router.post('/wallet/initialize', requireAccount, async (req, res) => {
+  const { userToken } = req.body ?? {}
+  if (!userToken) return res.status(400).json({ error: 'userToken is required' })
+
+  try {
+    const result = await initializeUserWallet(String(userToken))
+    res.json(result)
+  } catch (err: any) {
+    const e = err as CircleAuthError
+    res.status(e.status ?? 502).json({ error: e.message })
+  }
+})
+
+// POST /auth/wallet/sync   { userToken }   (signed in)
+//
+// Called after the browser executes the challenge. Reads the wallet
+// back from Circle and records it, which is what flips the account from
+// 'pending' to 'active'.
+router.post('/wallet/sync', requireAccount, async (req, res) => {
+  const { userToken } = req.body ?? {}
+  const account = (req as any).account
+  if (!userToken) return res.status(400).json({ error: 'userToken is required' })
+
+  try {
+    const wallets = await listUserWallets(String(userToken))
+    const wallet  = pickPrimaryWallet(wallets)
+
+    if (!wallet) {
+      // Circle indexes the new wallet asynchronously, so an empty list
+      // shortly after the challenge is normal. Tell the client to retry
+      // rather than treating it as a failure.
+      return res.status(202).json({ ready: false, reason: 'Wallet is still being created' })
+    }
+
+    const address = wallet.address.toLowerCase()
+    const now     = Math.floor(Date.now() / 1000)
+
+    await db.run(sql`
+      UPDATE accounts
+      SET wallet_address = ${address}, status = 'active', updated_at = ${now}
+      WHERE id = ${account.id}
+    `)
+
+    const rows = parseRows(await db.run(sql`${SELECT_PUBLIC} WHERE id = ${account.id} LIMIT 1`))
+    res.json({
+      ready:      true,
+      account:    publicAccount(rows[0]),
+      blockchain: wallet.blockchain,
+    })
+  } catch (err: any) {
+    const msg = String(err?.message ?? '')
+    // Two accounts can never share an address. If this fires, something
+    // is wrong with the Circle mapping and we must not silently continue.
+    if (/UNIQUE constraint failed: accounts.wallet_address/i.test(msg)) {
+      return res.status(409).json({
+        error: 'That wallet is already linked to another account. Contact support.',
+      })
+    }
+    const e = err as CircleAuthError
+    res.status(e.status ?? 502).json({ error: e.message ?? 'Could not read your wallet' })
   }
 })
 

@@ -13,6 +13,7 @@ import {
   clearAuthCookies, circleConfigured,
 } from '@/lib/circle'
 import { persistSession, type Account } from '@/hooks/useAuth'
+import { provisionWallet } from '@/hooks/useWalletProvisioning'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 
@@ -34,8 +35,10 @@ export default function SignUpPage() {
     setErrors(e => ({ ...e, [k]: undefined }))
   }
 
-  /** Create the account once Circle has proven the email. */
-  const submit = useCallback(async (userToken: string, data: Fields) => {
+  /** Create the account once Circle has proven the email, then give it a wallet. */
+  const submit = useCallback(async (
+    userToken: string, encryptionKey: string, data: Fields,
+  ) => {
     setBusy('Creating your account')
     try {
       const res = await fetch(`${API}/auth/signup`, {
@@ -54,6 +57,20 @@ export default function SignUpPage() {
 
       persistSession(body.token, body.account as Account)
       clearAuthCookies()
+
+      // The account exists now, so a failure below is recoverable: the
+      // user is signed in and we can retry provisioning rather than
+      // losing the signup entirely.
+      try {
+        await provisionWallet(userToken, encryptionKey, setBusy)
+      } catch (e: any) {
+        setError(
+          `${e?.message ?? 'Wallet setup did not finish'} Your account is saved \u2014 open your dashboard to try again.`,
+        )
+        setBusy(null)
+        return
+      }
+
       router.push('/dashboard')
     } catch {
       setError('Could not reach the server. Check your connection and try again.')
@@ -80,7 +97,7 @@ export default function SignUpPage() {
         setError('Verification was cancelled. Try again.')
         return
       }
-      void submit(result.userToken, fieldsRef.current)
+      void submit(result.userToken, result.encryptionKey, fieldsRef.current)
     }).catch(() => setError('Could not load sign-up. Refresh and try again.'))
 
     // Arriving from the sign-in page after Circle said "no account yet":
