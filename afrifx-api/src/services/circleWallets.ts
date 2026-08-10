@@ -127,3 +127,95 @@ export function pickPrimaryWallet(
     w => String(w.blockchain).toUpperCase() === blockchain.toUpperCase())
   return onChain ?? usable[0]
 }
+
+// ══════════════════════════════════════════════════════════
+// TRANSACTIONS
+//
+// Every on-chain action is the same handshake as wallet creation:
+// ask Circle to build it, get a challengeId, the user approves it on
+// their device, then poll for the result. Nothing is signed on the
+// server.
+// ══════════════════════════════════════════════════════════
+
+/** The user's primary wallet id (not the address) - Circle needs the id. */
+export async function getPrimaryWalletId(userToken: string): Promise<string> {
+  const wallets = await listUserWallets(userToken)
+  const wallet  = pickPrimaryWallet(wallets)
+  if (!wallet) throw new CircleAuthError('No wallet found for this account', 404)
+  return wallet.id
+}
+
+interface TokenBalance {
+  token?:  { id?: string; symbol?: string; blockchain?: string; decimals?: number }
+  amount?: string
+}
+
+/**
+ * Circle identifies tokens by its own UUID, not by contract address, so
+ * the id has to be looked up per wallet before a transfer can be built.
+ */
+export async function getTokenId(
+  userToken: string, walletId: string, symbol = 'USDC',
+): Promise<string> {
+  const data = await circleFetch(
+    `/v1/w3s/wallets/${walletId}/balances`, userToken)
+  const balances = (data.tokenBalances ?? []) as TokenBalance[]
+
+  const match = balances.find(
+    b => String(b.token?.symbol ?? '').toUpperCase() === symbol.toUpperCase())
+
+  if (!match?.token?.id) {
+    throw new CircleAuthError(
+      `No ${symbol} balance on this wallet yet. Add funds and try again.`, 400)
+  }
+  return match.token.id
+}
+
+/** Build a token transfer. Returns a challengeId for the user to approve. */
+export async function createTransfer(params: {
+  userToken:          string
+  walletId:           string
+  tokenId:            string
+  destinationAddress: string
+  amount:             string
+  feeLevel?:          'LOW' | 'MEDIUM' | 'HIGH'
+}): Promise<{ challengeId: string }> {
+  const data = await circleFetch(
+    '/v1/w3s/user/transactions/transfer', params.userToken, {
+      method: 'POST',
+      body:   JSON.stringify({
+        idempotencyKey:     randomUUID(),
+        walletId:           params.walletId,
+        tokenId:            params.tokenId,
+        destinationAddress: params.destinationAddress,
+        // Circle takes decimal strings, not base units.
+        amounts:            [params.amount],
+        feeLevel:           params.feeLevel ?? 'MEDIUM',
+      }),
+    })
+  return { challengeId: String(data.challengeId) }
+}
+
+export interface CircleTransaction {
+  id:          string
+  state:       string
+  txHash?:     string
+  blockchain?: string
+  amounts?:    string[]
+}
+
+/** Read a transaction back after the user approved it. */
+export async function getTransaction(
+  userToken: string, transactionId: string,
+): Promise<CircleTransaction> {
+  const data = await circleFetch(
+    `/v1/w3s/transactions/${transactionId}`, userToken)
+  const t = data.transaction ?? {}
+  return {
+    id:         String(t.id ?? transactionId),
+    state:      String(t.state ?? 'UNKNOWN'),
+    txHash:     t.txHash,
+    blockchain: t.blockchain,
+    amounts:    t.amounts,
+  }
+}

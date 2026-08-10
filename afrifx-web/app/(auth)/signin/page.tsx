@@ -11,6 +11,7 @@ import {
 } from '@/lib/circle'
 import { persistSession, useAuth, type Account } from '@/hooks/useAuth'
 import { provisionWallet } from '@/hooks/useWalletProvisioning'
+import { saveSigningSession } from '@/hooks/useCircleTx'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 
@@ -61,6 +62,9 @@ export default function SignInPage() {
       if (!res.ok) { setError(data.error ?? 'Could not sign you in'); setBusy(null); return }
 
       persistSession(data.token, data.account as Account)
+      // Keep the Circle token pair so the user can sign transactions
+      // without authenticating again for the next hour.
+      saveSigningSession(userToken, encryptionKey)
       clearAuthCookies()
 
       // First time in: make the wallet before letting them through, so

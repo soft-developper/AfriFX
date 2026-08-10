@@ -1,7 +1,9 @@
 'use client'
 import { SectionGuard } from '@/components/layout/SectionGuard'
 import { useState, useEffect } from 'react'
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useWaitForTransactionReceipt } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
+import { sendUsdc, NeedsReauthError } from '@/hooks/useCircleTx'
 import { useWalletReady } from '@/hooks/useWalletReady'
 import { isAddress, parseUnits } from 'viem'
 import { Button } from '@/components/ui/button'
@@ -26,7 +28,9 @@ function SendPageInner() {
 
   // Wallet balance on Arc (what Send has always used).
   const { formatted: balance, rawBalance } = useUSDCBalance()
-  const { writeContractAsync, isPending }  = useWriteContract()
+  const [sending, setSending] = useState(false)
+  const [txStep,  setTxStep]  = useState<string | null>(null)
+  const [txError, setTxError] = useState<string | null>(null)
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>()
   const { isSuccess }       = useWaitForTransactionReceipt({ hash: txHash })
 
@@ -80,7 +84,7 @@ function SendPageInner() {
   // For a cross-chain send we spend from whichever chain holds the balance.
   const sourceKey = gwByChain.find(c => c.amount >= amountNum)?.key ?? HOME
 
-  const busy = isPending || ['signing','requesting','switching','minting'].includes(gw.step)
+  const busy = sending || ['signing','requesting','switching','minting'].includes(gw.step)
 
   function setMax() { setAmount(availableNum.toFixed(6)) }
 
@@ -92,14 +96,20 @@ function SendPageInner() {
       return
     }
 
-    const hash = await writeContractAsync({
-      address:      CONTRACTS.USDC,
-      abi:          USDC_ABI,
-      functionName: 'transfer',
-      args:         [to as `0x${string}`, parseUnits(amount, USDC_DECIMALS)],
-    })
-    setTxHash(hash)
-    setTo(''); setAmount('')
+    // Same-chain: a Circle wallet transfer. The user approves it on
+    // their device, so there is no connected wallet to sign with.
+    setSending(true); setTxError(null)
+    try {
+      const result = await sendUsdc({ to, amount }, setTxStep)
+      if (result.txHash) setTxHash(result.txHash as `0x${string}`)
+      setTo(''); setAmount('')
+    } catch (err: any) {
+      setTxError(err instanceof NeedsReauthError
+        ? err.message
+        : (err?.message ?? 'Could not send the transfer'))
+    } finally {
+      setSending(false); setTxStep(null)
+    }
   }
 
   const gwLabel: Record<string, string> = {
@@ -224,6 +234,21 @@ function SendPageInner() {
             : 'Send USDC'
           }
         </Button>
+
+        {/* Same-chain progress: approving happens on the user's device,
+            so tell them what they're waiting for at each step. */}
+        {txStep && !isCrossChain && (
+          <p className="mt-2 flex items-center gap-1.5 text-[11px] text-app-muted">
+            <Loader2 className="h-3 w-3 animate-spin" /> {txStep}…
+          </p>
+        )}
+
+        {txError && !isCrossChain && (
+          <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-red-900/20 px-3 py-2 text-[11px] text-red-400">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>{txError}</span>
+          </div>
+        )}
 
         {/* Cross-chain progress */}
         {busy && isCrossChain && (

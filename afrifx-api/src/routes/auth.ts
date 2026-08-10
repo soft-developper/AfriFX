@@ -25,6 +25,7 @@ import {
 } from '../lib/accountAuth'
 import {
   initializeUserWallet, listUserWallets, pickPrimaryWallet,
+  getPrimaryWalletId, getTokenId, createTransfer, getTransaction,
 } from '../services/circleWallets'
 import {
   validateSignup, normalizeEmail, normalizeUsername, normalizeName,
@@ -213,6 +214,55 @@ router.post('/wallet/sync', requireAccount, async (req, res) => {
     }
     const e = err as CircleAuthError
     res.status(e.status ?? 502).json({ error: e.message ?? 'Could not read your wallet' })
+  }
+})
+
+// ══════════════════════════════════════════════════════════
+// TRANSACTIONS
+//
+// The server builds the transaction and Circle returns a challenge;
+// the user approves it on their own device. Nothing is signed here.
+// ══════════════════════════════════════════════════════════
+
+// POST /auth/wallet/tx/transfer  { userToken, to, amount }
+router.post('/wallet/tx/transfer', requireAccount, async (req, res) => {
+  const { userToken, to, amount } = req.body ?? {}
+  if (!userToken) return res.status(400).json({ error: 'userToken is required' })
+  if (!/^0x[a-fA-F0-9]{40}$/.test(String(to ?? ''))) {
+    return res.status(400).json({ error: 'Enter a valid destination address' })
+  }
+  const value = Number(amount)
+  if (!Number.isFinite(value) || value <= 0) {
+    return res.status(400).json({ error: 'Enter an amount greater than zero' })
+  }
+
+  try {
+    const walletId = await getPrimaryWalletId(String(userToken))
+    const tokenId  = await getTokenId(String(userToken), walletId)
+    const { challengeId } = await createTransfer({
+      userToken: String(userToken),
+      walletId,
+      tokenId,
+      destinationAddress: String(to),
+      // Circle expects a decimal string, not base units.
+      amount: String(amount),
+    })
+    res.json({ challengeId })
+  } catch (err: any) {
+    const e = err as CircleAuthError
+    res.status(e.status ?? 502).json({ error: e.message })
+  }
+})
+
+// GET /auth/wallet/tx/:id?userToken=..
+router.get('/wallet/tx/:id', requireAccount, async (req, res) => {
+  const userToken = String(req.query.userToken ?? '')
+  if (!userToken) return res.status(400).json({ error: 'userToken is required' })
+  try {
+    res.json(await getTransaction(userToken, req.params.id))
+  } catch (err: any) {
+    const e = err as CircleAuthError
+    res.status(e.status ?? 502).json({ error: e.message })
   }
 })
 
