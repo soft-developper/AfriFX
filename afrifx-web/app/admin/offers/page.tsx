@@ -5,6 +5,7 @@ import { adminFetch } from '@/hooks/useAdminAuth'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, ExternalLink, RefreshCw, AlertCircle, X } from 'lucide-react'
+import Link from 'next/link'
 
 const FLAGS: Record<string,string> = { NGN:'🇳🇬',GHS:'🇬🇭',KES:'🇰🇪',ZAR:'🇿🇦',EGP:'🇪🇬' }
 
@@ -24,12 +25,18 @@ export default function AdminOffers() {
   const [busy,    setBusy]    = useState<string|null>(null)
   const [error,   setError]   = useState<string|null>(null)
 
+  const [disputed, setDisputed] = useState<Set<string>>(new Set())
+
   async function load() {
     setLoading(true)
     const q = filter === 'all' ? '' : `?status=${filter}`
     const res = await adminFetch(`/admin/manage/offers${q}`)
     const data = await res.json()
-    setOffers(Array.isArray(data) ? data.map(norm) : [])
+    // The endpoint now returns { offers, disputedIds }. Keep the old
+    // bare-array shape working so a stale API doesn't blank the page.
+    const list = Array.isArray(data) ? data : (data?.offers ?? [])
+    setOffers(list.map(norm))
+    setDisputed(new Set<string>(Array.isArray(data?.disputedIds) ? data.disputedIds : []))
     setLoading(false)
   }
 
@@ -108,6 +115,9 @@ export default function AdminOffers() {
                       o.status === 'accepted' ? 'arc' :
                       o.status === 'cancelled' ? 'danger' : 'warning'
                     }>{o.status}</Badge>
+                    {disputed.has(String(o.id)) && (
+                      <Badge variant="danger">in dispute</Badge>
+                    )}
                   </div>
                   <p className="font-mono text-[10px] text-app-muted">
                     {o.id.slice(0,20)}… · maker {o.maker_address?.slice(0,8)}…
@@ -115,14 +125,23 @@ export default function AdminOffers() {
                   </p>
                 </div>
                 {o.status === 'accepted' && (
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={() => forceRelease(o.id)} disabled={busy === o.id}>
-                      {busy === o.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Force release'}
-                    </Button>
-                    <Button size="sm" variant="danger" onClick={() => forceCancel(o.id)} disabled={busy === o.id}>
-                      Cancel
-                    </Button>
-                  </div>
+                  disputed.has(String(o.id)) ? (
+                    // Under dispute: settle it from the Disputes section, where
+                    // the duty rules apply. The API rejects it here regardless.
+                    <Link href="/admin/disputes"
+                      className="shrink-0 text-xs text-app-accent-text hover:underline">
+                      Resolve in Disputes →
+                    </Link>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => forceRelease(o.id)} disabled={busy === o.id}>
+                        {busy === o.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Force release'}
+                      </Button>
+                      <Button size="sm" variant="danger" onClick={() => forceCancel(o.id)} disabled={busy === o.id}>
+                        Cancel
+                      </Button>
+                    </div>
+                  )
                 )}
               </div>
             </div>
