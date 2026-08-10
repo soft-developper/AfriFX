@@ -2,7 +2,7 @@
 import { SectionGuard } from '@/components/layout/SectionGuard'
 import { useState } from 'react'
 import Link from 'next/link'
-import { useAccount } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { useInvoices } from '@/hooks/useInvoices'
 import { useFXRates } from '@/hooks/useFXRate'
 import { useUpdateInvoiceStatus } from '@/hooks/useInvoices'

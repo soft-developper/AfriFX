@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { CheckCircle, Clock, AlertTriangle, ExternalLink, RefreshCw, Loader2 } from 'lucide-react'
 import { useCompleteBridge } from '@/hooks/useCompleteBridge'
 import { useAttestationStatus, finalityHint } from '@/hooks/useAttestationStatus'

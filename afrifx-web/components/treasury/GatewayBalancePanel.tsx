@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Layers, RefreshCw, AlertCircle, Plus, ChevronDown, ChevronUp } from 'lucide-react'
 import { GatewayDepositForm } from './GatewayDepositForm'
-import { useAccount } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { fetchGatewayBalances, gatewayChains, isValidAddress } from '@/lib/gateway'
 
 /*

@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'

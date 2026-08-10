@@ -1,3 +1,37 @@
+#!/usr/bin/env bash
+# ============================================================
+# fix-payroll-hook.sh
+#
+# FIX for a regression introduced by phase3-cutover.sh.
+#
+# WHAT HAPPENED
+# phase3-cutover.sh rewrote afrifx-web/hooks/usePayroll.ts to migrate
+# its useAccount import. It wrote that file from a copy of the repo that
+# PREDATED the payroll multichain work, so it silently reverted
+# `dest_chain` off PayrollBatch and `destChain` off the create mutation.
+#
+# PayrollCreateContent.tsx and PayrollExecuteContent.tsx still referenced
+# both, which is the two tsc errors you saw:
+#   'destChain' does not exist in type ...
+#   Property 'dest_chain' does not exist on type 'PayrollBatch'
+#
+# Only this one file was affected. The other multichain files
+# (PayrollCreateContent, PayrollExecuteContent, useGatewaySend,
+# LandingFeatures) were not in the cutover and are untouched.
+#
+# THE FIX
+# usePayroll.ts, with BOTH the multichain fields restored AND the
+# useAccountAddress migration kept.
+#
+# VERIFIED: applied on top of payroll-multichain + all phase scripts,
+# afrifx-web `tsc --noEmit` is clean and `npm run build` succeeds.
+# ============================================================
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$ROOT"
+
+echo "→ Restoring afrifx-web/hooks/usePayroll.ts…"
+cat > 'afrifx-web/hooks/usePayroll.ts' <<'AFX_FIX_EOF'
 'use client'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
@@ -90,3 +124,9 @@ export function useUpdateRecipient() {
     onSuccess: (_d, vars) => queryClient.invalidateQueries({ queryKey: ['payroll-batch', vars.batchId] }),
   })
 }
+AFX_FIX_EOF
+echo "  ✓ afrifx-web/hooks/usePayroll.ts"
+echo ""
+echo "→ Done. Now re-run:"
+echo "    cd afrifx-web && npx tsc --noEmit && npm run build"
+echo ""

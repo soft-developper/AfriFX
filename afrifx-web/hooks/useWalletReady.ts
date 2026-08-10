@@ -1,22 +1,26 @@
 'use client'
-import { useAccount } from 'wagmi'
+import { useAccountAddress } from '@/hooks/useAccountAddress'
 
 /*
-  Signing readiness for both injected wallets and the Web3Auth embedded wallet.
+  Whether the user's wallet is usable.
 
-  For MetaMask/WalletConnect, isConnected is sufficient. For the embedded
-  (social-login) wallet there can be a brief moment right after login where the
-  account is present but the provider isn't ready to sign yet; wagmi models this
-  through the connection status, so we treat 'connected' as ready and anything
-  else as not-ready. Signing paths should check `ready` before calling
-  writeContract to avoid an occasional "provider not ready" failure.
+  Previously this modelled wagmi connection state, because the wallet was
+  something the user connected and the provider could be briefly unready
+  right after login. That no longer applies: the wallet is provisioned by
+  Circle at sign-up, so "ready" simply means the account has an address.
+
+  `isEmbedded` is always true now - every wallet is a Circle
+  user-controlled wallet - and is kept so callers that show recovery
+  nudges keep working without a change.
 */
 export function useWalletReady() {
-  const { isConnected, status, connector } = useAccount()
+  const { address, isLoading } = useAccountAddress()
 
-  const ready = isConnected && status === 'connected'
-  // Identify the embedded wallet so the UI can, e.g., show a recovery nudge.
-  const isEmbedded = connector?.id === 'web3auth' || connector?.name?.toLowerCase().includes('web3auth')
+  const ready = Boolean(address) && !isLoading
 
-  return { ready, isEmbedded, status }
+  return {
+    ready,
+    isEmbedded: true,
+    status: isLoading ? 'connecting' : ready ? 'connected' : 'disconnected',
+  }
 }

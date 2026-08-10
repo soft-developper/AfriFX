@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import {
   Loader2, AlertCircle, CheckCircle, RefreshCw, Clock, Building2, Smartphone,
 } from 'lucide-react'

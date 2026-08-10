@@ -1,6 +1,6 @@
 'use client'
 import { useRef, useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { Paperclip, Loader2 } from 'lucide-react'
 import { uploadToCloudinary, type CloudinaryUploadResult } from '@/lib/cloudinary'
 

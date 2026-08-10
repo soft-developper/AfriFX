@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { useSettlementReport } from '@/hooks/usePayments'
 import { useFXRates } from '@/hooks/useFXRate'
 import { ClientOnly } from '@/components/ui/client-only'

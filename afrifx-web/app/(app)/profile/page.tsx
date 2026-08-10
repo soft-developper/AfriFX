@@ -1,7 +1,7 @@
 'use client'
 import { EmailPreferences } from '@/components/notifications/EmailPreferences'
 import { useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { useProfile } from '@/hooks/useProfile'
 import { useQueryClient } from '@tanstack/react-query'
 import { ProfileAvatar } from '@/components/profile/ProfileAvatar'

@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { ArrowUpDown, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import { CurrencyInput } from './CurrencyInput'
 import { RateDisplay } from './RateDisplay'

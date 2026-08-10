@@ -1,6 +1,6 @@
 'use client'
 import { useReadContract } from 'wagmi'
-import { useAccount } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { CONTRACTS } from '@/lib/contracts'
 import { USDC_ABI, formatUSDC } from '@/lib/usdc'
 

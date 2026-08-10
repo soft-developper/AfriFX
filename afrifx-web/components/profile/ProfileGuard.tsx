@@ -1,6 +1,6 @@
 'use client'
 import { useEffect } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { useRouter } from 'next/navigation'
 import { useProfile } from '@/hooks/useProfile'
 

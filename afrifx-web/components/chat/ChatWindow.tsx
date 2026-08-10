@@ -1,6 +1,6 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { MessageBubble }     from './MessageBubble'
 import { QuickActions }      from './QuickActions'
 import { MediaUploadButton } from './MediaUploadButton'

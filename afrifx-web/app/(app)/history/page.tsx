@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeftRight, ArrowRight, ExternalLink } from 'lucide-react'
 

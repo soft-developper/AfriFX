@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import {
   ArrowRight, ArrowUpDown, CheckCircle,
   AlertCircle, Loader2, Hash, Coins

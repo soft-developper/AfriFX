@@ -3,6 +3,7 @@ import { PlatformMaintenanceBanner } from '@/hooks/useMaintenance'
 import { Sidebar }     from '@/components/layout/Sidebar'
 import { MobileNav }   from '@/components/layout/MobileNav'
 import { ProfileGuard } from '@/components/profile/ProfileGuard'
+import { AuthGuard }    from '@/components/auth/AuthGuard'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,7 +15,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Sidebar />
         {/* Main content */}
         <main className="flex-1 overflow-y-auto p-4 pb-24 md:p-6 md:pb-6">
-          <ProfileGuard>{children}</ProfileGuard>
+          <AuthGuard><ProfileGuard>{children}</ProfileGuard></AuthGuard>
         </main>
       </div>
       {/* Bottom nav mobile only */}

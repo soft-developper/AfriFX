@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { Loader2, CheckCircle, AlertTriangle, Clock, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGatewayDeposit } from '@/hooks/useGatewayDeposit'

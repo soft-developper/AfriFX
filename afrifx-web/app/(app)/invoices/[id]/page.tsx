@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { useAccount } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { useInvoice, useUpdateInvoiceStatus } from '@/hooks/useInvoices'
 import { ClientOnly } from '@/components/ui/client-only'
 import { Badge } from '@/components/ui/badge'
