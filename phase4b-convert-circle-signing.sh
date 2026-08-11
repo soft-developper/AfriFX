@@ -1,178 +1,128 @@
-#!/usr/bin/env bash
-# ============================================================
-# phase4b-convert-circle-signing.sh
-#
-# /convert (the "Trade" nav item today) signs with the Circle wallet.
-#
-# Run AFTER fix-send-confirmation.sh.
-#
-# A conversion is a USDC transfer to the vault, so it reuses the same
-# transfer path proven by Send - no new backend needed.
-#
-# ⚠ TRADEOFF: THE ON-CHAIN MEMO IS DROPPED
-# Memo requires a CONTRACT CALL (contractExecution), not a transfer,
-# and that endpoint is not built yet. The reference and memoId are
-# still persisted with the transaction record, so reconciliation is
-# unaffected - only the on-chain annotation is missing. If the Memo
-# matters to you on-chain, this feature should wait for
-# contractExecution instead.
-#
-# ALSO FIXED: waitForTransactionReceipt is now skipped when there is no
-# hash yet. Circle reports a transfer as approved before it surfaces a
-# hash, and asking viem for a receipt for an empty hash throws.
-#
-# NOTE ON NAMING: the nav label "Trade" currently points at /convert.
-# Per your plan, Trade will eventually point at the fiat on-ramp /
-# off-ramp, and Bridge is the Circle CCTP bridge. This script only
-# touches /convert, which is the placeholder behind that label - so
-# some of it is expected to be replaced when the real ramp lands.
-#
-# VERIFIED: web tsc clean, npm run build succeeds.
-# NOT verified: the browser flow.
-#
-# AFTER RUNNING:
-#   cd afrifx-web && rm -rf .next && npx tsc --noEmit && npm run build
-# ============================================================
-set -euo pipefail
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$ROOT"
-echo "→ Writing files…"
+# AfriFX — Session Handoff
 
-mkdir -p "$(dirname "afrifx-web/hooks/useSwap.ts")"
-cat > 'afrifx-web/hooks/useSwap.ts' <<'AFX_T00_EOF'
-'use client'
-import { useState } from 'react'
-import { usePublicClient } from 'wagmi'
-import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
-import { sendUsdc } from '@/hooks/useCircleTx'
-import { isAddress } from 'viem'
-import { CONTRACTS, USDC_DECIMALS, SPREAD_BPS } from '@/lib/contracts'
-import {
-  buildMemoId, buildReference,
-} from '@/lib/memo'
-import { arcTestnet } from '@/lib/arc-chain'
-import type { Currency, SwapQuote } from '@/types'
+**Upload this plus a fresh repo zip to the new chat.**
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
-const ZERO     = '0x0000000000000000000000000000000000000000'
+---
 
-export function useSwap() {
-  const { address }   = useAccount()
-  const publicClient  = usePublicClient({ chainId: arcTestnet.id })
-  const [isLoading,  setIsLoading]  = useState(false)
-  const [error,      setError]      = useState<string | null>(null)
-  const [txHash,     setTxHash]     = useState<`0x${string}` | null>(null)
-  const [txStatus,   setTxStatus]   = useState<'idle'|'pending'|'settled'|'failed'>('idle')
-  const [reference,  setReference]  = useState<string | null>(null)
-  // What the user is waiting for while they approve on their device.
-  const [statusMessage, setTxStatusMessage] = useState<string | null>(null)
+## Where we are
 
+Re-engineering AfriFX from wallet-connect to a Web2-first product on Circle
+user-controlled wallets. Target rename: Nexum (deferred until after the
+re-engineering, decision D5).
 
-  function buildQuote(
-    fromCurrency: Currency, toCurrency: Currency,
-    fromAmount: number, rate: number,
-  ): SwapQuote {
-    const usdcAmount = fromCurrency === 'USDC' ? fromAmount : fromAmount / rate
-    const spread     = usdcAmount * (SPREAD_BPS / 10_000)
-    const networkFee = 0.001
-    return {
-      fromCurrency, toCurrency, fromAmount,
-      toAmount:   usdcAmount - spread - networkFee,
-      rate, spreadFee: spread, networkFee,
-      deadline:   Math.floor(Date.now() / 1000) + 600,
-    }
-  }
+**Working end to end, verified in the browser:** sign in with Google or an email
+code → Circle SCA wallet provisioned automatically → profile setup → dashboard
+with live balance → **Send USDC on Arc, with tx hash and explorer link.**
 
-  async function execute(quote: SwapQuote) {
-    if (!address) throw new Error('Sign in to convert')
-    const vault = CONTRACTS.AFRIFX_VAULT
-    if (!vault || vault === ZERO || !isAddress(vault)) {
-      throw new Error('Vault address not configured')
-    }
+---
 
-    setIsLoading(true); setError(null); setTxStatus('pending')
+## Delivered (in run order)
 
-    try {
-      const ref    = buildReference()
-      const memoId = buildMemoId(`convert-${address}`)
-      setReference(ref)
+| Script | What it did |
+|---|---|
+| `payroll-multichain.sh` | Payroll pays out on any Gateway chain, not just Arc |
+| `phase0-dispute-duty-fix.sh` | Closed 3 privilege bypasses letting off-duty admins settle disputes |
+| `phase0-migrations-and-tests.sh` | Versioned migration runner + reconstructed missing baselines; first tests |
+| `phase1-identity.sh` | `accounts` + `account_sessions`, Circle-backed auth |
+| `phase1-frontend.sh` | Sign-in screens, Circle Web SDK wiring |
+| `phase2-wallets.sh` | Wallet provisioning handshake on sign-up |
+| `phase3-cutover.sh` | Removed "connect wallet"; 35 files → `useAccountAddress` |
+| `fix-payroll-hook.sh` | Fixed a regression the cutover caused |
+| `phase3b-single-signin.sh` | Deleted sign-up; one `/signin` door |
+| `fix-google-redirect.sh` | Google returns to `/signin`, not the landing page |
+| `browse-without-signin.sh` | App browsable signed out |
+| `capture-email-on-signin.sh` | Email + name from Google OAuth; welcome mail once |
+| `phase4a-send-circle-signing.sh` | **Send signs via Circle challenges** |
+| `fix-send-confirmation.sh` | Fixed tx lookup (challengeId ≠ transaction id) |
+| `phase4b-convert-circle-signing.sh` | `/convert` via Circle (on-chain Memo dropped) |
 
-      const usdcIn = quote.fromCurrency === 'USDC'
-        ? quote.fromAmount
-        : quote.toAmount + quote.spreadFee + quote.networkFee
+Migrations `0001`–`0016`. 85 tests passing (`cd afrifx-api && npm test`).
 
-      /*
-        Circle wallets sign through a challenge the user approves on
-        their device, so there is no connected wallet to writeContract
-        with. A conversion is a USDC transfer to the vault, which the
-        transfer endpoint covers directly.
+---
 
-        TRADEOFF: the on-chain Memo is dropped. Memo needs a contract
-        call (contractExecution) rather than a transfer, and the
-        reference is already persisted with the transaction record
-        below, so nothing is lost operationally - only the on-chain
-        annotation.
-      */
-      const result = await sendUsdc(
-        { to: vault, amount: usdcIn.toFixed(6) },
-        setTxStatusMessage,
-      )
-      const hash = (result.txHash ?? '') as `0x${string}`
+## How signing works now
 
-      setTxHash(hash)
+```
+1. server builds it   POST /auth/wallet/tx/transfer  -> challengeId
+2. user approves it   sdk.execute(challengeId) on their device
+3. server finds it    GET  /auth/wallet/tx/find      -> txHash
+```
 
-      // Save to DB as pending
-      await fetch(`${API_BASE}/transactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          walletAddress: address, ...quote,
-          arcTxHash: hash, memoId, reference: ref,
-        }),
-      }).catch(console.error)
+Nothing is signed on the server. Key files:
+- `afrifx-api/src/services/circleWallets.ts` — `createTransfer`, `findRecentTransfer`, `getTokenId`, `pickPrimaryWallet`
+- `afrifx-api/src/routes/auth.ts` — all `/auth/*` routes
+- `afrifx-web/hooks/useCircleTx.ts` — `sendUsdc`, `NeedsReauthError`
 
-      // Wait for on-chain confirmation, then mark settled or failed
-      // based on the actual receipt status (a tx can broadcast then revert).
-      //
-      // `hash` can be empty: Circle reports the transfer as approved
-      // before it surfaces a hash. That is not a failure, so leave the
-      // conversion pending rather than asking viem for a receipt for
-      // nothing, which would throw.
-      if (publicClient && hash) {
-        publicClient.waitForTransactionReceipt({ hash }).then(receipt => {
-          const settled = receipt.status === 'success'
-          fetch(`${API_BASE}/transactions/${hash}`, {
-            method:  'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ status: settled ? 'settled' : 'failed' }),
-          }).catch(console.error)
-          setTxStatus(settled ? 'settled' : 'failed')
-          if (!settled) setError('Transaction reverted on-chain')
-        }).catch(() => {
-          // Receipt lookup failed (e.g. timeout) leave as pending; the
-          // txSettler job will reconcile it against the chain shortly.
-        })
-      }
+**Three non-obvious things, learned the hard way:**
+1. The transfer endpoint returns a **`challengeId`, not a transaction id.** Polling `/transactions/{challengeId}` never resolves — poll the transaction *list* instead.
+2. Circle's `userToken` lasts **60 minutes** and every signature needs one, but our session lasts 30 days. Kept in `sessionStorage`; `NeedsReauthError` when expired. Users will need to re-authenticate to sign. This is inherent to user-controlled wallets, not a bug.
+3. "Approved but not yet confirmed" is a **normal state**, not an error. UI must say something true in it or it reads as failure while the money has already moved.
 
-      return hash
-    } catch (err: any) {
-      const msg = err?.shortMessage ?? err?.message ?? 'Transaction failed'
-      setError(msg); setTxStatus('failed')
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }
+---
 
-  return {
-    buildQuote, execute,
-    isLoading, error, txHash, txStatus, reference, statusMessage,
-  }
-}
-AFX_T00_EOF
-echo "  ✓ afrifx-web/hooks/useSwap.ts"
+## Next: Bridge
 
-echo ""
-echo "→ Done."
-echo "  cd afrifx-web && rm -rf .next && npx tsc --noEmit && npm run build"
-echo ""
+Still on wagmi: `useBridge`, `useCompleteBridge`, `useGatewaySend`,
+`useGatewayDeposit`, `useCorridorSwap`, `useP2P`, `pay/[ref]`,
+`PayrollExecuteContent`.
+
+Needs a new **`contractExecution`** capability
+(`POST /v1/w3s/user/transactions/contractExecution` with `walletId`,
+`contractAddress`, `abiFunctionSignature`, `abiParameters`). That single
+addition also unblocks escrow, payroll and invoices — build it once, carefully.
+
+### ⚠ Verify before designing — do not trust training data
+
+Existing wallets are provisioned on **Arc only**
+(`initializeUserWallet` passes `blockchains: [PRIMARY_BLOCKCHAIN]`). Circle
+won't execute on a chain where the wallet doesn't exist.
+
+**Fetch these live and confirm:**
+- `developers.circle.com/wallets/unified-wallet-addressing-evm`
+- `developers.circle.com/wallets/account-types`
+
+Specifically check: (1) `/user/initialize` accepts multiple `blockchains`;
+(2) user-controlled wallets get unified EVM addressing **automatically** via the
+user JWT (the `walletSetId`/`refId` work is developer-controlled only);
+(3) whether **Gateway** — already integrated here, and which added ERC-1271
+support for smart accounts on 4 Aug 2026 — is a better fit than raw CCTP.
+Circle's own multichain guide uses Gateway rather than per-chain minting.
+
+Existing Arc-only wallets would need backfilling onto other chains.
+
+---
+
+## Working agreement
+
+- **All changes as a single bash script** placed in the repo root, writing whole
+  files. Then: `npx tsc --noEmit` → `npm run build` → `git add -A && git commit && git push`.
+- **Verify byte-for-byte** against a clean unzip of the repo before delivering.
+- **Run the API typecheck too** (`cd afrifx-api && npx tsc --noEmit`) — the local
+  routine only covers `afrifx-web`, and an `import.meta` error slipped through once.
+- **`rm -rf .next`** whenever a route is deleted, or stale generated types break `tsc`.
+- ⚠ **Working copies drift.** A whole-file overwrite generated from a stale copy
+  silently reverted the payroll multichain work once. Re-check against the
+  user's current zip before overwriting any file with prior history.
+
+---
+
+## Naming — don't conflate these
+
+- **Trade** (nav label) currently points at `/convert`. It will eventually point
+  at the **fiat on-ramp / off-ramp**, not yet built.
+- **Bridge** is the **Circle CCTP bridge**.
+- There is no feature called "Trade/Convert".
+
+---
+
+## Open, not blocking
+
+- **Payroll custody (D3)** — platform-held disbursement has real licensing
+  weight. Circle's own terms state the developer is solely responsible for
+  licensing. An allowance-based design may avoid custody entirely. Needs a
+  lawyer before Phase 4 touches payroll.
+- **Arc mainnet** not on Circle Wallets' supported list (testnet only). Chain is
+  env-configurable (`CIRCLE_BLOCKCHAIN`) so Base is a cheap fallback.
+- **Cross-chain Send** still on `useGatewaySend`.
+- **Account recovery** never designed. Highest-risk gap before real money.
+- **No frontend tests.** 85 tests are all backend.
