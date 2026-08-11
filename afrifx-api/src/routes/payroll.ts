@@ -171,4 +171,23 @@ router.delete('/batches/:id', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
+// GET /payroll/disbursement/status
+//
+// Reports whether the platform disbursement wallet (Phase 7a, MPC) is
+// configured and its current USDC balance. Used to verify provisioning and,
+// later, to check a batch can be funded. Read-only; exposes no secrets.
+router.get('/disbursement/status', async (_req, res) => {
+  const walletId = process.env.PAYROLL_DISBURSEMENT_WALLET_ID
+  if (!walletId) {
+    return res.json({ configured: false, reason: 'PAYROLL_DISBURSEMENT_WALLET_ID not set' })
+  }
+  try {
+    const { getDisbursementBalance } = await import('../services/platformDisbursement')
+    const balance = await getDisbursementBalance(walletId)
+    res.json({ configured: true, walletId, balance })
+  } catch (err: any) {
+    res.status(502).json({ configured: true, error: err.message })
+  }
+})
+
 export default router
