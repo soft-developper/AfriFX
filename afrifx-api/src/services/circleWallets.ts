@@ -444,16 +444,25 @@ export async function findContractExecution(params: {
   contractAddress: string
   since:           number
 }): Promise<CircleTransaction | null> {
-  // Keep the query minimal. Circle rejects the whole request (400) if any
-  // filter value doesn't match its enum exactly, so we filter by wallet only
-  // here and match blockchain + contract + recency in code below. This is
-  // more robust than a narrow server-side filter that can silently 400.
-  const qs = new URLSearchParams({
-    walletIds: params.walletId,
-    pageSize:  '30',
-  })
-  const data = await circleFetch(
-    `/v1/w3s/transactions?${qs.toString()}`, params.userToken)
+  // The user token already scopes /transactions to THIS user, so we don't
+  // pass walletIds/blockchain/operation as query filters at all - some of
+  // those combinations get rejected for user-controlled tokens. We fetch the
+  // user's recent transactions and match everything (chain + contract +
+  // recency) in code, which never 400s.
+  const qs = new URLSearchParams({ pageSize: '50' })
+
+  let data: any
+  try {
+    data = await circleFetch(
+      `/v1/w3s/transactions?${qs.toString()}`, params.userToken)
+  } catch (err: any) {
+    // A failed lookup must NOT kill the bridge: the transaction may still be
+    // confirming. Treat it as "not found yet" so the client keeps polling,
+    // and let the server log carry the reason.
+    console.warn('[findContractExecution] list query failed:',
+      err?.message, (err as any)?.circleCode)
+    return null
+  }
 
   const list = (data.transactions ?? []) as any[]
   const want = params.contractAddress.toLowerCase()
