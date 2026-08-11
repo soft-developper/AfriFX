@@ -85,7 +85,7 @@ function SendPageInner() {
   // For a cross-chain send we spend from whichever chain holds the balance.
   const sourceKey = gwByChain.find(c => c.amount >= amountNum)?.key ?? HOME
 
-  const busy = sending || ['signing','requesting','switching','minting'].includes(gw.step)
+  const busy = sending || ['signing','requesting','minting'].includes(gw.step)
 
   function setMax() { setAmount(availableNum.toFixed(6)) }
 
@@ -281,11 +281,6 @@ function SendPageInner() {
               <AlertCircle className="h-3.5 w-3.5" /> Transfer not completed
             </p>
             <p className="mt-1 text-[11px] text-red-800 dark:text-red-300/90">{gw.error}</p>
-            {gw.needsEoa && (
-              <p className="mt-1.5 text-[11px] text-red-700 dark:text-red-300/70">
-                Same-chain sends on Arc still work normally.
-              </p>
-            )}
             <Button size="sm" variant="outline" className="mt-2" onClick={gw.reset}>
               Try again
             </Button>

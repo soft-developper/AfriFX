@@ -1,62 +1,55 @@
 'use client'
 // ============================================================
-// useGatewaySend spend the unified balance on any supported chain.
+// useGatewaySend - spend the unified Gateway balance, signed by the user's
+// CIRCLE wallet.
 //
 // THE FLOW (per Circle's technical guide):
 //   1. Build a TransferSpec + BurnIntent describing the transfer
-//   2. Sign it as EIP-712 typed data with the user's EOA (off-chain, no gas)
+//   2. Sign it as EIP-712 typed data  <-- now via the Circle wallet (ERC-1271)
 //   3. POST to /v1/transfer -> Circle returns an attestation + signature
-//   4. Call gatewayMint() on the GatewayMinter on the DESTINATION chain
+//   4. gatewayMint() on the destination chain <-- now via executeContractCall
 //
-// Step 3 is the fast part (<500ms) because finality was already paid for at
-// deposit time. That's the whole point of Gateway.
+// CIRCLE MIGRATION
+//   Gateway added ERC-1271 support (Aug 2026), so an SCA can authorize
+//   transfers directly - no EOA, no delegate. Step 2 uses signTypedData (a
+//   SIGN_TYPEDDATA challenge) and step 4 uses executeContractCall. There is no
+//   network switch: Circle runs the mint on the chain we name.
 //
-// *** CONSTRAINTS THAT SHAPE THIS CODE ***
-//   * ONLY EOA SIGNATURES. Circle: "SCA signatures such as EIP-1271 signatures
-//     can't be accepted. Burn intents must be signed by an EOA." If the user's
-//     wallet is a smart account, this will fail at the signing step we detect
-//     that and say so plainly rather than showing a cryptic error.
+// *** CONSTRAINTS THAT STILL SHAPE THIS CODE ***
 //   * ATTESTATIONS EXPIRE AFTER 10 MINUTES, so the mint must follow promptly.
-//   * maxBlockHeight must be far enough ahead to exceed the wallet's
-//     withdrawalDelay, so we read the current block and add a generous buffer.
-//   * Same-chain transfers ARE supported and still mint-and-burn but for
-//     Arc->Arc we don't use Gateway at all (see useSmartSend), because a plain
-//     wallet transfer is instant and doesn't consume the unified balance.
+//   * maxBlockHeight must exceed the wallet's withdrawalDelay; we read the head
+//     and add a buffer, then let Circle's own error correct us if short.
+//   * Arc->Arc doesn't use Gateway (a plain wallet transfer is instant); that
+//     routing lives in the caller (useSmartSend), not here.
 // ============================================================
 
 import { useState, useCallback } from 'react'
-import { useAccount, useSignTypedData, useWriteContract, useSwitchChain, useConfig } from 'wagmi'
+import { useConfig } from 'wagmi'
 import { getPublicClient } from 'wagmi/actions'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
+import {
+  signTypedData, executeContractCall, NeedsReauthError, NeedsChainError,
+} from '@/hooks/useCircleTx'
 import { gatewayApi, gatewayContracts, gatewayChains, usdcToUnits } from '@/lib/gateway'
 import { chainByKey } from '@/lib/cctp-chains'
 import { evmChainId } from '@/lib/bridge-chains'
 
 export type SendStep =
-  | 'idle' | 'signing' | 'requesting' | 'switching' | 'minting' | 'done' | 'error'
+  | 'idle' | 'signing' | 'requesting' | 'minting' | 'done' | 'error'
 
 export interface GatewaySendState {
   step:    SendStep
   mintTx:  string | null
   error:   string | null
-  /** True when the failure is "your wallet can't sign for Gateway". */
+  /** Retained for API compatibility; always false now that SCAs can sign. */
   needsEoa: boolean
+  /** Human step note while the user approves on their device. */
+  note:    string | null
 }
 
 const INITIAL: GatewaySendState = {
-  step: 'idle', mintTx: null, error: null, needsEoa: false,
+  step: 'idle', mintTx: null, error: null, needsEoa: false, note: null,
 }
-
-// GatewayMinter only the method we call.
-const GATEWAY_MINTER_ABI = [
-  {
-    type: 'function', name: 'gatewayMint', stateMutability: 'nonpayable',
-    inputs: [
-      { name: 'attestationPayload', type: 'bytes' },
-      { name: 'signature',          type: 'bytes' },
-    ],
-    outputs: [],
-  },
-] as const
 
 // EIP-712 types, mirroring Circle's TransferSpec / BurnIntent structs.
 const EIP712_TYPES = {
@@ -97,9 +90,6 @@ function randomSalt(): `0x${string}` {
 
 export function useGatewaySend() {
   const { address } = useAccount()
-  const { signTypedDataAsync } = useSignTypedData()
-  const { writeContractAsync } = useWriteContract()
-  const { switchChainAsync }   = useSwitchChain()
   const config = useConfig()
   const [state, setState] = useState<GatewaySendState>(INITIAL)
 
@@ -112,8 +102,8 @@ export function useGatewaySend() {
     recipient: string
   }) => {
     if (!address) {
-      setState({ ...INITIAL, step: 'error', error: 'Connect a wallet first' })
-      return
+      setState({ ...INITIAL, step: 'error', error: 'Sign in first' })
+      return { ok: false as const, error: 'Sign in first', needsEoa: false }
     }
 
     const src = gatewayChains().find(c => c.key === params.fromKey)
@@ -124,34 +114,22 @@ export function useGatewaySend() {
 
     if (!src || !dst || !srcCctp || !dstCctp || !dstChainId) {
       setState({ ...INITIAL, step: 'error', error: 'Unsupported route' })
-      return
+      return { ok: false as const, error: 'Unsupported route', needsEoa: false }
     }
 
     const contracts = gatewayContracts()
     const value = usdcToUnits(params.amount)
+    const note = (m: string) => setState(s => ({ ...s, note: m }))
 
     try {
-      // ── 1. Build the burn intent ───────────────────────
       setState({ ...INITIAL, step: 'signing' })
 
-      // maxBlockHeight must clear the wallet's withdrawalDelay. We read the
-      // source chain's current height and add a large buffer.
+      // maxBlockHeight must clear the wallet's withdrawalDelay, measured in
+      // source-chain blocks. Read the head and add a generous buffer; if it's
+      // short, Circle's error states the exact minimum and we retry with it.
       const srcChainId = evmChainId(params.fromKey)
       const srcClient  = srcChainId ? getPublicClient(config, { chainId: srcChainId }) : null
       const head = srcClient ? await srcClient.getBlockNumber() : BigInt(0)
-
-      /*
-        maxBlockHeight must exceed the wallet's withdrawalDelay measured in
-        BLOCKS on the source chain. Arc produces blocks about twice a second, so
-        seven days is roughly 1.2 MILLION blocks, a naive buffer is easy to
-        under-shoot, and our first attempt did exactly that (Circle wanted
-        54,485,435 and got 54,275,825).
-
-        Rather than guess a bigger number, we start generous and then let
-        CIRCLE'S OWN ERROR correct us: the API states the exact minimum it
-        wants, so a rejection is retried once using that value. That's robust
-        against differing block times and any future change to the delay.
-      */
       let maxBlockHeight = head + BigInt(2_000_000)
 
       const spec = {
@@ -173,57 +151,48 @@ export function useGatewaySend() {
         hookData: '0x' as `0x${string}`,
       }
 
-      const intent = {
-        maxBlockHeight,
-        // Circle's fee must be covered; a generous ceiling avoids a rejected
-        // request, and the actual fee charged is far lower.
-        maxFee: usdcToUnits(Math.max(0.01, params.amount * 0.001)),
-        spec,
-      }
-
-      // ── 2 & 3. Sign, request attestation, self-correct ──
-      /*
-        Signing and the transfer request are wrapped together because a
-        maxBlockHeight rejection means we must RE-SIGN with the corrected value
-       , the signature covers that field, so we can't just resend.
-
-        Circle's 400 states the exact minimum it expects, so one retry using
-        that number turns a hard failure into a transparent correction.
-      */
-      const buildIntent = (mbh: bigint) => ({
-        maxBlockHeight: mbh,
-        // A generous ceiling avoids rejection; the fee actually charged is far
-        // lower. maxFee is what the USER authorises, so it stays proportional.
-        maxFee: usdcToUnits(Math.max(0.01, params.amount * 0.001)),
-        spec,
-      })
-
+      // Build + sign + request, self-correcting maxBlockHeight once. The
+      // signature covers maxBlockHeight, so a correction means RE-SIGN, not
+      // just resend - hence sign and request live together.
       const signAndRequest = async (mbh: bigint) => {
-        const intent = buildIntent(mbh)
+        const intent = {
+          maxBlockHeight: mbh,
+          // A generous ceiling avoids rejection; the fee actually charged is
+          // far lower. maxFee is what the USER authorises, so it stays
+          // proportional to the amount.
+          maxFee: usdcToUnits(Math.max(0.01, params.amount * 0.001)),
+          spec,
+        }
+
+        // Circle wants the EIP-712 message with all bigints as strings.
+        const typedData = {
+          types: {
+            EIP712Domain: [
+              { name: 'name',    type: 'string' },
+              { name: 'version', type: 'string' },
+            ],
+            ...EIP712_TYPES,
+          },
+          domain: { name: 'GatewayWallet', version: '1' },
+          primaryType: 'BurnIntent',
+          message: {
+            maxBlockHeight: mbh.toString(),
+            maxFee:         intent.maxFee.toString(),
+            spec: { ...spec, value: value.toString() },
+          },
+        }
 
         let signature: string
         try {
-          signature = await signTypedDataAsync({
-            domain: { name: 'GatewayWallet', version: '1' },
-            types: EIP712_TYPES as any,
-            primaryType: 'BurnIntent',
-            message: intent as any,
-          })
+          signature = await signTypedData(
+            { chainKey: params.fromKey, typedData, memo: 'Gateway transfer' }, note)
         } catch (sigErr: any) {
-          const m = String(sigErr?.message ?? '')
-          // A smart contract account can't produce the ECDSA signature Gateway
-          // requires. Say that clearly instead of a raw wallet error.
-          if (/1271|smart account|not supported|unsupported/i.test(m)) {
-            const e: any = new Error(
-              'This wallet can\'t sign Gateway transfers. Gateway requires a ' +
-              'standard wallet (EOA), smart contract accounts aren\'t supported.')
-            e.__needsEoa = true
-            throw e
-          }
+          // With ERC-1271 an SCA can sign, so the old "needs EOA" path is gone.
+          // Re-throw reauth/chain signals so the UI can handle them precisely.
           throw sigErr
         }
 
-        setState(s => ({ ...s, step: 'requesting' }))
+        setState(s => ({ ...s, step: 'requesting', note: null }))
         const res = await fetch(`${gatewayApi()}/transfer`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -241,8 +210,6 @@ export function useGatewaySend() {
         if (!res.ok) {
           const err: any = new Error(
             `Gateway transfer rejected (${res.status})${text ? `: ${text.slice(0, 200)}` : ''}`)
-          // Pull the required height out of Circle's message so the caller can
-          // retry precisely: "expected at least 54485435, got 54275825".
           const m = text.match(/expected at least (\d+)/i)
           if (m) err.__requiredHeight = BigInt(m[1])
           throw err
@@ -255,7 +222,6 @@ export function useGatewaySend() {
         data = await signAndRequest(maxBlockHeight)
       } catch (firstErr: any) {
         if (!firstErr?.__requiredHeight) throw firstErr
-        // Use Circle's own figure, plus headroom for blocks mined meanwhile.
         maxBlockHeight = firstErr.__requiredHeight + BigInt(500_000)
         setState(s => ({ ...s, step: 'signing' }))
         data = await signAndRequest(maxBlockHeight)
@@ -267,39 +233,32 @@ export function useGatewaySend() {
         throw new Error('Gateway did not return an attestation. Please try again.')
       }
 
-      // ── 4. Mint on the destination chain ───────────────
-      setState(s => ({ ...s, step: 'switching' }))
-      await switchChainAsync({ chainId: dstChainId }).catch(() => {
-        throw new Error(`Please switch your wallet to ${dst.name} to complete the transfer`)
-      })
-
+      // Mint on the destination chain via a Circle contract-execution challenge.
       setState(s => ({ ...s, step: 'minting' }))
-      const mintTx = await writeContractAsync({
-        address: contracts.minter as `0x${string}`,
-        abi: GATEWAY_MINTER_ABI,
-        functionName: 'gatewayMint',
-        args: [attestation as `0x${string}`, attSig as `0x${string}`],
-        chainId: dstChainId,
-      })
-      await getPublicClient(config, { chainId: dstChainId })
-        ?.waitForTransactionReceipt({ hash: mintTx as `0x${string}` })
+      const mintResult = await executeContractCall({
+        chainKey:             params.toKey,
+        contractAddress:      contracts.minter,
+        abiFunctionSignature: 'gatewayMint(bytes,bytes)',
+        abiParameters:        [attestation, attSig],
+      }, note)
 
-      setState(s => ({ ...s, step: 'done', mintTx: mintTx as string }))
-      // Also RETURN the result. The Send page reads state and ignores this,
-      // but a caller running many transfers in a loop (payroll) can't rely on
-      // async state between iterations, so it awaits this outcome instead.
-      return { ok: true as const, mintTx: mintTx as string }
+      const mintTx = mintResult.txHash ?? 'pending'
+      setState(s => ({ ...s, step: 'done', mintTx, note: null }))
+      // Also RETURN the result. The Send page reads state; a caller running
+      // many transfers in a loop (payroll) awaits this outcome instead, since
+      // async state between iterations isn't reliable.
+      return { ok: true as const, mintTx }
     } catch (err: any) {
       let message = err?.shortMessage ?? err?.message ?? 'Transfer failed'
-      if (/rpc request failed|fetch failed|failed to fetch/i.test(message)) {
+      if (err instanceof NeedsReauthError || err instanceof NeedsChainError) {
+        message = err.message
+      } else if (/rpc request failed|fetch failed|failed to fetch/i.test(message)) {
         message = 'Could not reach the network. Nothing was transferred, please try again.'
       }
-      // Preserve the "wallet can't sign for Gateway" case so the UI can explain
-      // it properly rather than showing a generic failure.
-      setState(s => ({ ...s, step: 'error', error: message, needsEoa: !!err?.__needsEoa }))
-      return { ok: false as const, error: message, needsEoa: !!err?.__needsEoa }
+      setState(s => ({ ...s, step: 'error', error: message, needsEoa: false, note: null }))
+      return { ok: false as const, error: message, needsEoa: false }
     }
-  }, [address, signTypedDataAsync, writeContractAsync, switchChainAsync, config])
+  }, [address, config])
 
   return { ...state, send, reset }
 }

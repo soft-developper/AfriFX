@@ -215,6 +215,30 @@ export async function executeChallenge(
   })
 }
 
+/**
+ * Like executeChallenge, but returns the SIGNATURE the challenge produced.
+ *
+ * SIGN_TYPEDDATA / SIGN_MESSAGE challenges yield a signature in the execute
+ * result (result.data.signature). executeChallenge throws that away because
+ * transfers/contract calls don't need it; Gateway burn intents do, so this
+ * variant surfaces it. Same PIN/confirm UX, different return.
+ */
+export async function executeSigningChallenge(
+  challengeId: string, userToken: string, encryptionKey: string,
+): Promise<string> {
+  const instance = await getSdk()
+  instance.setAuthentication({ userToken, encryptionKey })
+
+  return new Promise<string>((resolve, reject) => {
+    instance.execute(challengeId, (err: any, result: any) => {
+      if (err) { reject(new Error(err?.message ?? 'You cancelled the request')); return }
+      const sig = result?.data?.signature ?? result?.signature
+      if (!sig) { reject(new Error('No signature was returned by the wallet.')); return }
+      resolve(String(sig))
+    })
+  })
+}
+
 /** Clear the handshake cookies once we no longer need them. */
 export function clearAuthCookies(): void {
   deleteCookie(COOKIE.deviceToken)

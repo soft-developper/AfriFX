@@ -28,7 +28,7 @@ export function GatewayDepositForm({ onDone }: { onDone?: () => void }) {
   const chain   = chains.find(c => c.key === chainKey)
   const cctp    = chainByKey(chainKey)
   const amt     = Number(amount)
-  const busy    = ['switching', 'approving', 'depositing'].includes(step)
+  const busy    = ['approving', 'depositing'].includes(step)
 
   /*
     Balance on the chain being deposited FROM.
@@ -139,7 +139,7 @@ export function GatewayDepositForm({ onDone }: { onDone?: () => void }) {
       <Button className="w-full" disabled={!canGo}
         onClick={() => deposit({ chainKey, amount: amt })}>
         {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> Working…</>
-              : !isConnected ? 'Connect a wallet'
+              : !isConnected ? 'Sign in to deposit'
               : insufficient ? 'Insufficient balance'
               : 'Deposit'}
       </Button>

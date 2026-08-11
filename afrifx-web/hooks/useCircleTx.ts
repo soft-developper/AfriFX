@@ -16,7 +16,7 @@
  * persist on disk.
  */
 
-import { executeChallenge } from '@/lib/circle'
+import { executeChallenge, executeSigningChallenge } from '@/lib/circle'
 import { apiFetch } from '@/hooks/useAuth'
 
 const KEY = 'circle_signing'
@@ -312,4 +312,46 @@ export async function executeContractCall(
 
   // Approved and broadcast, just slow. Not a failure.
   return { state: 'PENDING' }
+}
+
+/**
+ * Sign EIP-712 typed data with the user's Circle wallet, returning the
+ * signature (an ERC-1271 signature, since the wallet is an SCA).
+ *
+ * This is the Gateway building block: sign a burn intent off-chain, then
+ * POST it to Circle's Gateway API for an attestation. Unlike a transfer or
+ * contract call, there is no transaction - the value is the signature itself.
+ *
+ * Throws NeedsReauthError when there's no live token, NeedsChainError when the
+ * wallet isn't on the requested source chain.
+ */
+export async function signTypedData(
+  params: { chainKey: string; typedData: unknown; memo?: string },
+  onStep?: (message: string) => void,
+): Promise<string> {
+  const session = getSigningSession()
+  if (!session) throw new NeedsReauthError()
+
+  onStep?.('Preparing the signature')
+
+  const res = await apiFetch('/auth/wallet/sign/typed', {
+    method: 'POST',
+    body:   JSON.stringify({
+      userToken: session.userToken,
+      chainKey:  params.chainKey,
+      typedData: params.typedData,
+      memo:      params.memo,
+    }),
+  })
+  const data = await res.json().catch(() => ({}))
+
+  if (res.status === 401) { clearSigningSession(); throw new NeedsReauthError() }
+  if (data?.code === 'NEEDS_CHAIN') throw new NeedsChainError(data.error)
+  if (!res.ok) throw new Error(data.error ?? 'Could not prepare the signature')
+
+  onStep?.('Approve the signature on your device')
+  const signature = await executeSigningChallenge(
+    data.challengeId, session.userToken, session.encryptionKey)
+
+  return signature
 }

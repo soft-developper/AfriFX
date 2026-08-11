@@ -1,37 +1,40 @@
 'use client'
 // ============================================================
-// useGatewayDeposit deposit USDC into Circle's Gateway Wallet.
-//
-// STAGE 3. The user signs in their OWN wallet; nothing is custodial and no key
-// ever reaches a server.
+// useGatewayDeposit - deposit USDC into Circle's Gateway Wallet, signed by the
+// user's CIRCLE wallet.
 //
 // Two on-chain steps, exactly as Circle documents:
 //   1. approve(GatewayWallet, amount)  on the USDC token
 //   2. deposit(usdcAddress, amount)    on the GatewayWallet
 //
+// CIRCLE MIGRATION: both are contractExecution challenges the user approves on
+// their device (executeContractCall). No network switch - Circle runs each
+// call on the chain we name.
+//
 // *** WHY THERE IS A GUARD ***
 // Circle: "Directly transferring USDC to the Gateway Wallet contract with a
 // standard ERC-20 transfer will result in loss of that USDC." There is NO
-// recovery from that mistake, so assertNotPlainTransfer() makes it structurally
-// impossible for this code to do it.
+// recovery, so assertNotPlainTransfer() makes it structurally impossible for
+// this code to do it.
 //
 // AFTER DEPOSITING: funds are NOT instantly spendable. They must reach block
-// finality first ~0.5s on Arc, but ~13-19 MINUTES on Base or Ethereum. The
+// finality first - ~0.5s on Arc, but ~13-19 MINUTES on Base or Ethereum. The
 // UI must say so rather than leaving the user wondering.
 // ============================================================
 
 import { useState, useCallback } from 'react'
-import { useAccount, useWriteContract, useSwitchChain, useConfig } from 'wagmi'
-import { getPublicClient } from 'wagmi/actions'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import {
-  gatewayContracts, gatewayChains, usdcToUnits,
-  GATEWAY_WALLET_ABI, GATEWAY_ERC20_ABI, assertNotPlainTransfer,
+  executeContractCall, NeedsReauthError, NeedsChainError,
+} from '@/hooks/useCircleTx'
+import {
+  gatewayContracts, gatewayChains, usdcToUnits, assertNotPlainTransfer,
 } from '@/lib/gateway'
 import { chainByKey } from '@/lib/cctp-chains'
 import { evmChainId } from '@/lib/bridge-chains'
 
 export type DepositStep =
-  | 'idle' | 'switching' | 'approving' | 'depositing' | 'done' | 'error'
+  | 'idle' | 'approving' | 'depositing' | 'done' | 'error'
 
 export interface DepositState {
   step:      DepositStep
@@ -40,24 +43,23 @@ export interface DepositState {
   error:     string | null
   /** How long deposits take to become spendable on the chosen chain. */
   finality:  string | null
+  /** Human step note while the user approves on their device. */
+  note:      string | null
 }
 
 const INITIAL: DepositState = {
-  step: 'idle', approveTx: null, depositTx: null, error: null, finality: null,
+  step: 'idle', approveTx: null, depositTx: null, error: null, finality: null, note: null,
 }
 
 export function useGatewayDeposit() {
   const { address } = useAccount()
-  const { writeContractAsync } = useWriteContract()
-  const { switchChainAsync }   = useSwitchChain()
-  const config = useConfig()
   const [state, setState] = useState<DepositState>(INITIAL)
 
   const reset = useCallback(() => setState(INITIAL), [])
 
   const deposit = useCallback(async (params: { chainKey: string; amount: number }) => {
     if (!address) {
-      setState({ ...INITIAL, step: 'error', error: 'Connect a wallet first' })
+      setState({ ...INITIAL, step: 'error', error: 'Sign in first' })
       return
     }
 
@@ -80,25 +82,17 @@ export function useGatewayDeposit() {
     }
 
     const units = usdcToUnits(params.amount)
+    const note = (m: string) => setState(s => ({ ...s, note: m }))
 
     try {
-      setState({ ...INITIAL, step: 'switching', finality: gwChain.finality })
-      await switchChainAsync({ chainId }).catch(() => {
-        throw new Error(`Please switch your wallet to ${chain.name} and try again`)
-      })
-
       // ── 1. Approve the Gateway Wallet to pull USDC ─────
-      setState(s => ({ ...s, step: 'approving' }))
-      const approveTx = await writeContractAsync({
-        address: chain.usdc as `0x${string}`,
-        abi: GATEWAY_ERC20_ABI,
-        functionName: 'approve',
-        args: [wallet, units],
-        chainId,
-      })
-      await getPublicClient(config, { chainId })
-        ?.waitForTransactionReceipt({ hash: approveTx as `0x${string}` })
-      setState(s => ({ ...s, approveTx: approveTx as string }))
+      setState({ ...INITIAL, step: 'approving', finality: gwChain.finality })
+      await executeContractCall({
+        chainKey:             params.chainKey,
+        contractAddress:      chain.usdc,
+        abiFunctionSignature: 'approve(address,uint256)',
+        abiParameters:        [wallet, units.toString()],
+      }, note)
 
       // ── 2. Deposit ─────────────────────────────────────
       // Guard: this must be deposit() on the wallet contract, never a plain
@@ -106,26 +100,30 @@ export function useGatewayDeposit() {
       assertNotPlainTransfer('deposit', wallet)
 
       setState(s => ({ ...s, step: 'depositing' }))
-      const depositTx = await writeContractAsync({
-        address: wallet,
-        abi: GATEWAY_WALLET_ABI,
-        functionName: 'deposit',
-        args: [chain.usdc as `0x${string}`, units],
-        chainId,
-      })
-      const receipt = await getPublicClient(config, { chainId })
-        ?.waitForTransactionReceipt({ hash: depositTx as `0x${string}` })
-      if (receipt && receipt.status !== 'success') throw new Error('Deposit transaction failed')
+      const depositResult = await executeContractCall({
+        chainKey:             params.chainKey,
+        contractAddress:      wallet,
+        abiFunctionSignature: 'deposit(address,uint256)',
+        abiParameters:        [chain.usdc, units.toString()],
+      }, note)
 
-      setState(s => ({ ...s, step: 'done', depositTx: depositTx as string }))
+      if (!depositResult.txHash) {
+        throw new Error(
+          'The deposit was approved but is taking longer than usual to confirm. ' +
+          'Check your balance shortly - if it landed, it went through.')
+      }
+
+      setState(s => ({ ...s, step: 'done', depositTx: depositResult.txHash!, note: null }))
     } catch (err: any) {
       let message = err?.shortMessage ?? err?.message ?? 'Deposit failed'
-      if (/rpc request failed|fetch failed|failed to fetch/i.test(message)) {
+      if (err instanceof NeedsReauthError || err instanceof NeedsChainError) {
+        message = err.message
+      } else if (/rpc request failed|fetch failed|failed to fetch/i.test(message)) {
         message = 'Could not reach the network. Nothing was submitted, please try again.'
       }
-      setState(s => ({ ...s, step: 'error', error: message }))
+      setState(s => ({ ...s, step: 'error', error: message, note: null }))
     }
-  }, [address, writeContractAsync, switchChainAsync, config])
+  }, [address])
 
   return { ...state, deposit, reset }
 }

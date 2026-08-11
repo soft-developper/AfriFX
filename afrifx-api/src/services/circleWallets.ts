@@ -485,3 +485,40 @@ export async function findContractExecution(params: {
     amounts:    match.amounts,
   }
 }
+
+// ══════════════════════════════════════════════════════════
+// TYPED-DATA SIGNING (EIP-712, for Gateway burn intents)
+//
+// Gateway authorizes a transfer with an OFF-CHAIN EIP-712 signature, not a
+// contract call. Circle user-controlled wallets sign typed data via a
+// challenge (POST /user/sign/typedData). The wallet is an SCA, so the
+// resulting signature is ERC-1271 - which Gateway now accepts directly.
+// The signature itself comes back on the CLIENT from executing the challenge;
+// here we only build the challenge.
+// ══════════════════════════════════════════════════════════
+
+/**
+ * Create an EIP-712 typed-data signing challenge for the user's wallet.
+ *
+ * `typedData` is the EIP-712 object ({ types, domain, primaryType, message }).
+ * Circle wants it as a STRING in the `data` field, so we stringify it here.
+ * Returns a challengeId the browser executes to produce the signature.
+ */
+export async function createTypedDataSignature(params: {
+  userToken: string
+  walletId:  string
+  typedData: unknown
+  memo?:     string
+}): Promise<{ challengeId: string }> {
+  const data = await circleFetch(
+    '/v1/w3s/user/sign/typedData', params.userToken, {
+      method: 'POST',
+      body:   JSON.stringify({
+        walletId: params.walletId,
+        data:     typeof params.typedData === 'string'
+          ? params.typedData : JSON.stringify(params.typedData),
+        memo:     params.memo,
+      }),
+    })
+  return { challengeId: String(data.challengeId) }
+}

@@ -27,6 +27,7 @@ import {
   initializeUserWallet, listUserWallets, pickPrimaryWallet, addUserWalletChains,
   getPrimaryWalletId, getTokenId, createTransfer, getTransaction, findRecentTransfer,
   cctpBlockchainFor, getWalletIdForChain, createContractExecution, findContractExecution,
+  createTypedDataSignature,
 } from '../services/circleWallets'
 import {
   validateSignup, normalizeEmail, normalizeUsername, normalizeName,
@@ -405,6 +406,40 @@ router.get('/wallet/tx/find-contract', requireAccount, async (req, res) => {
       detail: (err as any).circleCode ?? (err as any).detail ?? undefined,
       where:  'find-contract',
     })
+  }
+})
+
+// POST /auth/wallet/sign/typed
+//   { userToken, chainKey, typedData, memo? }
+//
+// Create an EIP-712 typed-data signing challenge (for Gateway burn intents).
+// The signature is an off-chain ERC-1271 signature the browser retrieves by
+// executing the returned challenge. chainKey picks the wallet on the SOURCE
+// chain whose signature Gateway will verify.
+router.post('/wallet/sign/typed', requireAccount, async (req, res) => {
+  const { userToken, chainKey, typedData, memo } = req.body ?? {}
+
+  if (!userToken)  return res.status(400).json({ error: 'userToken is required' })
+  if (!chainKey)   return res.status(400).json({ error: 'chainKey is required' })
+  if (!typedData)  return res.status(400).json({ error: 'typedData is required' })
+
+  const blockchain = cctpBlockchainFor(String(chainKey))
+  if (!blockchain) return res.status(400).json({ error: `Unsupported chain: ${chainKey}` })
+
+  try {
+    const walletId = await getWalletIdForChain(String(userToken), blockchain)
+    const { challengeId } = await createTypedDataSignature({
+      userToken: String(userToken),
+      walletId,
+      typedData,
+      memo: memo ? String(memo) : undefined,
+    })
+    res.json({ challengeId })
+  } catch (err: any) {
+    const e = err as CircleAuthError
+    const body: any = { error: e.message }
+    if ((err as any).code === 'NEEDS_CHAIN') body.code = 'NEEDS_CHAIN'
+    res.status(e.status ?? 502).json(body)
   }
 })
 
