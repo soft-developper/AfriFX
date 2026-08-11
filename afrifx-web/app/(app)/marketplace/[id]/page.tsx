@@ -96,7 +96,7 @@ export default function OfferDetailPage() {
 
   const {
     takerConfirm, makerConfirm, raiseDispute, cancelOwnOffer,
-    isLoading: actionLoading, error, txHash,
+    isLoading: actionLoading, error, txHash, note,
   } = useP2P()
 
   // Profile hooks MUST be before any conditional returns (React rules of hooks)
@@ -635,6 +635,9 @@ export default function OfferDetailPage() {
             <div className="mt-3 flex items-start gap-2 rounded-lg bg-red-900/20 px-3 py-2.5 text-xs text-red-400">
               <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />{error}
             </div>
+          )}
+          {actionLoading && !!note && (
+            <p className="mt-2 text-xs text-app-muted">{note}</p>
           )}
           {!!txHash && (
             <a href={`https://testnet.arcscan.app/tx/${txHash}`}

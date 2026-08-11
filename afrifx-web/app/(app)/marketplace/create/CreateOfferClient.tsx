@@ -40,7 +40,7 @@ export function CreateOfferClient() {
   const [paymentNote,   setPaymentNote]   = useState('')
   const payoutComplete = accountName.trim() && accountNumber.trim() && bankName.trim()
 
-  const { createOffer, isLoading, error } = useP2P()
+  const { createOffer, isLoading, error, note } = useP2P()
   const { rate: fxRate } = useRate(`${localCurrency}/USDC`)
   const marketRate = fxRate?.rate ?? 0
 
@@ -352,6 +352,10 @@ export function CreateOfferClient() {
 
         {error && (
           <div className="rounded-lg bg-red-900/20 px-4 py-3 text-xs text-red-400">{error}</div>
+        )}
+
+        {isLoading && note && (
+          <p className="text-xs text-app-muted">{note}</p>
         )}
       </div>
     </div>

@@ -1,18 +1,37 @@
 'use client'
+// ============================================================
+// useP2P - marketplace escrow, signed by the user's CIRCLE wallet.
+//
+// CIRCLE MIGRATION (Phase 4, marketplace). Each on-chain action is a vault
+// contract call the user approves on their device via executeContractCall,
+// not a wagmi writeContract. Reads stay as plain Arc RPC lookups (receipts,
+// event logs) - those need no wallet, so usePublicClient is kept for them.
+//
+// MEMO DROPPED. Arc's Memo.memo() must be called from an EOA (its CallFrom
+// precompile forwards the EOA as msg.sender). A Circle wallet is a smart
+// contract, so a Memo-wrapped call reverts - verified on-chain with a probe
+// before this migration, and already the case for Convert (4b). We therefore
+// call the vault directly: the Circle SCA IS msg.sender for its own
+// contractExecution, which is exactly what the vault needs. The reference /
+// pair / memoId metadata is still persisted to the API below, so nothing is
+// lost operationally - only the on-chain annotation.
+//
+// DISCIPLINE (unchanged): a tx hash only means "broadcast". We read the
+// receipt and require status === success before recording an action as done,
+// so a reverted tx is never persisted as complete.
+// ============================================================
+
 import { useState } from 'react'
-import { useAccount, useWriteContract, usePublicClient } from 'wagmi'
-import {
-  parseUnits, isAddress, decodeEventLog, encodeFunctionData,
-} from 'viem'
+import { usePublicClient } from 'wagmi'
+import { parseUnits, isAddress, decodeEventLog } from 'viem'
 import { CONTRACTS, USDC_DECIMALS } from '@/lib/contracts'
-import { USDC_ABI } from '@/lib/usdc'
 import { VAULT_P2P_ABI } from '@/lib/vault-abi'
-import {
-  buildMemoId, buildReference, buildMemoTransferArgs,
-  buildMemoCallArgs, encodeMemoData,
-  MEMO_ADDRESS, MEMO_ABI,
-} from '@/lib/memo'
+import { buildMemoId, buildReference } from '@/lib/memo'
 import { arcTestnet } from '@/lib/arc-chain'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
+import {
+  executeContractCall, NeedsReauthError, NeedsChainError,
+} from '@/hooks/useCircleTx'
 
 const API  = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 const ZERO = '0x0000000000000000000000000000000000000000'
@@ -40,21 +59,19 @@ export function useP2P() {
   const [error,     setError]     = useState<string | null>(null)
   const [txHash,    setTxHash]    = useState<`0x${string}` | null>(null)
   const [offerId,   setOfferId]   = useState<`0x${string}` | null>(null)
-
-  const { writeContractAsync } = useWriteContract()
+  const [note,      setNote]      = useState<string | null>(null)
 
   function clearError() { setError(null) }
 
-  // Check Memo availability once
-  async function isMemoAvailable(): Promise<boolean> {
-    if (!publicClient) return false
-    try {
-      const code = await publicClient.getCode({ address: MEMO_ADDRESS })
-      return !!code && code !== '0x'
-    } catch { return false }
+  // Turn any executeContractCall failure into a user-facing message, keeping
+  // the reauth / chain signals meaningful instead of a generic "Failed".
+  function toMessage(err: any): string {
+    if (err instanceof NeedsReauthError) return err.message
+    if (err instanceof NeedsChainError)  return err.message
+    return err?.shortMessage ?? err?.message ?? 'Failed'
   }
 
-  // Extract OfferCreated bytes32 from receipt
+  // Extract OfferCreated bytes32 from a receipt (RPC read, no wallet needed).
   async function getOfferIdFromReceipt(hash: `0x${string}`): Promise<`0x${string}`> {
     if (!publicClient) throw new Error('No public client')
     const receipt = await publicClient.waitForTransactionReceipt({ hash })
@@ -74,8 +91,8 @@ export function useP2P() {
   }
 
   // Wait for the on-chain receipt and return whether it actually succeeded.
-  // A tx hash existing only means it was broadcast it can still revert,
-  // in which case we must NOT record the action as done.
+  // A tx hash existing only means it was broadcast; it can still revert, in
+  // which case we must NOT record the action as done.
   async function confirmedOnChain(hash: `0x${string}`): Promise<boolean> {
     if (!publicClient) return false
     try {
@@ -87,61 +104,50 @@ export function useP2P() {
   }
 
   // ── Create offer ──────────────────────────────────────────
-  // Note: approve() cannot be memo-wrapped (no state change to forward)
-  // createP2POffer() IS memo-wrapped vault sees user as msg.sender via CallFrom
+  // Two vault-chain calls: approve() then createP2POffer(). executeContractCall
+  // returns only after each call surfaces on-chain, so the approve is mined
+  // before the create - preserving the nonce ordering the old code enforced
+  // manually (no "nonce too low" from firing both instantly).
   async function createOffer(params: CreateOfferParams) {
-    if (!address) throw new Error('Wallet not connected')
+    if (!address) throw new Error('Sign in first')
     const vault = CONTRACTS.AFRIFX_VAULT
     if (!vault || vault === ZERO || !isAddress(vault)) throw new Error('Vault not configured')
 
-    setIsLoading(true); setError(null)
+    setIsLoading(true); setError(null); setNote(null)
     try {
       const usdcRaw  = parseUnits(params.usdcAmount.toFixed(6), USDC_DECIMALS)
       const localRaw = BigInt(Math.round(params.localAmount))
       const orderN   = params.orderType === 'limit' ? 1 : 0
       const memoId   = buildMemoId(`p2p-create-${address}`)
       const ref      = buildReference()
-      const useMemo  = await isMemoAvailable()
 
-      // 1. Approve vault (must be direct not memo-wrapped)
-      // Wait for it to be MINED before sending the next tx, otherwise the
-      // create tx grabs the same/stale nonce and the chain rejects it with
-      // "nonce too low". This matters most for the embedded (social-login)
-      // wallet, which signs both txs instantly in the background with no
-      // manual pause between them (unlike MetaMask's per-tx confirmation).
-      const approveHash = await writeContractAsync({
-        address: CONTRACTS.USDC, abi: USDC_ABI,
-        functionName: 'approve', args: [vault, usdcRaw],
-      })
-      if (publicClient) {
-        const approveReceipt = await publicClient.waitForTransactionReceipt({ hash: approveHash })
-        if (approveReceipt.status !== 'success') {
-          throw new Error('USDC approval failed on-chain, the offer was not created.')
-        }
-      }
+      // 1. Approve the vault to pull the maker's USDC.
+      await executeContractCall({
+        chainKey:             'arc',
+        contractAddress:      CONTRACTS.USDC,
+        abiFunctionSignature: 'approve(address,uint256)',
+        abiParameters:        [vault, usdcRaw.toString()],
+      }, setNote)
 
-      let hash: `0x${string}`
+      // 2. Create the offer.
+      const createResult = await executeContractCall({
+        chainKey:             'arc',
+        contractAddress:      vault,
+        abiFunctionSignature: 'createP2POffer(uint256,string,uint256,uint8,uint256)',
+        abiParameters: [
+          usdcRaw.toString(),
+          params.localCurrency,
+          localRaw.toString(),
+          orderN,
+          params.makerTimerSeconds.toString(),
+        ],
+      }, setNote)
 
-      if (useMemo) {
-        // 2. createP2POffer via Memo vault sees user as msg.sender
-        const createData = encodeFunctionData({
-          abi:          VAULT_P2P_ABI,
-          functionName: 'createP2POffer',
-          args:         [usdcRaw, params.localCurrency, localRaw, orderN, BigInt(params.makerTimerSeconds)],
-        })
-        const args = buildMemoCallArgs(vault, createData, memoId, {
-          app:  'afrifx',
-          type: 'p2p-create',
-          ref,
-          pair: `${params.localCurrency}/USDC`,
-        })
-        hash = await writeContractAsync(args)
-      } else {
-        hash = await writeContractAsync({
-          address: vault, abi: VAULT_P2P_ABI,
-          functionName: 'createP2POffer',
-          args: [usdcRaw, params.localCurrency, localRaw, orderN, BigInt(params.makerTimerSeconds)],
-        })
+      const hash = (createResult.txHash ?? '') as `0x${string}`
+      if (!hash) {
+        throw new Error(
+          'The offer was approved but is taking longer than usual to confirm. ' +
+          'Check the marketplace shortly - if it appears, it went through.')
       }
 
       setTxHash(hash)
@@ -172,37 +178,26 @@ export function useP2P() {
       })
       return realOfferId
     } catch (err: any) {
-      setError(err?.shortMessage ?? err?.message ?? 'Failed')
+      setError(toMessage(err))
       throw err
-    } finally { setIsLoading(false) }
+    } finally { setIsLoading(false); setNote(null) }
   }
 
   // ── Accept offer ──────────────────────────────────────────
   async function acceptOffer(offerId: `0x${string}`, makerTimerSeconds: number) {
-    if (!address) throw new Error('Wallet not connected')
-    setIsLoading(true); setError(null)
+    if (!address) throw new Error('Sign in first')
+    setIsLoading(true); setError(null); setNote(null)
     try {
-      const memoId  = buildMemoId(`p2p-accept-${offerId}`)
-      const useMemo = await isMemoAvailable()
+      const result = await executeContractCall({
+        chainKey:             'arc',
+        contractAddress:      CONTRACTS.AFRIFX_VAULT,
+        abiFunctionSignature: 'acceptP2POffer(bytes32)',
+        abiParameters:        [offerId],
+      }, setNote)
 
-      let hash: `0x${string}`
-      if (useMemo) {
-        const acceptData = encodeFunctionData({
-          abi: VAULT_P2P_ABI, functionName: 'acceptP2POffer', args: [offerId],
-        })
-        hash = await writeContractAsync(buildMemoCallArgs(
-          CONTRACTS.AFRIFX_VAULT, acceptData, memoId,
-          { app: 'afrifx', type: 'p2p-accept', offerId },
-        ))
-      } else {
-        hash = await writeContractAsync({
-          address: CONTRACTS.AFRIFX_VAULT, abi: VAULT_P2P_ABI,
-          functionName: 'acceptP2POffer', args: [offerId],
-        })
-      }
-
+      const hash = (result.txHash ?? '') as `0x${string}`
       setTxHash(hash)
-      if (!(await confirmedOnChain(hash))) {
+      if (!hash || !(await confirmedOnChain(hash))) {
         setError('Transaction reverted on-chain, the offer was not accepted.')
         throw new Error('accept reverted on-chain')
       }
@@ -214,37 +209,26 @@ export function useP2P() {
       })
       return hash
     } catch (err: any) {
-      setError(err?.shortMessage ?? err?.message ?? 'Failed')
+      setError(toMessage(err))
       throw err
-    } finally { setIsLoading(false) }
+    } finally { setIsLoading(false); setNote(null) }
   }
 
   // ── Taker confirms sent ───────────────────────────────────
   async function takerConfirm(offerId: `0x${string}`, makerTimerSeconds: number) {
-    if (!address) throw new Error('Wallet not connected')
-    setIsLoading(true); setError(null)
+    if (!address) throw new Error('Sign in first')
+    setIsLoading(true); setError(null); setNote(null)
     try {
-      const memoId  = buildMemoId(`p2p-taker-confirm-${offerId}`)
-      const useMemo = await isMemoAvailable()
+      const result = await executeContractCall({
+        chainKey:             'arc',
+        contractAddress:      CONTRACTS.AFRIFX_VAULT,
+        abiFunctionSignature: 'takerConfirm(bytes32)',
+        abiParameters:        [offerId],
+      }, setNote)
 
-      let hash: `0x${string}`
-      if (useMemo) {
-        const confirmData = encodeFunctionData({
-          abi: VAULT_P2P_ABI, functionName: 'takerConfirm', args: [offerId],
-        })
-        hash = await writeContractAsync(buildMemoCallArgs(
-          CONTRACTS.AFRIFX_VAULT, confirmData, memoId,
-          { app: 'afrifx', type: 'p2p-taker-confirm', offerId },
-        ))
-      } else {
-        hash = await writeContractAsync({
-          address: CONTRACTS.AFRIFX_VAULT, abi: VAULT_P2P_ABI,
-          functionName: 'takerConfirm', args: [offerId],
-        })
-      }
-
+      const hash = (result.txHash ?? '') as `0x${string}`
       setTxHash(hash)
-      if (!(await confirmedOnChain(hash))) {
+      if (!hash || !(await confirmedOnChain(hash))) {
         setError('Transaction reverted on-chain, your confirmation was not recorded.')
         throw new Error('takerConfirm reverted on-chain')
       }
@@ -256,37 +240,26 @@ export function useP2P() {
       })
       return hash
     } catch (err: any) {
-      setError(err?.shortMessage ?? err?.message ?? 'Failed')
+      setError(toMessage(err))
       throw err
-    } finally { setIsLoading(false) }
+    } finally { setIsLoading(false); setNote(null) }
   }
 
   // ── Maker confirms received ───────────────────────────────
   async function makerConfirm(offerId: `0x${string}`) {
-    if (!address) throw new Error('Wallet not connected')
-    setIsLoading(true); setError(null)
+    if (!address) throw new Error('Sign in first')
+    setIsLoading(true); setError(null); setNote(null)
     try {
-      const memoId  = buildMemoId(`p2p-maker-confirm-${offerId}`)
-      const useMemo = await isMemoAvailable()
+      const result = await executeContractCall({
+        chainKey:             'arc',
+        contractAddress:      CONTRACTS.AFRIFX_VAULT,
+        abiFunctionSignature: 'makerConfirm(bytes32)',
+        abiParameters:        [offerId],
+      }, setNote)
 
-      let hash: `0x${string}`
-      if (useMemo) {
-        const confirmData = encodeFunctionData({
-          abi: VAULT_P2P_ABI, functionName: 'makerConfirm', args: [offerId],
-        })
-        hash = await writeContractAsync(buildMemoCallArgs(
-          CONTRACTS.AFRIFX_VAULT, confirmData, memoId,
-          { app: 'afrifx', type: 'p2p-maker-confirm', offerId },
-        ))
-      } else {
-        hash = await writeContractAsync({
-          address: CONTRACTS.AFRIFX_VAULT, abi: VAULT_P2P_ABI,
-          functionName: 'makerConfirm', args: [offerId],
-        })
-      }
-
+      const hash = (result.txHash ?? '') as `0x${string}`
       setTxHash(hash)
-      if (!(await confirmedOnChain(hash))) {
+      if (!hash || !(await confirmedOnChain(hash))) {
         setError('Transaction reverted on-chain, your confirmation was not recorded.')
         throw new Error('makerConfirm reverted on-chain')
       }
@@ -297,19 +270,20 @@ export function useP2P() {
       })
       return hash
     } catch (err: any) {
-      setError(err?.shortMessage ?? err?.message ?? 'Failed')
+      setError(toMessage(err))
       throw err
-    } finally { setIsLoading(false) }
+    } finally { setIsLoading(false); setNote(null) }
   }
 
   // ── Taker raises dispute ──────────────────────────────────
+  // Server-only, no chain call - unchanged by the Circle migration.
   async function raiseDispute(
     offerId: string,
     reason?: string,
     disputeType: 'maker_not_received' | 'maker_silent' = 'maker_silent',
     raisedByRole: 'maker' | 'taker' = 'taker',
   ) {
-    if (!address) throw new Error('Wallet not connected')
+    if (!address) throw new Error('Sign in first')
     setIsLoading(true); setError(null)
     try {
       const res = await fetch(`${API}/disputes`, {
@@ -329,15 +303,19 @@ export function useP2P() {
 
   // ── Maker cancels own open offer ──────────────────────────
   async function cancelOwnOffer(offerId: `0x${string}`) {
-    if (!address) throw new Error('Wallet not connected')
-    setIsLoading(true); setError(null)
+    if (!address) throw new Error('Sign in first')
+    setIsLoading(true); setError(null); setNote(null)
     try {
-      const hash = await writeContractAsync({
-        address: CONTRACTS.AFRIFX_VAULT, abi: VAULT_P2P_ABI,
-        functionName: 'makerCancelOffer', args: [offerId],
-      })
+      const result = await executeContractCall({
+        chainKey:             'arc',
+        contractAddress:      CONTRACTS.AFRIFX_VAULT,
+        abiFunctionSignature: 'makerCancelOffer(bytes32)',
+        abiParameters:        [offerId],
+      }, setNote)
+
+      const hash = (result.txHash ?? '') as `0x${string}`
       setTxHash(hash)
-      if (!(await confirmedOnChain(hash))) {
+      if (!hash || !(await confirmedOnChain(hash))) {
         setError('Transaction reverted on-chain, the offer was not cancelled.')
         throw new Error('cancel reverted on-chain')
       }
@@ -348,14 +326,14 @@ export function useP2P() {
       })
       return hash
     } catch (err: any) {
-      setError(err?.shortMessage ?? err?.message ?? 'Failed')
+      setError(toMessage(err))
       throw err
-    } finally { setIsLoading(false) }
+    } finally { setIsLoading(false); setNote(null) }
   }
 
   return {
     createOffer, acceptOffer, takerConfirm,
     makerConfirm, raiseDispute, cancelOwnOffer,
-    isLoading, error, txHash, offerId, clearError,
+    isLoading, error, txHash, offerId, note, clearError,
   }
 }
