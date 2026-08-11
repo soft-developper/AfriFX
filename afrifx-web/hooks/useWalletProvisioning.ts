@@ -58,6 +58,13 @@ export async function provisionWallet(
     if (res.ok && data.ready) {
       const token = getToken()
       if (token) persistSession(token, data.account as Account)
+
+      // Add the CCTP bridge chains so a future bridge can mint on the
+      // destination. Best-effort: the Arc wallet is already live and the
+      // account is active, so a hiccup here must NOT block sign-in. Bridging
+      // can add any missing chain on demand later.
+      await addBridgeChains(userToken, encryptionKey, onStep).catch(() => {})
+
       return { account: data.account as Account, blockchain: data.blockchain }
     }
 
@@ -71,4 +78,40 @@ export async function provisionWallet(
   throw new Error(
     'Your wallet is taking longer than usual to appear. It may still be created \u2014 sign in again in a moment to check.',
   )
+}
+
+/**
+ * Add the CCTP bridge chains to the freshly created wallet.
+ *
+ * A bridge mints on the DESTINATION chain, which the user's wallet must
+ * already exist on. Circle gives every EVM chain the same address, but each
+ * one is added once - we do that here, at sign-up, so bridging is seamless
+ * later instead of pausing mid-transfer to add a chain.
+ *
+ * One extra device approval: the server asks Circle to add the chains and
+ * returns a challengeId, the user confirms it in the window, done. When every
+ * chain already exists (a repeated sign-in) the server returns no challenge
+ * and we return immediately.
+ *
+ * Deliberately allowed to throw - the caller treats any failure as non-fatal,
+ * because the Arc wallet already works and missing chains can be added on
+ * demand at bridge time.
+ */
+export async function addBridgeChains(
+  userToken: string,
+  encryptionKey: string,
+  onStep?: (message: string) => void,
+): Promise<void> {
+  const res = await apiFetch('/auth/wallet/add-chains', {
+    method: 'POST',
+    body:   JSON.stringify({ userToken }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error ?? 'Could not add bridge chains')
+
+  // No challenge means every chain already exists; nothing to approve.
+  if (data.challengeId) {
+    onStep?.('Confirm in the window to enable bridging')
+    await executeChallenge(data.challengeId, userToken, encryptionKey)
+  }
 }

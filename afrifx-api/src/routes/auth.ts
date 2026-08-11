@@ -24,7 +24,7 @@ import {
   createSession, revokeSession, requireAccount, bearerFrom,
 } from '../lib/accountAuth'
 import {
-  initializeUserWallet, listUserWallets, pickPrimaryWallet,
+  initializeUserWallet, listUserWallets, pickPrimaryWallet, addUserWalletChains,
   getPrimaryWalletId, getTokenId, createTransfer, getTransaction, findRecentTransfer,
 } from '../services/circleWallets'
 import {
@@ -214,6 +214,26 @@ router.post('/wallet/sync', requireAccount, async (req, res) => {
     }
     const e = err as CircleAuthError
     res.status(e.status ?? 502).json({ error: e.message ?? 'Could not read your wallet' })
+  }
+})
+
+// POST /auth/wallet/add-chains   { userToken }   (signed in)
+//
+// Adds the CCTP bridge chains to the user's wallet so a bridge can MINT on
+// the destination. Returns a challengeId the browser executes (one approval),
+// or challengeId: null when every chain already exists. This is provisioning
+// only - it records nothing on the account and the wallet stays usable on Arc
+// whether or not it succeeds.
+router.post('/wallet/add-chains', requireAccount, async (req, res) => {
+  const { userToken } = req.body ?? {}
+  if (!userToken) return res.status(400).json({ error: 'userToken is required' })
+
+  try {
+    const result = await addUserWalletChains(String(userToken))
+    res.json(result)
+  } catch (err: any) {
+    const e = err as CircleAuthError
+    res.status(e.status ?? 502).json({ error: e.message })
   }
 })
 

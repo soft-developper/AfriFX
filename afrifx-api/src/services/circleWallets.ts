@@ -27,6 +27,32 @@ const CIRCLE_BASE_URL = process.env.CIRCLE_BASE_URL ?? 'https://api.circle.com'
  */
 export const PRIMARY_BLOCKCHAIN = process.env.CIRCLE_BLOCKCHAIN ?? 'ARC-TESTNET'
 
+/**
+ * The extra chains a wallet needs beyond its primary (Arc) one so that
+ * CCTP bridging can MINT on the destination.
+ *
+ * WHY THIS EXISTS
+ * A bridge burns on the source chain and mints on the destination. The mint
+ * is a contract call the user's wallet has to sign ON THE DESTINATION CHAIN,
+ * so the wallet must exist there first. Circle user-controlled wallets share
+ * ONE address across EVM chains (unified addressing is automatic when the
+ * user token is passed), but each chain still has to be added once before
+ * the wallet can act on it.
+ *
+ * We add them all at sign-up so bridging is seamless later, rather than
+ * deriving a chain mid-bridge while the user waits. Arc itself is created by
+ * initializeUserWallet and is deliberately NOT repeated here.
+ *
+ * Testnet chain codes are Circle's own enum values (note Polygon Amoy is
+ * MATIC-AMOY, not "polygon"). Override via env for mainnet without a code
+ * change.
+ */
+export const CCTP_BRIDGE_CHAINS: string[] =
+  (process.env.CIRCLE_BRIDGE_CHAINS ?? 'BASE-SEPOLIA,ETH-SEPOLIA,ARB-SEPOLIA,MATIC-AMOY')
+    .split(',')
+    .map(s => s.trim().toUpperCase())
+    .filter(Boolean)
+
 /** Circle's code for "this user already has a wallet". Not an error for us. */
 const ALREADY_INITIALIZED = 155106
 
@@ -126,6 +152,52 @@ export function pickPrimaryWallet(
   const onChain = usable.find(
     w => String(w.blockchain).toUpperCase() === blockchain.toUpperCase())
   return onChain ?? usable[0]
+}
+
+/**
+ * Which of the CCTP bridge chains this user does NOT yet have a wallet on.
+ *
+ * Pure and exported so it can be tested without touching the network. Only
+ * chains missing from the user's current wallet list are returned, so calling
+ * addUserWalletChains repeatedly (e.g. a signup that was retried) never asks
+ * Circle to recreate chains that already exist.
+ */
+export function missingBridgeChains(
+  wallets: CircleWallet[], want: string[] = CCTP_BRIDGE_CHAINS,
+): string[] {
+  const have = new Set(wallets.map(w => String(w.blockchain).toUpperCase()))
+  return want.map(c => c.toUpperCase()).filter(c => !have.has(c))
+}
+
+/**
+ * Add the CCTP bridge chains to an already-initialized user's wallet.
+ *
+ * Returns a challengeId the browser must execute (the user approves once,
+ * as with any wallet action), or null when every chain already exists so the
+ * caller can skip straight past it.
+ *
+ * Circle creates the same address on each EVM chain automatically because we
+ * pass the user token; we only list the chains still missing.
+ */
+export async function addUserWalletChains(userToken: string): Promise<
+  { challengeId: string } | { challengeId: null }
+> {
+  const existing = await listUserWallets(userToken)
+  const missing  = missingBridgeChains(existing)
+  if (!missing.length) return { challengeId: null }
+
+  const data = await circleFetch('/v1/w3s/user/wallets', userToken, {
+    method: 'POST',
+    body:   JSON.stringify({
+      idempotencyKey: randomUUID(),
+      accountType:    'SCA',
+      blockchains:    missing,
+    }),
+  })
+  const challengeId = data?.challengeId
+  // No challengeId can come back if Circle decides there is nothing to do;
+  // treat that the same as "already present" rather than failing.
+  return challengeId ? { challengeId: String(challengeId) } : { challengeId: null }
 }
 
 // ══════════════════════════════════════════════════════════
