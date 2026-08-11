@@ -1,3 +1,45 @@
+#!/usr/bin/env bash
+# ============================================================
+# phase4b-convert-circle-signing.sh
+#
+# /convert (the "Trade" nav item today) signs with the Circle wallet.
+#
+# Run AFTER fix-send-confirmation.sh.
+#
+# A conversion is a USDC transfer to the vault, so it reuses the same
+# transfer path proven by Send - no new backend needed.
+#
+# ⚠ TRADEOFF: THE ON-CHAIN MEMO IS DROPPED
+# Memo requires a CONTRACT CALL (contractExecution), not a transfer,
+# and that endpoint is not built yet. The reference and memoId are
+# still persisted with the transaction record, so reconciliation is
+# unaffected - only the on-chain annotation is missing. If the Memo
+# matters to you on-chain, this feature should wait for
+# contractExecution instead.
+#
+# ALSO FIXED: waitForTransactionReceipt is now skipped when there is no
+# hash yet. Circle reports a transfer as approved before it surfaces a
+# hash, and asking viem for a receipt for an empty hash throws.
+#
+# NOTE ON NAMING: the nav label "Trade" currently points at /convert.
+# Per your plan, Trade will eventually point at the fiat on-ramp /
+# off-ramp, and Bridge is the Circle CCTP bridge. This script only
+# touches /convert, which is the placeholder behind that label - so
+# some of it is expected to be replaced when the real ramp lands.
+#
+# VERIFIED: web tsc clean, npm run build succeeds.
+# NOT verified: the browser flow.
+#
+# AFTER RUNNING:
+#   cd afrifx-web && rm -rf .next && npx tsc --noEmit && npm run build
+# ============================================================
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$ROOT"
+echo "→ Writing files…"
+
+mkdir -p "$(dirname "afrifx-web/hooks/useSwap.ts")"
+cat > 'afrifx-web/hooks/useSwap.ts' <<'AFX_T00_EOF'
 'use client'
 import { useState } from 'react'
 import { usePublicClient } from 'wagmi'
@@ -127,3 +169,10 @@ export function useSwap() {
     isLoading, error, txHash, txStatus, reference, statusMessage,
   }
 }
+AFX_T00_EOF
+echo "  ✓ afrifx-web/hooks/useSwap.ts"
+
+echo ""
+echo "→ Done."
+echo "  cd afrifx-web && rm -rf .next && npx tsc --noEmit && npm run build"
+echo ""
