@@ -1,3 +1,41 @@
+#!/usr/bin/env bash
+# ============================================================================
+# Phase 6c - HOTFIX: hold Gateway cross-chain send (ERC-1271 not yet accepted)
+#
+# WHY
+#   Gateway's /transfer attestation API rejects the SCA's ERC-1271 signature
+#   ("Invalid signature: recovered signer does not match sourceSigner") - it
+#   still statically ECDSA-recovers an EOA at that step, despite the ERC-1271
+#   announcement. So cross-chain Gateway SEND fails for every user. (Deposit,
+#   CCTP Bridge, P2P, Send/Convert all still work.)
+#
+# WHAT IT DOES
+#   Gates useGatewaySend behind NEXT_PUBLIC_GATEWAY_SEND_ENABLED. While unset
+#   (default), a cross-chain send returns a clear "temporarily unavailable"
+#   message instead of a raw signature error. Deposits are untouched. When
+#   Circle confirms ERC-1271 is live on the transfer API, set the env var to
+#   'true' to re-enable - no code change needed.
+#
+# CHANGES (1 file)
+#   afrifx-web/hooks/useGatewaySend.ts
+#
+# REQUIRES: Phase 6b.
+#
+# USAGE
+#   bash phase6c-hold-gateway-send.sh
+# ============================================================================
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WEB="$ROOT/afrifx-web"
+say(){ printf '\033[1;36m==>\033[0m %s\n' "$*"; }
+ok(){ printf '\033[1;32m  ok\033[0m %s\n' "$*"; }
+die(){ printf '\033[1;31m  x %s\033[0m\n' "$*" >&2; exit 1; }
+grep -q "signTypedData" "$WEB/hooks/useGatewaySend.ts" || die "Phase 6b not detected."
+BK="$ROOT/.phase6c-backup"; rm -rf "$BK"; mkdir -p "$BK/$(dirname afrifx-web/hooks/useGatewaySend.ts)"
+cp "$ROOT/afrifx-web/hooks/useGatewaySend.ts" "$BK/afrifx-web/hooks/useGatewaySend.ts" 2>/dev/null || true
+ok "snapshot saved"
+say "Writing file"
+cat > "$ROOT/afrifx-web/hooks/useGatewaySend.ts" <<'AFX_6C_EOF'
 'use client'
 // ============================================================
 // useGatewaySend - spend the unified Gateway balance, signed by the user's
@@ -278,3 +316,38 @@ export function useGatewaySend() {
 
   return { ...state, send, reset }
 }
+AFX_6C_EOF
+ok "wrote afrifx-web/hooks/useGatewaySend.ts"
+
+say "Verifying"
+grep -q "GATEWAY_SEND_ENABLED" "$WEB/hooks/useGatewaySend.ts" || die "guard missing"
+
+say "WEB: install + tsc + build"
+( cd "$WEB" && npm install --no-audit --no-fund --loglevel=error >/dev/null 2>&1 && rm -rf .next && npx tsc --noEmit ) || { cp -rf "$BK"/. "$ROOT"/; die "web tsc failed - restored"; }
+ok "web typechecks"
+( cd "$WEB" && npm run build >/dev/null 2>&1 ) || { cp -rf "$BK"/. "$ROOT"/; die "web build failed - restored"; }
+ok "web builds"
+rm -rf "$BK"
+say "Phase 6c applied and verified."
+cat <<'NOTE'
+
+  Gateway cross-chain SEND now shows a friendly "temporarily unavailable"
+  message instead of failing on the signature. Deposits still work.
+
+  Commit & push:
+    git add afrifx-web/hooks/useGatewaySend.ts
+    git commit -m "phase 6c: hold Gateway cross-chain send pending ERC-1271 confirmation"
+    git push origin main
+
+  WHEN CIRCLE CONFIRMS ERC-1271 IS LIVE ON /transfer:
+    - If it just needs enabling: set NEXT_PUBLIC_GATEWAY_SEND_ENABLED=true in
+      the web env (Vercel) and redeploy. No code change.
+    - If it needs a signature-FORMAT change: tell me exactly what Circle says
+      and I'll apply it, then flip the flag.
+
+  QUESTION TO ASK CIRCLE:
+    "Is ERC-1271 burn-intent signing live on the TESTNET /v1/transfer API for
+     user-controlled SCA wallets? If so, what signature format does the
+     transfer request expect (raw 65-byte, or an ERC-6492/wrapped form), and
+     does the SCA need any on-chain registration first?"
+NOTE
