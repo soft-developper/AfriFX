@@ -1,49 +1,48 @@
 'use client'
 // ============================================================
-// useCompleteBridge, finish a mint that was left outstanding.
+// useCompleteBridge — finish a mint that was left outstanding.
 //
 // WHY THIS EXISTS
 // A CCTP bridge burns on the source chain, then mints on the destination. The
 // mint is a SEPARATE transaction, so anything that interrupts the flow (closing
-// the tab, a slow attestation, an RPC failure) leaves the burn done and the
-// mint owed.
+// the tab, a slow attestation) leaves the burn done and the mint owed.
 //
-// Our reconciler can SEE those, but it cannot fix them: the platform holds no
-// key, by design. So the person who owns the funds needs a way to finish it
-// themselves. That is what this does.
+// Our reconciler can SEE those but cannot fix them: the platform holds no key,
+// by design. So the owner of the funds finishes it themselves. That is what
+// this does.
 //
-// The good news is that CCTP makes this safe and permanent:
+// CCTP makes this safe and permanent:
 //   * attestations DO NOT EXPIRE, so there is no deadline
-//   * we set destinationCaller to bytes32(0) at burn time, meaning ANY address
-//     may submit the mint
-// So a stranded transfer is always recoverable, and recovering it needs nothing
-// but the original burn transaction hash, which we persisted.
+//   * destinationCaller was bytes32(0) at burn time, so ANY address may mint
+// A stranded transfer is always recoverable, needing only the original burn
+// transaction hash, which we persisted.
+//
+// CIRCLE MIGRATION: the mint is a contractExecution challenge the user approves
+// on their device (executeContractCall), signed by their Circle wallet on the
+// destination chain. No wagmi, no network switch — Circle runs the call on the
+// chain we name.
 // ============================================================
 
 import { useState, useCallback } from 'react'
-import { useWriteContract, useSwitchChain, useConfig } from 'wagmi'
-import { getPublicClient } from 'wagmi/actions'
-import { irisBase, chainByKey } from '@/lib/cctp-chains'
-import { MESSAGE_TRANSMITTER_V2_ABI, fetchAttestation } from '@/lib/cctp-client'
-import { cctpContracts } from '@/lib/cctp-chains'
-import { evmChainId } from '@/lib/bridge-chains'
+import {
+  executeContractCall, NeedsReauthError, NeedsChainError,
+} from '@/hooks/useCircleTx'
+import { irisBase, chainByKey, cctpContracts } from '@/lib/cctp-chains'
+import { fetchAttestation } from '@/lib/cctp-client'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 
-export type CompleteStep = 'idle' | 'checking' | 'switching' | 'minting' | 'done' | 'error'
+export type CompleteStep = 'idle' | 'checking' | 'minting' | 'done' | 'error'
 
 export function useCompleteBridge() {
-  const { writeContractAsync } = useWriteContract()
-  const { switchChainAsync }   = useSwitchChain()
-  const config = useConfig()
-
   const [step,   setStep]   = useState<CompleteStep>('idle')
   const [error,  setError]  = useState<string | null>(null)
   const [mintTx, setMintTx] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [note,   setNote]   = useState<string | null>(null)
 
   const reset = useCallback(() => {
-    setStep('idle'); setError(null); setMintTx(null); setBusyId(null)
+    setStep('idle'); setError(null); setMintTx(null); setBusyId(null); setNote(null)
   }, [])
 
   const complete = useCallback(async (bridge: {
@@ -58,13 +57,12 @@ export function useCompleteBridge() {
     }
 
     setBusyId(bridge.id)
-    setStep('checking'); setError(null)
+    setStep('checking'); setError(null); setNote(null)
 
     try {
       const from = chainByKey(bridge.from_chain)
       const to   = chainByKey(bridge.to_chain)
-      const dstChainId = evmChainId(bridge.to_chain)
-      if (!from || !to || !dstChainId) throw new Error('Unsupported route')
+      if (!from || !to) throw new Error('Unsupported route')
 
       // 1. Fetch the attestation using the ORIGINAL burn tx. Attestations never
       //    expire, so this works however long ago the burn happened.
@@ -87,24 +85,16 @@ export function useCompleteBridge() {
         body: JSON.stringify({ attestation: att.attestation }),
       }).catch(() => {})
 
-      // 2. Mint on the destination chain.
-      setStep('switching')
-      try {
-        await switchChainAsync({ chainId: dstChainId })
-      } catch {
-        throw new Error(`Please switch your wallet to ${to.name}, then try again.`)
-      }
-
+      // 2. Mint on the destination chain via a Circle challenge.
       setStep('minting')
-      const tx = await writeContractAsync({
-        address: cctpContracts().messageTransmitter as `0x${string}`,
-        abi: MESSAGE_TRANSMITTER_V2_ABI,
-        functionName: 'receiveMessage',
-        args: [att.message as `0x${string}`, att.attestation as `0x${string}`],
-        chainId: dstChainId,
-      })
-      await getPublicClient(config, { chainId: dstChainId })
-        ?.waitForTransactionReceipt({ hash: tx as `0x${string}` })
+      const result = await executeContractCall({
+        chainKey:             to.key,
+        contractAddress:      cctpContracts().messageTransmitter,
+        abiFunctionSignature: 'receiveMessage(bytes,bytes)',
+        abiParameters:        [att.message, att.attestation],
+      }, setNote)
+
+      const tx = result.txHash ?? 'pending'
 
       await fetch(`${API}/bridge/${bridge.id}/completed`, {
         method: 'POST',
@@ -112,11 +102,13 @@ export function useCompleteBridge() {
         body: JSON.stringify({ mintTx: tx }),
       }).catch(() => {})
 
-      setMintTx(tx as string)
-      setStep('done')
+      setMintTx(tx)
+      setStep('done'); setNote(null)
     } catch (err: any) {
-      let message = err?.shortMessage ?? err?.message ?? 'Could not complete the transfer'
-      if (/already been used|nonce already/i.test(message)) {
+      let message = err?.message ?? 'Could not complete the transfer'
+      if (err instanceof NeedsReauthError || err instanceof NeedsChainError) {
+        message = err.message
+      } else if (/already been used|nonce already|already minted/i.test(message)) {
         // The mint already happened, so this is success, not failure.
         message = 'This transfer was already completed. Refreshing the list.'
         await fetch(`${API}/bridge/${bridge.id}/completed`, {
@@ -125,11 +117,11 @@ export function useCompleteBridge() {
           body: JSON.stringify({ mintTx: 'already-minted' }),
         }).catch(() => {})
       }
-      setStep('error'); setError(message)
+      setStep('error'); setError(message); setNote(null)
     } finally {
       setBusyId(null)
     }
-  }, [writeContractAsync, switchChainAsync, config])
+  }, [])
 
-  return { step, error, mintTx, busyId, complete, reset }
+  return { step, error, mintTx, busyId, note, complete, reset }
 }

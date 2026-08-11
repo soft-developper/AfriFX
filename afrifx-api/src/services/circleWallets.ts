@@ -333,3 +333,142 @@ export async function findRecentTransfer(params: {
     amounts:    match.amounts,
   }
 }
+
+// ══════════════════════════════════════════════════════════
+// CONTRACT EXECUTION (bridge burn / approve / mint)
+//
+// A CCTP bridge is three contract calls the user's wallet signs:
+//   approve() + depositForBurn() on the SOURCE chain, then
+//   receiveMessage() on the DESTINATION chain.
+// Each is the same challenge handshake as a transfer: build here, the user
+// approves on their device, then we locate the resulting transaction to read
+// its on-chain hash. Nothing is signed on the server.
+// ══════════════════════════════════════════════════════════
+
+/**
+ * Map the app's internal chain key to Circle's blockchain enum value.
+ *
+ * The rest of the app keys chains as arc/base/ethereum/arbitrum/polygon, but
+ * Circle's API wants its own codes (and Polygon Amoy is MATIC-AMOY, NOT
+ * "polygon" - the classic mix-up). Kept in one place so the mapping can't
+ * drift. Mainnet codes are provided too for when CCTP_ENV flips.
+ */
+export function cctpBlockchainFor(key: string): string | null {
+  const testnet: Record<string, string> = {
+    arc: 'ARC-TESTNET', base: 'BASE-SEPOLIA', ethereum: 'ETH-SEPOLIA',
+    arbitrum: 'ARB-SEPOLIA', polygon: 'MATIC-AMOY',
+  }
+  const mainnet: Record<string, string> = {
+    arc: 'ARC-TESTNET', base: 'BASE', ethereum: 'ETH',
+    arbitrum: 'ARB', polygon: 'MATIC',
+  }
+  const isMainnet = (process.env.CCTP_ENV ?? 'testnet') === 'mainnet'
+  return (isMainnet ? mainnet : testnet)[key] ?? null
+}
+
+/**
+ * The wallet id on a specific blockchain.
+ *
+ * A bridge signs the burn on the source chain and the mint on the
+ * destination, so we can't reuse the primary (Arc) wallet id for both - we
+ * need the id of the wallet that lives on the chain the call targets. Circle
+ * gives every EVM chain the same ADDRESS but a distinct wallet id, so we look
+ * the id up by blockchain.
+ *
+ * Throws NEEDS_CHAIN (409) when the user has no wallet on that chain yet, so
+ * the caller can trigger the add-chains flow rather than failing opaquely.
+ */
+export async function getWalletIdForChain(
+  userToken: string, blockchain: string,
+): Promise<string> {
+  const wallets = await listUserWallets(userToken)
+  const match = wallets.find(
+    w => String(w.blockchain).toUpperCase() === blockchain.toUpperCase()
+      && w.address && w.state !== 'FROZEN')
+  if (!match) {
+    const err = new CircleAuthError(
+      `Your wallet isn't set up on ${blockchain} yet. Finish enabling bridging and try again.`,
+      409)
+    ;(err as any).code = 'NEEDS_CHAIN'
+    throw err
+  }
+  return match.id
+}
+
+/**
+ * Build a contract execution. Returns a challengeId for the user to approve.
+ *
+ * abiParameters follow Circle's rules: addresses and bytes32 as 0x-hex
+ * strings, uint256 as decimal strings, booleans as booleans, arrays nested.
+ * The caller passes them already in that shape.
+ */
+export async function createContractExecution(params: {
+  userToken:            string
+  walletId:             string
+  contractAddress:      string
+  abiFunctionSignature: string
+  abiParameters:        (string | number | boolean | unknown[])[]
+  feeLevel?:            'LOW' | 'MEDIUM' | 'HIGH'
+}): Promise<{ challengeId: string }> {
+  const data = await circleFetch(
+    '/v1/w3s/user/transactions/contractExecution', params.userToken, {
+      method: 'POST',
+      body:   JSON.stringify({
+        idempotencyKey:       randomUUID(),
+        walletId:             params.walletId,
+        contractAddress:      params.contractAddress,
+        abiFunctionSignature: params.abiFunctionSignature,
+        abiParameters:        params.abiParameters,
+        feeLevel:             params.feeLevel ?? 'MEDIUM',
+      }),
+    })
+  return { challengeId: String(data.challengeId) }
+}
+
+/**
+ * Find the transaction a contract-execution challenge produced.
+ *
+ * Like a transfer, the challenge gives back a challengeId, NOT a transaction
+ * id, so we poll the transaction LIST. A bridge fires several contract calls
+ * (approve, burn on the source; mint on the destination), so matching on the
+ * destination address isn't enough - we match on the CONTRACT the call
+ * targeted, on the right chain, created after we started. Newest wins.
+ *
+ * `since` is epoch seconds. The list is narrowed server-side by blockchain and
+ * operation so we're not scanning unrelated transfers.
+ */
+export async function findContractExecution(params: {
+  userToken:       string
+  walletId:        string
+  blockchain:      string
+  contractAddress: string
+  since:           number
+}): Promise<CircleTransaction | null> {
+  const qs = new URLSearchParams({
+    walletIds:  params.walletId,
+    blockchain: params.blockchain,
+    operation:  'CONTRACT_EXECUTION',
+    pageSize:   '20',
+  })
+  const data = await circleFetch(
+    `/v1/w3s/transactions?${qs.toString()}`, params.userToken)
+
+  const list = (data.transactions ?? []) as any[]
+  const want = params.contractAddress.toLowerCase()
+
+  const match = list.find(t => {
+    if (String(t.contractAddress ?? '').toLowerCase() !== want) return false
+    const created = Date.parse(String(t.createDate ?? '')) / 1000
+    // Allow a little clock skew between us and Circle.
+    return !Number.isFinite(created) || created >= params.since - 120
+  })
+
+  if (!match) return null
+  return {
+    id:         String(match.id),
+    state:      String(match.state ?? 'UNKNOWN'),
+    txHash:     match.txHash,
+    blockchain: match.blockchain,
+    amounts:    match.amounts,
+  }
+}

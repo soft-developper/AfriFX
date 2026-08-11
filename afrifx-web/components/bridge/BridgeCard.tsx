@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useAccount, useChainId, useSwitchChain } from 'wagmi'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import {
   ArrowDown, Loader2, CheckCircle, AlertTriangle, ExternalLink, Info,
 } from 'lucide-react'
@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import { useBridge } from '@/hooks/useBridge'
 import { cctpChains, chainByKey, isRouteSupported } from '@/lib/cctp-chains'
 import { useChainUsdcBalance } from '@/hooks/useChainUsdcBalance'
-import { evmChainId } from '@/lib/bridge-chains'
 
 /*
   Bridge UI for CCTP transfers.
@@ -33,7 +32,7 @@ const FLOW: { key: string; label: (from: string, to: string, amt: string) => str
   { key: 'minting',   label: (_f, t)     => `Mint on ${t}` },
 ]
 
-const ORDER = ['creating', 'switching', 'approving', 'burning', 'attesting', 'minting', 'done']
+const ORDER = ['creating', 'approving', 'burning', 'attesting', 'minting', 'done']
 
 function stageState(stage: string, current: string): 'done' | 'active' | 'pending' {
   if (current === 'done') return 'done'
@@ -47,9 +46,7 @@ function stageState(stage: string, current: string): 'done' | 'active' | 'pendin
 
 export function BridgeCard() {
   const { address, isConnected } = useAccount()
-  const activeChainId = useChainId()
-  const { switchChain, isPending: switching } = useSwitchChain()
-  const { step, bridgeId, burnTx, mintTx, error, inFlight, waitedSec, bridge, reset, env } = useBridge()
+  const { step, bridgeId, burnTx, mintTx, error, inFlight, waitedSec, note, bridge, reset, env } = useBridge()
 
   const chains = cctpChains()
   const [fromKey, setFromKey] = useState('arc')
@@ -74,22 +71,13 @@ export function BridgeCard() {
   const to   = chainByKey(toKey)
   const routeOk = isRouteSupported(fromKey, toKey)
   const amt = Number(amount)
-  const busy = ['creating','switching','approving','burning','attesting','minting'].includes(step)
+  const busy = ['creating','approving','burning','attesting','minting'].includes(step)
   const insufficient = amt > 0 && amt > balance
 
   const canSubmit = isConnected && routeOk && amt > 0 && !busy && !insufficient
 
   function swapDirection() {
     setFromKey(toKey); setToKey(fromKey)
-  }
-
-  const stepLabel: Record<string, string> = {
-    creating:  'Preparing transfer…',
-    switching: `Switch your wallet to ${from?.name ?? 'the source chain'}`,
-    approving: 'Approve USDC spending in your wallet',
-    burning:   'Confirm the transfer in your wallet',
-    attesting: 'Waiting for Circle to attest (usually under a minute)',
-    minting:   `Switch to ${to?.name ?? 'the destination'} and confirm the final step`,
   }
 
   const explorerTx = (chainKey: string, hash: string) => {
@@ -171,29 +159,6 @@ export function BridgeCard() {
         <p className="mb-3 text-xs text-amber-400">Source and destination must be different chains.</p>
       )}
 
-      {/* Manual network switch. Auto-switching is unreliable across wallets,
-          so when the wallet isn't on the source chain we say so and give a
-          button, instead of only discovering it mid-transfer. */}
-      {isConnected && !!from && evmChainId(fromKey) !== undefined &&
-       activeChainId !== evmChainId(fromKey) && (
-        <div className="mb-3 rounded-lg border border-amber-700/40 bg-amber-900/10 p-2.5">
-          <p className="text-[11px] text-amber-800 dark:text-amber-200/90">
-            Your wallet is on a different network. Bridging from {from.name}
-            {' '}needs it selected.
-          </p>
-          <button
-            onClick={() => {
-              const id = evmChainId(fromKey)
-              if (id) switchChain({ chainId: id })
-            }}
-            disabled={switching || busy}
-            className="mt-1.5 rounded-md bg-app-accent px-2.5 py-1 text-[11px] font-medium text-app-on-accent hover:opacity-90 disabled:opacity-50"
-          >
-            {switching ? 'Switching…' : `Switch to ${from.name}`}
-          </button>
-        </div>
-      )}
-
       {insufficient && (
         <p className="mb-3 flex items-center gap-1.5 rounded-lg bg-red-900/20 px-3 py-2 text-xs text-red-400">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
@@ -234,10 +199,18 @@ export function BridgeCard() {
           onClick={() => bridge({ fromKey, toKey, amount: amt })}
         >
           {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> Working…</>
-                : !isConnected ? 'Connect a wallet'
+                : !isConnected ? 'Sign in to bridge'
                 : insufficient ? 'Insufficient balance'
                 : 'Bridge USDC'}
         </Button>
+      )}
+
+      {/* Live step note: with a Circle wallet each approve/burn/mint is a
+          prompt on the user's device, so tell them what they're approving. */}
+      {busy && note && (
+        <p className="mt-2 flex items-center gap-1.5 text-[11px] text-app-muted">
+          <Loader2 className="h-3 w-3 animate-spin" /> {note}
+        </p>
       )}
 
       {/* Progress */}

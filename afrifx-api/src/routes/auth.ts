@@ -26,6 +26,7 @@ import {
 import {
   initializeUserWallet, listUserWallets, pickPrimaryWallet, addUserWalletChains,
   getPrimaryWalletId, getTokenId, createTransfer, getTransaction, findRecentTransfer,
+  cctpBlockchainFor, getWalletIdForChain, createContractExecution, findContractExecution,
 } from '../services/circleWallets'
 import {
   validateSignup, normalizeEmail, normalizeUsername, normalizeName,
@@ -304,6 +305,85 @@ router.get('/wallet/tx/:id', requireAccount, async (req, res) => {
   if (!userToken) return res.status(400).json({ error: 'userToken is required' })
   try {
     res.json(await getTransaction(userToken, req.params.id))
+  } catch (err: any) {
+    const e = err as CircleAuthError
+    res.status(e.status ?? 502).json({ error: e.message })
+  }
+})
+
+// POST /auth/wallet/tx/contract
+//   { userToken, chainKey, contractAddress, abiFunctionSignature, abiParameters, feeLevel? }
+//
+// Build a contract execution (bridge approve/burn/mint) on a specific chain.
+// chainKey is the app's key (arc/base/ethereum/arbitrum/polygon); we resolve
+// it to Circle's blockchain code and to the wallet id on that chain. Returns a
+// challengeId the browser executes. A 409 with code NEEDS_CHAIN means the
+// user's wallet isn't on that chain yet.
+router.post('/wallet/tx/contract', requireAccount, async (req, res) => {
+  const {
+    userToken, chainKey, contractAddress,
+    abiFunctionSignature, abiParameters, feeLevel,
+  } = req.body ?? {}
+
+  if (!userToken)       return res.status(400).json({ error: 'userToken is required' })
+  if (!chainKey)        return res.status(400).json({ error: 'chainKey is required' })
+  if (!/^0x[a-fA-F0-9]{40}$/.test(String(contractAddress ?? ''))) {
+    return res.status(400).json({ error: 'A valid contractAddress is required' })
+  }
+  if (!abiFunctionSignature) {
+    return res.status(400).json({ error: 'abiFunctionSignature is required' })
+  }
+  if (!Array.isArray(abiParameters)) {
+    return res.status(400).json({ error: 'abiParameters must be an array' })
+  }
+
+  const blockchain = cctpBlockchainFor(String(chainKey))
+  if (!blockchain) return res.status(400).json({ error: `Unsupported chain: ${chainKey}` })
+
+  try {
+    const walletId = await getWalletIdForChain(String(userToken), blockchain)
+    const { challengeId } = await createContractExecution({
+      userToken: String(userToken),
+      walletId,
+      contractAddress:      String(contractAddress),
+      abiFunctionSignature: String(abiFunctionSignature),
+      abiParameters,
+      feeLevel: feeLevel === 'LOW' || feeLevel === 'HIGH' ? feeLevel : 'MEDIUM',
+    })
+    res.json({ challengeId })
+  } catch (err: any) {
+    const e = err as CircleAuthError
+    // Surface the NEEDS_CHAIN marker so the client can prompt to enable the chain.
+    const body: any = { error: e.message }
+    if ((err as any).code === 'NEEDS_CHAIN') body.code = 'NEEDS_CHAIN'
+    res.status(e.status ?? 502).json(body)
+  }
+})
+
+// GET /auth/wallet/tx/find-contract?userToken=..&chainKey=..&contract=..&since=..
+//
+// A contract-execution challenge returns no transaction id, so the client asks
+// us to locate the transaction it produced (to read its on-chain hash).
+router.get('/wallet/tx/find-contract', requireAccount, async (req, res) => {
+  const userToken = String(req.query.userToken ?? '')
+  const chainKey  = String(req.query.chainKey ?? '')
+  const contract  = String(req.query.contract ?? '')
+  const since     = Number(req.query.since ?? 0)
+
+  if (!userToken) return res.status(400).json({ error: 'userToken is required' })
+  if (!chainKey)  return res.status(400).json({ error: 'chainKey is required' })
+  if (!contract)  return res.status(400).json({ error: 'contract is required' })
+
+  const blockchain = cctpBlockchainFor(chainKey)
+  if (!blockchain) return res.status(400).json({ error: `Unsupported chain: ${chainKey}` })
+
+  try {
+    const walletId = await getWalletIdForChain(userToken, blockchain)
+    const tx = await findContractExecution({
+      userToken, walletId, blockchain, contractAddress: contract, since,
+    })
+    // Not an error: Circle may not have indexed it yet.
+    res.json(tx ?? { state: 'PENDING' })
   } catch (err: any) {
     const e = err as CircleAuthError
     res.status(e.status ?? 502).json({ error: e.message })

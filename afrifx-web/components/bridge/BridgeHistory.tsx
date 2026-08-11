@@ -167,6 +167,9 @@ export function BridgeHistory() {
                   {finish.busyId === r.id && finish.step === 'checking' && (
                     <p className="mt-1 text-[10px] text-app-muted">Checking with Circle...</p>
                   )}
+                  {finish.busyId === r.id && finish.note && (
+                    <p className="mt-1 text-[10px] text-app-muted">{finish.note}</p>
+                  )}
                   {finish.error && finish.busyId === null && (
                     <p className="mt-1 text-[10px] text-red-700 dark:text-red-300">{finish.error}</p>
                   )}

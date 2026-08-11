@@ -149,3 +149,109 @@ export async function sendUsdc(
   // have moved, so say so honestly instead of reporting an error.
   return { state: 'PENDING' }
 }
+
+/**
+ * Execute a contract call from the user's Circle wallet on a given chain.
+ *
+ * This is the bridge's building block: approve() and depositForBurn() on the
+ * source chain, receiveMessage() on the destination. Same shape as sendUsdc -
+ * build on the server, approve on the device, then poll for the on-chain
+ * hash - but for an arbitrary contract call rather than a plain transfer.
+ *
+ * Throws NeedsReauthError when there is no live Circle token so callers can
+ * prompt for re-authentication instead of a generic failure. Throws
+ * NeedsChainError when the wallet isn't on the target chain yet.
+ *
+ * Returns the transaction hash once Circle surfaces it. `waitForHash: false`
+ * returns as soon as the challenge is approved (the caller polls elsewhere).
+ */
+export class NeedsChainError extends Error {
+  constructor(message?: string) {
+    super(message ?? 'Your wallet isn\u2019t set up on that chain yet.')
+    this.name = 'NeedsChainError'
+  }
+}
+
+export interface ContractCallParams {
+  chainKey:             string
+  contractAddress:      string
+  abiFunctionSignature: string
+  abiParameters:        (string | number | boolean | unknown[])[]
+  feeLevel?:            'LOW' | 'MEDIUM' | 'HIGH'
+}
+
+export async function executeContractCall(
+  params: ContractCallParams,
+  onStep?: (message: string) => void,
+): Promise<TransferResult> {
+  const session = getSigningSession()
+  if (!session) throw new NeedsReauthError()
+
+  const startedAt = Date.now()
+
+  onStep?.('Preparing the transaction')
+
+  const res = await apiFetch('/auth/wallet/tx/contract', {
+    method: 'POST',
+    body:   JSON.stringify({
+      userToken:            session.userToken,
+      chainKey:             params.chainKey,
+      contractAddress:      params.contractAddress,
+      abiFunctionSignature: params.abiFunctionSignature,
+      abiParameters:        params.abiParameters,
+      feeLevel:             params.feeLevel,
+    }),
+  })
+  const data = await res.json().catch(() => ({}))
+
+  if (res.status === 401) { clearSigningSession(); throw new NeedsReauthError() }
+  if (data?.code === 'NEEDS_CHAIN') throw new NeedsChainError(data.error)
+  if (!res.ok) throw new Error(data.error ?? 'Could not prepare the transaction')
+
+  onStep?.('Approve the transaction to continue')
+  await executeChallenge(data.challengeId, session.userToken, session.encryptionKey)
+
+  onStep?.('Confirming on-chain')
+
+  // The challenge returns no transaction id, so ask the server to locate the
+  // transaction it produced on this chain/contract and read its hash.
+  const since = Math.floor(startedAt / 1000)
+  let consecutiveErrors = 0
+
+  for (let i = 0; i < 40; i++) {
+    await new Promise(r => setTimeout(r, 2000))
+
+    const s = getSigningSession()
+    if (!s) throw new NeedsReauthError()
+
+    const qs = new URLSearchParams({
+      userToken: s.userToken,
+      chainKey:  params.chainKey,
+      contract:  params.contractAddress,
+      since:     String(since),
+    })
+    const r2 = await apiFetch(`/auth/wallet/tx/find-contract?${qs}`)
+
+    if (!r2.ok) {
+      if (++consecutiveErrors >= 5) {
+        throw new Error(
+          'Lost track of the transaction while confirming it. It may still have ' +
+          'gone through \u2014 check before retrying.',
+        )
+      }
+      continue
+    }
+    consecutiveErrors = 0
+
+    const tx = await r2.json().catch(() => ({}))
+    if (DONE.includes(tx.state))   return { txHash: tx.txHash, state: tx.state }
+    if (FAILED.includes(tx.state)) throw new Error(`Transaction ${String(tx.state).toLowerCase()}`)
+
+    // Once we have a hash it's on-chain, even if Circle hasn't marked it
+    // COMPLETE yet. Return it rather than making the caller wait.
+    if (tx.txHash) return { txHash: tx.txHash, state: tx.state ?? 'SENT' }
+  }
+
+  // Approved and broadcast, just slow. Not a failure.
+  return { state: 'PENDING' }
+}

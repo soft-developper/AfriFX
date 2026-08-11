@@ -8,8 +8,9 @@
 // ============================================================
 
 import { useState, useEffect, useCallback } from 'react'
-import { useAccount, useConfig } from 'wagmi'
+import { useConfig } from 'wagmi'
 import { getPublicClient } from 'wagmi/actions'
+import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { chainByKey } from '@/lib/cctp-chains'
 import { evmChainId } from '@/lib/bridge-chains'
 
