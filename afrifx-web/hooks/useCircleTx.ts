@@ -180,17 +180,13 @@ export interface ContractCallParams {
   feeLevel?:            'LOW' | 'MEDIUM' | 'HIGH'
 }
 
-export async function executeContractCall(
-  params: ContractCallParams,
-  onStep?: (message: string) => void,
-): Promise<TransferResult> {
-  const session = getSigningSession()
-  if (!session) throw new NeedsReauthError()
-
-  const startedAt = Date.now()
-
-  onStep?.('Preparing the transaction')
-
+/**
+ * Build a contract execution on the server. Returns a normalized shape so the
+ * caller can branch on NEEDS_CHAIN vs auth vs success without touching Response.
+ */
+async function prepareContractCall(
+  params: ContractCallParams, session: { userToken: string },
+): Promise<{ ok: boolean; status: number; code?: string; error?: string; challengeId?: string }> {
   const res = await apiFetch('/auth/wallet/tx/contract', {
     method: 'POST',
     body:   JSON.stringify({
@@ -202,14 +198,76 @@ export async function executeContractCall(
       feeLevel:             params.feeLevel,
     }),
   })
-  const data = await res.json().catch(() => ({}))
+  const body = await res.json().catch(() => ({}))
+  return {
+    ok:          res.ok,
+    status:      res.status,
+    code:        body?.code,
+    error:       body?.error,
+    challengeId: body?.challengeId,
+  }
+}
 
+/**
+ * Add the CCTP bridge chains to the wallet, approving the challenge if one is
+ * returned. Used to self-heal a bridge when the wallet predates chain
+ * provisioning (accounts created before Phase 5a). Best-effort by nature: if
+ * it can't add them, the caller's retry will surface a clear NEEDS_CHAIN.
+ */
+async function ensureBridgeChains(
+  session: { userToken: string; encryptionKey: string },
+  onStep?: (message: string) => void,
+): Promise<void> {
+  const res = await apiFetch('/auth/wallet/add-chains', {
+    method: 'POST',
+    body:   JSON.stringify({ userToken: session.userToken }),
+  })
+  const data = await res.json().catch(() => ({}))
   if (res.status === 401) { clearSigningSession(); throw new NeedsReauthError() }
-  if (data?.code === 'NEEDS_CHAIN') throw new NeedsChainError(data.error)
-  if (!res.ok) throw new Error(data.error ?? 'Could not prepare the transaction')
+  if (!res.ok) throw new Error(data.error ?? 'Could not enable the network')
+  if (data.challengeId) {
+    onStep?.('Confirm in the window to enable this network')
+    await executeChallenge(data.challengeId, session.userToken, session.encryptionKey)
+  }
+}
+
+export async function executeContractCall(
+  params: ContractCallParams,
+  onStep?: (message: string) => void,
+): Promise<TransferResult> {
+  const session = getSigningSession()
+  if (!session) throw new NeedsReauthError()
+
+  const startedAt = Date.now()
+
+  onStep?.('Preparing the transaction')
+
+  // Build the contract execution. If the wallet isn't on this chain yet
+  // (older accounts created before the chains were provisioned), add the
+  // chain once and retry - so the bridge self-heals instead of failing.
+  let data = await prepareContractCall(params, session)
+
+  if (data?.code === 'NEEDS_CHAIN') {
+    onStep?.('Enabling this network for your wallet')
+    await ensureBridgeChains(session, onStep)
+    // Small pause so Circle indexes the new wallet before we reference it.
+    await new Promise(r => setTimeout(r, 2500))
+    const retrySession = getSigningSession()
+    if (!retrySession) throw new NeedsReauthError()
+    data = await prepareContractCall(params, retrySession)
+    // Still not there - surface it honestly rather than looping.
+    if (data?.code === 'NEEDS_CHAIN') throw new NeedsChainError(data.error)
+  }
+
+  if (data?.status === 401) { clearSigningSession(); throw new NeedsReauthError() }
+  if (!data?.ok) throw new Error(data?.error ?? 'Could not prepare the transaction')
+  if (!data.challengeId) throw new Error('The transaction could not be prepared. Please try again.')
+
+  const signSession = getSigningSession()
+  if (!signSession) throw new NeedsReauthError()
 
   onStep?.('Approve the transaction to continue')
-  await executeChallenge(data.challengeId, session.userToken, session.encryptionKey)
+  await executeChallenge(data.challengeId, signSession.userToken, signSession.encryptionKey)
 
   onStep?.('Confirming on-chain')
 

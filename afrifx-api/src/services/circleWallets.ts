@@ -444,20 +444,24 @@ export async function findContractExecution(params: {
   contractAddress: string
   since:           number
 }): Promise<CircleTransaction | null> {
+  // Keep the query minimal. Circle rejects the whole request (400) if any
+  // filter value doesn't match its enum exactly, so we filter by wallet only
+  // here and match blockchain + contract + recency in code below. This is
+  // more robust than a narrow server-side filter that can silently 400.
   const qs = new URLSearchParams({
-    walletIds:  params.walletId,
-    blockchain: params.blockchain,
-    operation:  'CONTRACT_EXECUTION',
-    pageSize:   '20',
+    walletIds: params.walletId,
+    pageSize:  '30',
   })
   const data = await circleFetch(
     `/v1/w3s/transactions?${qs.toString()}`, params.userToken)
 
   const list = (data.transactions ?? []) as any[]
   const want = params.contractAddress.toLowerCase()
+  const chain = params.blockchain.toUpperCase()
 
   const match = list.find(t => {
     if (String(t.contractAddress ?? '').toLowerCase() !== want) return false
+    if (String(t.blockchain ?? '').toUpperCase() !== chain)     return false
     const created = Date.parse(String(t.createDate ?? '')) / 1000
     // Allow a little clock skew between us and Circle.
     return !Number.isFinite(created) || created >= params.since - 120

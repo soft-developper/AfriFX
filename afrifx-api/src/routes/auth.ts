@@ -385,6 +385,12 @@ router.get('/wallet/tx/find-contract', requireAccount, async (req, res) => {
     // Not an error: Circle may not have indexed it yet.
     res.json(tx ?? { state: 'PENDING' })
   } catch (err: any) {
+    // A missing wallet-on-chain here is transient during self-heal (the chain
+    // was just added and Circle is still indexing it). Don't error-storm the
+    // client's poll loop - report PENDING so it keeps waiting a bit longer.
+    if ((err as any).code === 'NEEDS_CHAIN') {
+      return res.json({ state: 'PENDING' })
+    }
     const e = err as CircleAuthError
     res.status(e.status ?? 502).json({ error: e.message })
   }
