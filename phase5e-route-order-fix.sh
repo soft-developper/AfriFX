@@ -1,3 +1,40 @@
+#!/usr/bin/env bash
+# ============================================================================
+# Phase 5e - Fix route shadowing that broke the bridge ("Fail to parse id as UUID")
+#
+# ROOT CAUSE (the real one)
+#   GET /auth/wallet/tx/:id was declared BEFORE GET /auth/wallet/tx/find-contract.
+#   Express matches top-down, so every call to /wallet/tx/find-contract was
+#   captured by the :id wildcard with id="find-contract", then forwarded to
+#   Circle as /v1/w3s/transactions/find-contract -> Circle replied
+#   "Fail to parse id as UUID in url." The find-contract handler never ran, so
+#   the bridge could never locate its burn/mint and always failed.
+#
+# FIX
+#   Constrain the :id route to a UUID pattern so the wildcard can NEVER shadow
+#   the named /wallet/tx/find and /wallet/tx/find-contract routes. Verified:
+#   /wallet/tx/find-contract now hits its own handler; real UUIDs still match.
+#
+# CHANGES (1 file)
+#   afrifx-api/src/routes/auth.ts   :id route constrained to a UUID
+#
+# REQUIRES: Phases 5b-5d already applied.
+#
+# USAGE
+#   bash phase5e-route-order-fix.sh
+# ============================================================================
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+API="$ROOT/afrifx-api"; WEB="$ROOT/afrifx-web"
+say(){ printf '\033[1;36m==>\033[0m %s\n' "$*"; }
+ok(){ printf '\033[1;32m  ok\033[0m %s\n' "$*"; }
+die(){ printf '\033[1;31m  x %s\033[0m\n' "$*" >&2; exit 1; }
+grep -q "find-contract" "$API/src/routes/auth.ts" || die "Phase 5b-5d not detected. Apply them first."
+BK="$ROOT/.phase5e-backup"; rm -rf "$BK"; mkdir -p "$BK/$(dirname afrifx-api/src/routes/auth.ts)"
+cp "$ROOT/afrifx-api/src/routes/auth.ts" "$BK/afrifx-api/src/routes/auth.ts" 2>/dev/null || true
+ok "snapshot saved"
+say "Writing file"
+cat > "$ROOT/afrifx-api/src/routes/auth.ts" <<'AFX_5E_EOF'
 /**
  * Account authentication.
  *
@@ -559,3 +596,33 @@ router.post('/logout', async (req, res) => {
 })
 
 export default router
+AFX_5E_EOF
+ok "wrote afrifx-api/src/routes/auth.ts"
+
+say "Verifying"
+grep -q "0-9a-fA-F" "$API/src/routes/auth.ts" || die "UUID constraint missing"
+
+say "API: install + tsc + tests"
+( cd "$API" && npm install --no-audit --no-fund --loglevel=error >/dev/null 2>&1 && npx tsc --noEmit ) || { cp -rf "$BK"/. "$ROOT"/; die "API tsc failed - restored"; }
+ok "api typechecks"
+( cd "$API" && npx vitest run >/dev/null 2>&1 ) || { cp -rf "$BK"/. "$ROOT"/; die "API tests failed - restored"; }
+ok "api tests pass"
+say "WEB: tsc (web bundle unchanged by this fix)"
+( cd "$WEB" && npm install --no-audit --no-fund --loglevel=error >/dev/null 2>&1 && npx tsc --noEmit ) || { cp -rf "$BK"/. "$ROOT"/; die "web tsc failed - restored"; }
+ok "web typechecks"
+rm -rf "$BK"
+say "Phase 5e applied and verified."
+cat <<'NOTE'
+
+  THE bug: /wallet/tx/find-contract was being swallowed by the /wallet/tx/:id
+  route, so Circle got "find-contract" as a transaction id. Fixed by making
+  :id match only UUIDs.
+
+  Commit & push:
+    git add afrifx-api/src/routes/auth.ts
+    git commit -m "phase 5e: constrain :id route so find-contract isn't shadowed"
+    git push origin main
+
+  Then retry the bridge - the find-contract poll will now reach its handler and
+  the transfer should progress through burn -> attest -> mint.
+NOTE
