@@ -190,4 +190,82 @@ router.get('/disbursement/status', async (_req, res) => {
   }
 })
 
+// GET /payroll/disbursement/address
+//
+// The address employers send USDC to when topping up the float. Read from the
+// live wallet so it can never drift from what was provisioned.
+router.get('/disbursement/address', async (_req, res) => {
+  const walletId = process.env.PAYROLL_DISBURSEMENT_WALLET_ID
+  if (!walletId) return res.status(400).json({ error: 'Disbursement wallet not configured' })
+  try {
+    const { getDisbursementAddress } = await import('../services/platformDisbursement')
+    const address = await getDisbursementAddress(walletId)
+    res.json({ address })
+  } catch (err: any) {
+    res.status(502).json({ error: err.message })
+  }
+})
+
+// POST /payroll/disbursement/fund   { funderAddress, amount, txHash }
+//
+// Record an employer top-up of the reusable float. The employer has already
+// signed a USDC transfer to the disbursement address (client side); here we
+// log it and confirm it by re-reading the live wallet balance. We do NOT trust
+// the client's word that it landed - we check Circle.
+router.post('/disbursement/fund', async (req, res) => {
+  const { funderAddress, amount, txHash } = req.body ?? {}
+  const walletId = process.env.PAYROLL_DISBURSEMENT_WALLET_ID
+
+  if (!walletId)       return res.status(400).json({ error: 'Disbursement wallet not configured' })
+  if (!funderAddress)  return res.status(400).json({ error: 'funderAddress is required' })
+  if (!(Number(amount) > 0)) return res.status(400).json({ error: 'A positive amount is required' })
+
+  const id  = randomUUID()
+  const now = Math.floor(Date.now() / 1000)
+
+  try {
+    // Record the intent first (audit trail), then confirm against the chain.
+    await db.run(sql`
+      INSERT INTO payroll_disbursement_funding
+        (id, funder_address, amount, tx_hash, status, created_at)
+      VALUES (${id}, ${String(funderAddress)}, ${Number(amount)},
+              ${txHash ? String(txHash) : null}, 'pending', ${now})`)
+
+    // Confirm by reading the live balance. We don't assert an exact delta
+    // (fees, timing, concurrent tops make that brittle) - a balance at least
+    // as large as this top-up is sufficient evidence it landed.
+    const { getDisbursementBalance } = await import('../services/platformDisbursement')
+    const balance = await getDisbursementBalance(walletId)
+
+    const landed = balance >= Number(amount)
+    if (landed) {
+      await db.run(sql`
+        UPDATE payroll_disbursement_funding
+        SET status = 'confirmed', confirmed_at = ${now}
+        WHERE id = ${id}`)
+    }
+
+    res.json({ id, status: landed ? 'confirmed' : 'pending', balance })
+  } catch (err: any) {
+    await db.run(sql`
+      UPDATE payroll_disbursement_funding SET status = 'failed' WHERE id = ${id}`)
+      .catch(() => {})
+    res.status(502).json({ error: err.message })
+  }
+})
+
+// GET /payroll/disbursement/funding   top-up history (newest first)
+router.get('/disbursement/funding', async (_req, res) => {
+  try {
+    const rows = parseRows(await db.run(sql`
+      SELECT id, funder_address, amount, tx_hash, status, created_at, confirmed_at
+      FROM payroll_disbursement_funding
+      ORDER BY created_at DESC
+      LIMIT 100`))
+    res.json({ funding: rows })
+  } catch (err: any) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 export default router

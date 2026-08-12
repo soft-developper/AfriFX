@@ -9,6 +9,7 @@ import { formatAmount } from '@/lib/utils'
 import { gatewayChains } from '@/lib/gateway'
 import { ArrowLeft, Plus, Trash2, Upload, Users, FileText, AlertCircle, CheckCircle, Layers } from 'lucide-react'
 import Link from 'next/link'
+import { DisbursementFloatCard } from '@/components/treasury/DisbursementFloatCard'
 
 const HOME = 'arc'
 
@@ -162,6 +163,8 @@ export function PayrollCreateContent() {
           </p>
         </div>
       </div>
+
+      <DisbursementFloatCard />
 
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">

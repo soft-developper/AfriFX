@@ -13,6 +13,9 @@
 // not print the entity secret.
 // ============================================================
 
+import * as dotenv from 'dotenv'
+dotenv.config()
+
 import { provisionDisbursementWallet } from '../services/platformDisbursement'
 
 async function main() {

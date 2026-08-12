@@ -98,6 +98,15 @@ export async function getDisbursementBalance(walletId: string): Promise<number> 
   return usdc ? Number(usdc.amount) : 0
 }
 
+/** The on-chain address of the disbursement wallet (what employers fund). */
+export async function getDisbursementAddress(walletId: string): Promise<string> {
+  const c = client()
+  const res = await c.getWallet({ id: walletId })
+  const address = res.data?.wallet?.address
+  if (!address) throw new Error('Could not read the disbursement wallet address')
+  return address
+}
+
 export interface PayoutResult {
   id:     string
   state:  string
