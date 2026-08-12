@@ -1,59 +1,84 @@
 'use client'
-import { useState, useEffect } from 'react'
+// ============================================================
+// PayrollExecuteContent - execute a batch from the platform float.
+//
+// HYBRID CUSTODY (Phase 7c). The employer does NOT sign each payout. They
+// click Execute once; the backend pays every recipient from the pre-funded
+// MPC float and this screen POLLS the batch to show progress. No wagmi, no
+// per-recipient signing, no Gateway - all of that moved server-side.
+//
+// The backend enforces the safety rules (balance gate, idempotency, resume);
+// the client's job is just to start it and reflect progress.
+// ============================================================
+
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import { useAccount, useWriteContract, usePublicClient } from 'wagmi'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { usePayrollBatch, useUpdateRecipient } from '@/hooks/usePayroll'
-import { CONTRACTS, USDC_DECIMALS } from '@/lib/contracts'
-import { USDC_ABI } from '@/lib/usdc'
-import { buildMemoId, buildMemoTransferArgs } from '@/lib/memo'
-import { MEMO_ADDRESS, MEMO_ABI } from '@/lib/memo'
-import { arcTestnet } from '@/lib/arc-chain'
+import { usePayrollBatch } from '@/hooks/usePayroll'
 import { formatAmount } from '@/lib/utils'
-import { parseUnits } from 'viem'
-import { useGatewaySend } from '@/hooks/useGatewaySend'
-import { fetchGatewayBalances, gatewayChains } from '@/lib/gateway'
-import { chainByKey } from '@/lib/cctp-chains'
-
-const HOME = 'arc'
 import {
   ArrowLeft, CheckCircle, XCircle, Loader2,
-  ExternalLink, Play, AlertCircle, Clock,
+  ExternalLink, Play, AlertCircle,
 } from 'lucide-react'
 
+const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+
 export function PayrollExecuteContent() {
-  const { id }           = useParams()
-  const { address }      = useAccount()
-  const { data: batch }  = usePayrollBatch(id as string)
-  const updateRecipient  = useUpdateRecipient()
-  const { writeContractAsync } = useWriteContract()
-  const publicClient = usePublicClient({ chainId: arcTestnet.id })
-  const gw = useGatewaySend()
+  const { id } = useParams()
+  const { data: batch, refetch } = usePayrollBatch(id as string)
 
-  const [executing,    setExecuting]    = useState(false)
-  const [currentIdx,   setCurrentIdx]   = useState(0)
-  const [errorMsg,     setErrorMsg]     = useState<string | null>(null)
-  const [done,         setDone]         = useState(false)
-  const [gwBalance,    setGwBalance]    = useState<number | null>(null)
+  const [starting, setStarting] = useState(false)
+  const [error,    setError]    = useState<string | null>(null)
+  const [floatBal, setFloatBal] = useState<number | null>(null)
 
-  // Which chain does this batch pay out on? Falls back to Arc for batches
-  // created before the multichain migration.
-  const destChain   = batch?.dest_chain ?? HOME
-  const isCrossChain = destChain !== HOME
-  const chainMeta   = gatewayChains().find(c => c.key === destChain)
-  const chainCctp   = chainByKey(destChain)
+  const recipients = batch?.recipients ?? []
+  const paidCount  = recipients.filter(r => r.status === 'paid' || r.status === 'sent').length
+  const failCount  = recipients.filter(r => r.status === 'failed').length
+  const owed       = recipients
+    .filter(r => r.status === 'pending' || r.status === 'processing')
+    .reduce((s, r) => s + Number(r.amount), 0)
 
-  // For cross-chain batches, load the owner's unified Gateway balance so we
-  // can warn before they start rather than fail partway through.
+  const batchStatus = batch?.status
+  const isProcessing = batchStatus === 'processing'
+  const isDone       = batchStatus === 'completed'
+  const isPartial    = batchStatus === 'partial'
+
+  // Load the float balance so we can warn before starting rather than fail.
+  const loadFloat = useCallback(async () => {
+    try {
+      const res  = await fetch(`${API}/payroll/disbursement/status`)
+      const data = await res.json().catch(() => ({}))
+      setFloatBal(typeof data.balance === 'number' ? data.balance : null)
+    } catch { setFloatBal(null) }
+  }, [])
+  useEffect(() => { loadFloat() }, [loadFloat])
+
+  // While the batch is processing, poll it for progress.
   useEffect(() => {
-    if (!address || !isCrossChain) return
-    fetchGatewayBalances(address).then(res => {
-      if ('error' in res) { setGwBalance(null); return }
-      setGwBalance(res.total)
-    })
-  }, [address, isCrossChain, gw.step])
+    if (!isProcessing) return
+    const t = setInterval(() => { refetch(); loadFloat() }, 3000)
+    return () => clearInterval(t)
+  }, [isProcessing, refetch, loadFloat])
+
+  const execute = useCallback(async () => {
+    if (!batch) return
+    setStarting(true); setError(null)
+    try {
+      const res  = await fetch(`${API}/payroll/batches/${batch.id}/execute`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(data.error ?? 'Could not start the payout')
+        return
+      }
+      await refetch()
+    } catch (err: any) {
+      setError(err?.message ?? 'Could not start the payout')
+    } finally {
+      setStarting(false)
+    }
+  }, [batch, refetch])
 
   if (!batch) return (
     <div className="flex h-64 items-center justify-center">
@@ -61,327 +86,116 @@ export function PayrollExecuteContent() {
     </div>
   )
 
-  const recipients = batch!.recipients ?? []
-  const sentCount  = recipients.filter(r => r.status === 'sent').length
-  const pct        = recipients.length > 0 ? Math.round((sentCount / recipients.length) * 100) : 0
-
-  // Explorer base for the batch's chain (per-chain, not hardcoded ArcScan).
-  const explorerBase = chainCctp?.explorer ?? 'https://testnet.arcscan.app'
-
-  // Total still owed on this batch, used to check the unified balance covers it.
-  const remainingTotal = recipients
-    .filter(r => r.status !== 'sent')
-    .reduce((s, r) => s + Number(r.amount), 0)
-  const insufficientGw = isCrossChain && gwBalance !== null && gwBalance < remainingTotal
-
-  async function executePayroll() {
-    if (!address || executing) return
-    setExecuting(true)
-    setErrorMsg(null)
-
-    const pending = recipients.filter(r => r.status === 'pending')
-
-    for (let i = 0; i < pending.length; i++) {
-      const recipient = pending[i]
-      setCurrentIdx(i)
-      const who = recipient.name ?? recipient.wallet_address.slice(0, 10)
-
-      try {
-        if (isCrossChain) {
-          // ── Cross-chain: spend the unified Gateway balance ──
-          // Each payment is signed, attested and minted on the destination
-          // chain individually. gw.send returns the outcome so we can mark
-          // this recipient before moving to the next one.
-          const result = await gw.send({
-            fromKey:   HOME,          // unified balance is funded from Arc
-            toKey:     destChain,
-            amount:    recipient.amount,
-            recipient: recipient.wallet_address,
-          })
-
-          if (result?.ok) {
-            await updateRecipient.mutateAsync({
-              id: recipient.id, batchId: batch!.id, status: 'sent', txHash: result.mintTx,
-            })
-          } else {
-            await updateRecipient.mutateAsync({
-              id: recipient.id, batchId: batch!.id, status: 'failed',
-            })
-            setErrorMsg(`Payment to ${who} failed: ${result?.error ?? 'Gateway transfer failed'}`)
-            // A wallet that can't sign Gateway transfers will fail on every
-            // recipient, so stop rather than prompt uselessly N more times.
-            if (result?.needsEoa) {
-              setErrorMsg('This wallet can\'t sign Gateway transfers. Cross-chain payroll needs a standard wallet (EOA).')
-              break
-            }
-          }
-          continue
-        }
-
-        // ── Arc (home): direct USDC transfer with a Memo, unchanged ──
-        const usdcRaw = parseUnits(recipient.amount.toFixed(6), USDC_DECIMALS)
-        const memoId  = buildMemoId(`payroll-${batch!.id}-${recipient.id}`)
-
-        // Check if Memo is available
-        let hash: `0x${string}`
-        try {
-          const args = buildMemoTransferArgs(
-            CONTRACTS.USDC,
-            recipient.wallet_address as `0x${string}`,
-            recipient.amount,
-            USDC_DECIMALS,
-            memoId,
-            {
-              app:  'afrifx',
-              type: 'p2p-create', // reuse as generic transfer
-              ref:  recipient.memo_ref ?? undefined,
-            },
-          )
-          hash = await writeContractAsync(args)
-        } catch {
-          // Fallback to direct transfer
-          hash = await writeContractAsync({
-            address:      CONTRACTS.USDC,
-            abi:          USDC_ABI,
-            functionName: 'transfer',
-            args:         [recipient.wallet_address as `0x${string}`, usdcRaw],
-          })
-        }
-
-        // Confirm on-chain before marking sent a broadcast tx can revert.
-        let onChainOk = true
-        if (publicClient) {
-          try {
-            const receipt = await publicClient.waitForTransactionReceipt({ hash })
-            onChainOk = receipt.status === 'success'
-          } catch {
-            onChainOk = false
-          }
-        }
-
-        if (onChainOk) {
-          await updateRecipient.mutateAsync({
-            id:      recipient.id,
-            batchId: batch!.id,
-            status:  'sent',
-            txHash:  hash,
-          })
-        } else {
-          await updateRecipient.mutateAsync({
-            id:      recipient.id,
-            batchId: batch!.id,
-            status:  'failed',
-            txHash:  hash,
-          })
-          setErrorMsg(`Payment to ${who} reverted on-chain`)
-        }
-      } catch (err: any) {
-        const msg = err?.shortMessage ?? err?.message ?? 'Transaction failed'
-        await updateRecipient.mutateAsync({
-          id:      recipient.id,
-          batchId: batch!.id,
-          status:  'failed',
-        })
-        setErrorMsg(`Payment to ${who} failed: ${msg}`)
-        // Continue with next recipients
-      }
-    }
-
-    setExecuting(false)
-    setDone(true)
-  }
+  const insufficientFloat = floatBal !== null && owed > 0 && floatBal < owed
 
   const statusBadge = {
-    draft:      'warning',
-    processing: 'arc',
-    completed:  'success',
-    failed:     'danger',
-  }[batch!.status] as any
+    draft:      'secondary',
+    processing: 'default',
+    completed:  'default',
+    partial:    'destructive',
+  }[String(batch.status)] as any
 
   return (
     <div>
       <div className="mb-6 flex items-center gap-3">
-        <Link href="/treasury">
+        <Link href="/treasury/payroll">
           <button className="rounded-lg border border-app-border p-2 text-app-muted hover:text-app-text">
             <ArrowLeft className="h-4 w-4" />
           </button>
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold text-app-text">{batch!.name}</h1>
-            <Badge variant={statusBadge}>{batch!.status}</Badge>
+            <h1 className="text-lg font-semibold text-app-text">{batch.name}</h1>
+            <Badge variant={statusBadge}>{batch.status}</Badge>
           </div>
-          <p className="text-xs text-app-muted">
-            {batch.recipient_count} recipients · ${formatAmount(batch!.total_amount)} USDC
-            · Paid on {chainMeta?.name ?? destChain}
-            · Created {new Date(batch!.created_at * 1000).toLocaleDateString()}
+          {batch.description && (
+            <p className="text-sm text-app-muted">{batch.description}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div className="mb-4 grid grid-cols-3 gap-3">
+        <div className="rounded-xl border border-app-border bg-app-surface p-3">
+          <p className="text-[11px] text-app-muted">Recipients</p>
+          <p className="font-mono text-sm text-app-text">{recipients.length}</p>
+        </div>
+        <div className="rounded-xl border border-app-border bg-app-surface p-3">
+          <p className="text-[11px] text-app-muted">Total</p>
+          <p className="font-mono text-sm text-app-text">{formatAmount(batch.total_amount)} USDC</p>
+        </div>
+        <div className="rounded-xl border border-app-border bg-app-surface p-3">
+          <p className="text-[11px] text-app-muted">Float balance</p>
+          <p className="font-mono text-sm text-app-text">
+            {floatBal === null ? '—' : `${floatBal.toLocaleString()} USDC`}
           </p>
         </div>
       </div>
 
-      {/* Progress bar */}
-      {(executing || batch!.status === 'completed') && (
-        <div className="mb-4 rounded-xl border border-app-border bg-app-surface p-4">
-          <div className="mb-2 flex items-center justify-between text-xs">
-            <span className="text-app-muted">
-              {executing ? `Sending payment ${currentIdx + 1} of ${recipients.filter(r => r.status === 'pending').length}…` : 'All payments sent'}
-            </span>
-            <span className={`font-medium ${pct === 100 ? 'text-emerald-400' : 'text-app-text'}`}>
-              {sentCount}/{recipients.length} · {pct}%
-            </span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-app-border">
-            <div
-              className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          {executing && (
-            <p className="mt-1.5 text-center text-xs text-app-muted">
-              Do not close this tab until all payments are sent.
-            </p>
-          )}
+      {/* Progress line */}
+      {(isProcessing || isDone || isPartial) && (
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-app-border bg-app-surface px-4 py-3">
+          {isProcessing
+            ? <Loader2 className="h-4 w-4 animate-spin text-app-accent-text" />
+            : isPartial
+            ? <AlertCircle className="h-4 w-4 text-amber-500" />
+            : <CheckCircle className="h-4 w-4 text-emerald-500" />}
+          <span className="text-sm text-app-text">
+            {isProcessing ? `Paying… ${paidCount} of ${recipients.length} done`
+             : isPartial  ? `Completed with ${failCount} failed. Re-run to retry the rest.`
+             :              `All ${recipients.length} payments sent`}
+          </span>
         </div>
       )}
 
-      {done && sentCount === recipients.length && (
-        <div className="mb-4 rounded-xl border border-emerald-900/50 bg-emerald-900/20 p-4 text-center">
-          <CheckCircle className="mx-auto mb-2 h-8 w-8 text-emerald-400" />
-          <p className="text-sm font-medium text-emerald-400">All payments sent successfully!</p>
-          <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-600">
-            ${formatAmount(batch!.total_amount)} USDC distributed to {sentCount} recipients
-          </p>
-        </div>
+      {insufficientFloat && !isProcessing && (
+        <p className="mb-3 flex items-center gap-1.5 rounded-lg bg-red-900/20 px-3 py-2 text-xs text-red-400">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          Float has {floatBal} USDC but {owed} USDC is owed. Top up the float on the payroll page first.
+        </p>
+      )}
+      {error && (
+        <p className="mb-3 rounded-lg bg-red-900/20 px-3 py-2 text-xs text-red-400">{error}</p>
       )}
 
-      {errorMsg && (
-        <div className="mb-4 flex items-start gap-2 rounded-xl border border-red-900/50 bg-red-900/20 p-4 text-xs text-red-400">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          <div>
-            <p className="font-medium">Payment failed</p>
-            <p className="mt-0.5">{errorMsg}</p>
-            <p className="mt-1 text-red-600">The remaining payments will continue. You can retry failed ones separately.</p>
-          </div>
-        </div>
+      {/* Execute / resume button */}
+      {!isDone && (
+        <Button
+          className="mb-4 w-full"
+          disabled={starting || isProcessing || owed <= 0 || insufficientFloat}
+          onClick={execute}>
+          {starting || isProcessing
+            ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing…</>
+            : isPartial
+            ? <><Play className="h-4 w-4" /> Retry remaining ({formatAmount(owed)} USDC)</>
+            : <><Play className="h-4 w-4" /> Pay {recipients.length} recipients ({formatAmount(owed)} USDC)</>}
+        </Button>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-3">
-
-        {/* Recipients table */}
-        <div className="lg:col-span-2 rounded-xl border border-app-border bg-app-surface p-5">
-          <p className="mb-4 text-sm font-medium text-app-text">Recipients</p>
-          <div className="space-y-2">
-            {recipients.map((r, i) => (
-              <div key={r.id}
-                className={`flex items-center gap-3 rounded-xl p-3 transition-colors
-                  ${executing && i === currentIdx && r.status === 'pending'
-                    ? 'border border-app-accent/40 bg-app-accent/5'
-                    : 'border border-app-border bg-app-bg'}`}>
-
-                {/* Status icon */}
-                <div className="shrink-0">
-                  {r.status === 'sent'    ? <CheckCircle className="h-4 w-4 text-emerald-400" />
-                  : r.status === 'failed' ? <XCircle     className="h-4 w-4 text-red-400" />
-                  : executing && i === currentIdx
-                  ? <Loader2 className="h-4 w-4 animate-spin text-app-accent-text" />
-                  : <Clock   className="h-4 w-4 text-app-muted" />}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  {r.name && (
-                    <p className="text-xs font-medium text-app-text">{r.name}</p>
-                  )}
-                  <p className="font-mono text-[11px] text-app-muted truncate">{r.wallet_address}</p>
-                  {r.memo_ref && (
-                    <p className="text-[10px] text-app-muted">{r.memo_ref}</p>
-                  )}
-                </div>
-
-                {/* Amount */}
-                <div className="shrink-0 text-right">
-                  <p className="font-mono text-sm font-medium text-app-text">
-                    {formatAmount(r.amount)} USDC
-                  </p>
-                  {r.tx_hash && (
-                    <a href={`${explorerBase}/tx/${r.tx_hash}`}
-                      target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[10px] text-app-accent-text hover:underline">
-                      View tx <ExternalLink className="h-2.5 w-2.5" />
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Action panel */}
-        <div className="space-y-4">
-          <div className="rounded-xl border border-app-border bg-app-surface p-5">
-            <p className="mb-4 text-sm font-medium text-app-text">Execute</p>
-            <div className="space-y-2 text-xs">
-              {[
-                ['Recipients', String(batch.recipient_count)],
-                ['Total',      `${formatAmount(batch!.total_amount)} USDC`],
-                ['Sent',       `${sentCount} / ${batch.recipient_count}`],
-                ['Payout on',  chainMeta?.name ?? destChain],
-                ...(isCrossChain
-                  ? [['Unified balance', gwBalance === null ? '…' : `${gwBalance.toFixed(2)} USDC`] as [string, string]]
-                  : []),
-              ].map(([l,v]) => (
-                <div key={l} className="flex justify-between">
-                  <span className="text-app-muted">{l}</span>
-                  <span className="font-mono text-app-text">{v}</span>
-                </div>
-              ))}
+      {/* Recipient list */}
+      <div className="overflow-hidden rounded-xl border border-app-border">
+        {recipients.map((r, i) => (
+          <div key={r.id ?? i}
+            className="flex items-center justify-between border-b border-app-border px-4 py-3 last:border-0">
+            <div className="min-w-0">
+              <p className="truncate text-sm text-app-text">{r.name || 'Recipient'}</p>
+              <p className="truncate font-mono text-[11px] text-app-muted">{r.wallet_address}</p>
             </div>
-
-            {/* Cross-chain batches spend the unified Gateway balance. If it
-                won't cover what's left, say so before any wallet prompts. */}
-            {insufficientGw && (
-              <div className="mt-3 flex items-start gap-1.5 rounded-lg bg-amber-900/20 px-3 py-2 text-[11px] text-amber-800 dark:text-amber-300">
-                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                Your unified balance ({gwBalance?.toFixed(2)} USDC) is less than the
-                {' '}{formatAmount(remainingTotal)} USDC still owed. Add funds on the
-                Treasury page before starting.
-              </div>
-            )}
-
-            {batch!.status !== 'completed' && (
-              <Button className="mt-4 w-full" size="lg"
-                onClick={executePayroll}
-                disabled={executing || done || sentCount === recipients.length || insufficientGw}>
-                {executing
-                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</>
-                  : sentCount > 0
-                  ? `Resume (${recipients.length - sentCount} remaining)`
-                  : <><Play className="h-4 w-4" /> Start payroll</>
-                }
-              </Button>
-            )}
-
-            {isCrossChain && executing && (
-              <p className="mt-2 flex items-center gap-1.5 text-[11px] text-app-muted">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Approve each payment in your wallet. It signs, then mints on {chainMeta?.name ?? destChain}.
-              </p>
-            )}
-
-            {batch!.status === 'completed' && (
-              <div className="mt-4 flex items-center gap-2 rounded-lg bg-emerald-900/20 px-3 py-2 text-xs text-emerald-400">
-                <CheckCircle className="h-3.5 w-3.5" />
-                Payroll complete
-              </div>
-            )}
-
-            <p className="mt-2 text-center text-[10px] text-app-muted">
-              {isCrossChain
-                ? `Each payment spends your unified balance and mints on ${chainMeta?.name ?? destChain}`
-                : 'Each payment is sent individually on Arc with a unique Memo reference'}
-            </p>
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-sm text-app-text">{formatAmount(r.amount)} USDC</span>
+              {r.tx_hash
+                ? <a href={`https://testnet.arcscan.app/tx/${r.tx_hash}`}
+                     target="_blank" rel="noopener noreferrer"
+                     className="text-app-muted hover:text-app-text">
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                : (r.status === 'paid' || r.status === 'sent') ? <CheckCircle className="h-4 w-4 text-emerald-400" />
+                : r.status === 'failed'     ? <XCircle className="h-4 w-4 text-red-400" />
+                : r.status === 'processing' ? <Loader2 className="h-4 w-4 animate-spin text-app-accent-text" />
+                : <span className="text-[11px] text-app-muted">pending</span>}
+            </div>
           </div>
-        </div>
+        ))}
       </div>
     </div>
   )

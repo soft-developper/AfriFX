@@ -171,6 +171,136 @@ router.delete('/batches/:id', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
+// ── PAYOUT ENGINE (hybrid custody, Phase 7c) ────────────────
+//
+// Pay a batch's recipients from the platform float, backend-signed (no user
+// present). Kicked off by /execute, which returns immediately; the client
+// polls GET /payroll/batches/:id to watch per-recipient progress.
+//
+// THREE RULES THAT KEEP MONEY SAFE
+//   1. BALANCE GATE: refuse to start a batch the float can't cover, BEFORE
+//      paying anyone - so a batch never half-pays and runs dry.
+//   2. IDEMPOTENT PER RECIPIENT: the key is `${batchId}:${recipientId}`, so a
+//      retry or double-execute can't pay anyone twice (Circle dedupes it).
+//   3. RESUMABLE: only 'pending' recipients are paid; 'paid' ones are skipped.
+//      If the process restarts mid-run, re-executing finishes the rest.
+
+// Guard so the same batch isn't worked by two overlapping runs in one process.
+const runningBatches = new Set<string>()
+
+async function runBatchPayout(batchId: string): Promise<void> {
+  if (runningBatches.has(batchId)) return
+  runningBatches.add(batchId)
+  try {
+    const { sendUsdc } = await import('../services/platformDisbursement')
+
+    const pending = parseRows(await db.run(sql`
+      SELECT id, wallet_address, amount, memo_ref
+      FROM payroll_recipients
+      WHERE batch_id = ${batchId} AND status = 'pending'`))
+
+    for (const r of pending) {
+      const recipientId = r.id ?? r[0]
+      const toAddress   = r.wallet_address ?? r[1]
+      const amount      = Number(r.amount ?? r[2])
+      const memoRef     = r.memo_ref ?? r[3] ?? undefined
+
+      try {
+        await db.run(sql`
+          UPDATE payroll_recipients SET status = 'processing'
+          WHERE id = ${recipientId} AND status = 'pending'`)
+
+        const result = await sendUsdc({
+          walletId:           process.env.PAYROLL_DISBURSEMENT_WALLET_ID as string,
+          destinationAddress: String(toAddress),
+          amount,
+          // Stable key => exactly-once even if this runs twice.
+          idempotencyKey:     `${batchId}:${recipientId}`,
+          refId:              memoRef ? String(memoRef) : undefined,
+        })
+
+        await db.run(sql`
+          UPDATE payroll_recipients
+          SET status = 'paid', tx_hash = ${result.txHash ?? result.id}
+          WHERE id = ${recipientId}`)
+      } catch (err: any) {
+        // One recipient failing must not abort the batch; mark it and go on.
+        await db.run(sql`
+          UPDATE payroll_recipients SET status = 'failed'
+          WHERE id = ${recipientId}`).catch(() => {})
+      }
+    }
+
+    // Settle the batch status from the actual recipient outcomes.
+    const counts = parseRows(await db.run(sql`
+      SELECT status, COUNT(*) AS c FROM payroll_recipients
+      WHERE batch_id = ${batchId} GROUP BY status`))
+    const by: Record<string, number> = {}
+    for (const row of counts) by[String(row.status ?? row[0])] = Number(row.c ?? row[1])
+
+    const stillPending = (by['pending'] ?? 0) + (by['processing'] ?? 0)
+    const failed       = by['failed'] ?? 0
+    const finalStatus  =
+      stillPending > 0 ? 'processing'
+      : failed > 0     ? 'partial'
+      :                  'completed'
+
+    await db.run(sql`
+      UPDATE payroll_batches
+      SET status = ${finalStatus},
+          executed_at = ${Math.floor(Date.now() / 1000)}
+      WHERE id = ${batchId}`)
+  } finally {
+    runningBatches.delete(batchId)
+  }
+}
+
+// POST /payroll/batches/:id/execute
+//
+// Start (or resume) paying a batch from the float. Validates + balance-gates,
+// flips the batch to 'processing', kicks off the payout in the background, and
+// returns immediately. Poll GET /payroll/batches/:id for progress.
+router.post('/batches/:id/execute', async (req, res) => {
+  const batchId  = req.params.id
+  const walletId = process.env.PAYROLL_DISBURSEMENT_WALLET_ID
+  if (!walletId) return res.status(400).json({ error: 'Disbursement wallet not configured' })
+
+  try {
+    const batchRows = parseRows(await db.run(sql`
+      SELECT id, status FROM payroll_batches WHERE id = ${batchId} LIMIT 1`))
+    if (!batchRows.length) return res.status(404).json({ error: 'Batch not found' })
+    const status = String(batchRows[0].status ?? batchRows[0][1])
+    if (status === 'completed') return res.status(400).json({ error: 'Batch already completed' })
+
+    // Sum only what's still owed (pending), so a resume gates on the remainder.
+    const owedRows = parseRows(await db.run(sql`
+      SELECT COALESCE(SUM(amount), 0) AS owed FROM payroll_recipients
+      WHERE batch_id = ${batchId} AND status IN ('pending', 'processing')`))
+    const owed = Number(owedRows[0]?.owed ?? owedRows[0]?.[0] ?? 0)
+    if (owed <= 0) return res.status(400).json({ error: 'Nothing left to pay in this batch' })
+
+    // RULE 1 - balance gate: never start what the float can't finish.
+    const { getDisbursementBalance } = await import('../services/platformDisbursement')
+    const balance = await getDisbursementBalance(walletId)
+    if (balance < owed) {
+      return res.status(400).json({
+        error: `Float balance (${balance} USDC) is less than the ${owed} USDC still owed in this batch. Top up the float first.`,
+        code:  'insufficient_float',
+        balance, owed,
+      })
+    }
+
+    await db.run(sql`UPDATE payroll_batches SET status = 'processing' WHERE id = ${batchId}`)
+
+    // Fire and forget: the client polls the batch for progress.
+    runBatchPayout(batchId).catch(() => {})
+
+    res.json({ status: 'processing', owed, balance })
+  } catch (err: any) {
+    res.status(502).json({ error: err.message })
+  }
+})
+
 // GET /payroll/disbursement/status
 //
 // Reports whether the platform disbursement wallet (Phase 7a, MPC) is

@@ -11,7 +11,7 @@ export interface PayrollRecipient {
   wallet_address: string
   amount:         number
   currency:       string
-  status:         'pending' | 'sent' | 'failed'
+  status:         'pending' | 'processing' | 'paid' | 'sent' | 'failed'
   tx_hash:        string | null
   memo_ref:       string | null
   created_at:     number
@@ -25,7 +25,7 @@ export interface PayrollBatch {
   total_amount:    number
   currency:        string
   recipient_count: number
-  status:          'draft' | 'processing' | 'completed' | 'failed'
+  status:          'draft' | 'processing' | 'completed' | 'partial' | 'failed'
   dest_chain:      string
   executed_at:     number | null
   created_at:      number
