@@ -183,7 +183,9 @@ export function PayrollExecuteContent() {
             </div>
             <div className="flex items-center gap-3">
               <span className="font-mono text-sm text-app-text">{formatAmount(r.amount)} USDC</span>
-              {r.tx_hash
+              {r.tx_hash && r.tx_hash.startsWith('ERR: ')
+                ? <span className="max-w-[180px] truncate text-[11px] text-red-400" title={r.tx_hash.slice(5)}>{r.tx_hash.slice(5)}</span>
+                : r.tx_hash
                 ? <a href={`https://testnet.arcscan.app/tx/${r.tx_hash}`}
                      target="_blank" rel="noopener noreferrer"
                      className="text-app-muted hover:text-app-text">

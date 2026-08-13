@@ -98,6 +98,26 @@ export async function getDisbursementBalance(walletId: string): Promise<number> 
   return usdc ? Number(usdc.amount) : 0
 }
 
+/**
+ * Resolve the Circle tokenId for USDC on this wallet's chain.
+ *
+ * Identifying a transfer by tokenId is the most reliable path - it works
+ * whether USDC is a native asset (as on Arc) or an ERC-20, avoiding the
+ * "tokenAddress for a native token" rejection. Cached after first lookup.
+ */
+let _usdcTokenId: string | null = null
+async function resolveUsdcTokenId(walletId: string): Promise<string | null> {
+  if (_usdcTokenId) return _usdcTokenId
+  const c = client()
+  const res = await c.getWalletTokenBalance({ id: walletId })
+  const balances = res.data?.tokenBalances ?? []
+  const usdc = balances.find(
+    b => String(b.token?.symbol ?? '').toUpperCase() === 'USDC'
+      || String(b.token?.tokenAddress ?? '').toLowerCase() === USDC_ADDRESS.toLowerCase())
+  _usdcTokenId = usdc?.token?.id ? String(usdc.token.id) : null
+  return _usdcTokenId
+}
+
 /** The on-chain address of the disbursement wallet (what employers fund). */
 export async function getDisbursementAddress(walletId: string): Promise<string> {
   const c = client()
@@ -132,16 +152,31 @@ export async function sendUsdc(params: {
   refId?:             string
 }): Promise<PayoutResult> {
   const c = client()
-  const res = await c.createTransaction({
-    walletId:           params.walletId,
-    tokenAddress:       USDC_ADDRESS,
-    blockchain:         BLOCKCHAIN as any,
-    destinationAddress: params.destinationAddress,
-    amount:             [params.amount.toString()],
-    idempotencyKey:     params.idempotencyKey ?? randomUUID(),
-    fee: { type: 'level', config: { feeLevel: 'MEDIUM' } },
-    ...(params.refId ? { refId: params.refId } : {}),
-  })
+
+  // Prefer tokenId (works for native USDC like Arc's). Fall back to
+  // tokenAddress+blockchain if the id can't be resolved.
+  const tokenId = await resolveUsdcTokenId(params.walletId).catch(() => null)
+  const tokenIdent = tokenId
+    ? { tokenId }
+    : { tokenAddress: USDC_ADDRESS, blockchain: BLOCKCHAIN as any }
+
+  let res
+  try {
+    res = await c.createTransaction({
+      walletId:           params.walletId,
+      ...tokenIdent,
+      destinationAddress: params.destinationAddress,
+      amount:             [params.amount.toString()],
+      idempotencyKey:     params.idempotencyKey ?? randomUUID(),
+      fee: { type: 'level', config: { feeLevel: 'MEDIUM' } },
+      ...(params.refId ? { refId: params.refId } : {}),
+    } as any)
+  } catch (err: any) {
+    // Surface Circle's actual rejection instead of a generic failure.
+    const detail = err?.response?.data?.message ?? err?.message ?? 'transfer rejected'
+    throw new Error(detail)
+  }
+
   const tx = res.data
   if (!tx?.id) throw new Error('Circle did not return a transaction id')
   return { id: String(tx.id), state: String(tx.state ?? 'INITIATED') }

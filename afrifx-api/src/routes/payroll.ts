@@ -225,8 +225,13 @@ async function runBatchPayout(batchId: string): Promise<void> {
           WHERE id = ${recipientId}`)
       } catch (err: any) {
         // One recipient failing must not abort the batch; mark it and go on.
+        // Capture Circle's ACTUAL message so failures are diagnosable: log it
+        // (Render logs) and stash a short form in tx_hash (no error column yet)
+        // prefixed with "ERR:" so the UI/DB can show why.
+        const reason = String(err?.response?.data?.message ?? err?.message ?? 'unknown error').slice(0, 180)
+        console.error(`[payout] batch=${batchId} recipient=${recipientId} FAILED:`, reason)
         await db.run(sql`
-          UPDATE payroll_recipients SET status = 'failed'
+          UPDATE payroll_recipients SET status = 'failed', tx_hash = ${'ERR: ' + reason}
           WHERE id = ${recipientId}`).catch(() => {})
       }
     }
