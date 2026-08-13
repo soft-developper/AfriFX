@@ -105,7 +105,7 @@ export async function getDisbursementBalance(walletId: string): Promise<number> 
  * whether USDC is a native asset (as on Arc) or an ERC-20, avoiding the
  * "tokenAddress for a native token" rejection. Cached after first lookup.
  */
-// PHASE_7C2: resolve the Circle tokenId for USDC on this wallet's chain.
+// PHASE_7C3 (supersedes 7C2): resolve the Circle tokenId for USDC on this wallet's chain.
 //
 // On Arc, USDC is the NATIVE token (isNative:true, no tokenAddress). Circle's
 // transfer API takes EITHER { tokenId } OR { tokenAddress, blockchain } and
@@ -122,16 +122,25 @@ async function resolveUsdcTokenId(walletId: string): Promise<string | null> {
   const res = await c.getWalletTokenBalance({ id: walletId })
   const balances = res.data?.tokenBalances ?? []
 
-  const match = balances.find(b => {
-    const t = b.token ?? {}
-    const sym  = String((t as any).symbol ?? '').toUpperCase()
-    const addr = String((t as any).tokenAddress ?? '').toLowerCase()
-    const native = (t as any).isNative === true
-    // On Arc the native token IS USDC; elsewhere match the USDC symbol/address.
-    return sym === 'USDC' || native || addr === USDC_ADDRESS.toLowerCase()
+  // PHASE_7C3: on Arc the wallet holds TWO USDC entries - the NATIVE gas asset
+  // (isNative:true, no address) and the ERC-20 USDC (isNative:false, has an
+  // address). A USDC *transfer* goes through the ERC-20 contract, so we must
+  // pick the NON-native entry. The native one is spent on gas, not transferred;
+  // sending it as a token is what Circle rejected ("API parameter invalid").
+  const usdc = balances.filter(b => {
+    const t = (b.token ?? {}) as any
+    const sym  = String(t.symbol ?? '').toUpperCase()
+    const addr = String(t.tokenAddress ?? '').toLowerCase()
+    return sym === 'USDC' || addr === USDC_ADDRESS.toLowerCase()
   })
 
-  const id = (match?.token as any)?.id ? String((match!.token as any).id) : null
+  // Prefer the ERC-20 (non-native) USDC; fall back to whatever USDC exists.
+  const pick =
+    usdc.find(b => (b.token as any)?.isNative === false)
+    ?? usdc.find(b => (b.token as any)?.isNative !== true)
+    ?? usdc[0]
+
+  const id = (pick?.token as any)?.id ? String((pick!.token as any).id) : null
   if (id) _usdcTokenId = id   // cache real ids only
   return id
 }
@@ -218,8 +227,24 @@ export async function sendUsdc(params: {
       ...(params.refId ? { refId: params.refId } : {}),
     } as any)
   } catch (err: any) {
-    // Surface Circle's actual rejection instead of a generic failure.
-    const detail = err?.response?.data?.message ?? err?.message ?? 'transfer rejected'
+    // PHASE_7C3: Circle returns a data.errors[] naming the exact bad field;
+    // the top-level message is just "API parameter invalid". Log the full
+    // structured error (once) so failures are diagnosable, then surface a
+    // detailed-but-short reason to the caller/recipient row.
+    const data   = err?.response?.data
+    const errors = Array.isArray(data?.errors) ? data.errors : []
+    const fieldMsgs = errors
+      .map((e: any) => [e?.location, e?.message].filter(Boolean).join(': '))
+      .filter(Boolean)
+      .join('; ')
+    console.error('[sendUsdc] Circle rejected transfer:', JSON.stringify({
+      status:  err?.response?.status,
+      code:    data?.code,
+      message: data?.message,
+      errors,
+    }))
+    const detail =
+      fieldMsgs || data?.message || err?.message || 'transfer rejected'
     throw new Error(detail)
   }
 
