@@ -183,6 +183,27 @@ export async function getDisbursementAddress(walletId: string): Promise<string> 
   return address
 }
 
+// PHASE_7D1 (diagnostic): read the wallet's REAL account type from Circle.
+// getWallet returns accountType ('EOA' | 'SCA') and, for SCAs, scaCore. This
+// is the only authoritative way to confirm what was actually provisioned.
+export async function getDisbursementWalletInfo(walletId: string): Promise<{
+  id: string; address: string | null; blockchain: string | null;
+  accountType: string | null; scaCore: string | null; state: string | null
+}> {
+  const c = client()
+  const res = await c.getWallet({ id: walletId })
+  const w = (res.data?.wallet ?? {}) as any
+  return {
+    id:          String(w.id ?? walletId),
+    address:     w.address ?? null,
+    blockchain:  w.blockchain ?? null,
+    accountType: w.accountType ?? null,
+    scaCore:     w.scaCore ?? null,
+    state:       w.state ?? null,
+  }
+}
+
+/* PHASE_7D1 diagnostics active */
 export interface PayoutResult {
   id:     string
   state:  string
@@ -220,6 +241,20 @@ export async function sendUsdc(params: {
       'Confirm the float is funded and visible via GET /payroll/disbursement/tokens.')
   }
   const tokenIdent = { tokenId }
+
+  // PHASE_7D1 (diagnostic): print the EXACT body we send Circle, so an
+  // "API parameter invalid" with empty errors[] can be read field-by-field.
+  const _debugBody = {
+    walletId:           params.walletId,
+    tokenIdent,
+    destinationAddress: params.destinationAddress,
+    amount:             [params.amount.toString()],
+    amountRaw:          params.amount,
+    amountType:         typeof params.amount,
+    fee:                { type: 'level', config: { feeLevel: 'MEDIUM' } },
+    refId:              params.refId ?? null,
+  }
+  console.log('[sendUsdc] createTransaction body:', JSON.stringify(_debugBody))
 
   let res
   try {

@@ -427,4 +427,21 @@ router.get('/disbursement/tokens', async (_req, res) => {
   }
 })
 
+// GET /payroll/disbursement/wallet-info   (PHASE_7D1 diagnostic)
+//
+// The wallet's REAL account type straight from Circle - the authoritative
+// check that the re-provisioned wallet is actually EOA (not still SCA). Safe
+// to remove once payouts are green.
+router.get('/disbursement/wallet-info', async (_req, res) => {
+  const walletId = process.env.PAYROLL_DISBURSEMENT_WALLET_ID
+  if (!walletId) return res.status(400).json({ error: 'Disbursement wallet not configured' })
+  try {
+    const { getDisbursementWalletInfo } = await import('../services/platformDisbursement')
+    const info = await getDisbursementWalletInfo(walletId)
+    res.json(info)
+  } catch (err: any) {
+    res.status(502).json({ error: err.message })
+  }
+})
+
 export default router
