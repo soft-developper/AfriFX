@@ -403,4 +403,22 @@ router.get('/disbursement/funding', async (_req, res) => {
   }
 })
 
+// GET /payroll/disbursement/tokens   (PHASE_7C2 diagnostic)
+//
+// Show exactly what Circle reports for the funded disbursement wallet:
+// each token's id, symbol, isNative flag, address and amount. Use this to
+// confirm a real USDC tokenId resolves before re-running a batch. Safe to
+// remove once payouts are green.
+router.get('/disbursement/tokens', async (_req, res) => {
+  const walletId = process.env.PAYROLL_DISBURSEMENT_WALLET_ID
+  if (!walletId) return res.status(400).json({ error: 'Disbursement wallet not configured' })
+  try {
+    const { listWalletTokens } = await import('../services/platformDisbursement')
+    const tokens = await listWalletTokens(walletId)
+    res.json({ walletId, tokens })
+  } catch (err: any) {
+    res.status(502).json({ error: err.message })
+  }
+})
+
 export default router

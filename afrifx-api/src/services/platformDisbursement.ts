@@ -105,17 +105,58 @@ export async function getDisbursementBalance(walletId: string): Promise<number> 
  * whether USDC is a native asset (as on Arc) or an ERC-20, avoiding the
  * "tokenAddress for a native token" rejection. Cached after first lookup.
  */
+// PHASE_7C2: resolve the Circle tokenId for USDC on this wallet's chain.
+//
+// On Arc, USDC is the NATIVE token (isNative:true, no tokenAddress). Circle's
+// transfer API takes EITHER { tokenId } OR { tokenAddress, blockchain } and
+// rejects a native transfer that carries a tokenAddress. So we must send
+// tokenId. We read it from the wallet's token balances, matching a USDC or
+// native entry, and return its token.id.
+//
+// Cache ONLY a real id - never cache null (a pre-funding/empty read must not
+// poison every later payout in this process).
 let _usdcTokenId: string | null = null
 async function resolveUsdcTokenId(walletId: string): Promise<string | null> {
   if (_usdcTokenId) return _usdcTokenId
   const c = client()
   const res = await c.getWalletTokenBalance({ id: walletId })
   const balances = res.data?.tokenBalances ?? []
-  const usdc = balances.find(
-    b => String(b.token?.symbol ?? '').toUpperCase() === 'USDC'
-      || String(b.token?.tokenAddress ?? '').toLowerCase() === USDC_ADDRESS.toLowerCase())
-  _usdcTokenId = usdc?.token?.id ? String(usdc.token.id) : null
-  return _usdcTokenId
+
+  const match = balances.find(b => {
+    const t = b.token ?? {}
+    const sym  = String((t as any).symbol ?? '').toUpperCase()
+    const addr = String((t as any).tokenAddress ?? '').toLowerCase()
+    const native = (t as any).isNative === true
+    // On Arc the native token IS USDC; elsewhere match the USDC symbol/address.
+    return sym === 'USDC' || native || addr === USDC_ADDRESS.toLowerCase()
+  })
+
+  const id = (match?.token as any)?.id ? String((match!.token as any).id) : null
+  if (id) _usdcTokenId = id   // cache real ids only
+  return id
+}
+
+/**
+ * Diagnostic: list the raw token balances Circle reports for a wallet.
+ * Used by GET /payroll/disbursement/tokens to confirm a real USDC tokenId
+ * resolves before re-running a batch. Never logs secrets.
+ */
+export async function listWalletTokens(walletId: string): Promise<Array<{
+  id: string | null; symbol: string | null; isNative: boolean;
+  tokenAddress: string | null; amount: string | null
+}>> {
+  const c = client()
+  const res = await c.getWalletTokenBalance({ id: walletId })
+  return (res.data?.tokenBalances ?? []).map(b => {
+    const t = (b.token ?? {}) as any
+    return {
+      id:           t.id ? String(t.id) : null,
+      symbol:       t.symbol ?? null,
+      isNative:     t.isNative === true,
+      tokenAddress: t.tokenAddress ?? null,
+      amount:       b.amount ?? null,
+    }
+  })
 }
 
 /** The on-chain address of the disbursement wallet (what employers fund). */
@@ -153,12 +194,17 @@ export async function sendUsdc(params: {
 }): Promise<PayoutResult> {
   const c = client()
 
-  // Prefer tokenId (works for native USDC like Arc's). Fall back to
-  // tokenAddress+blockchain if the id can't be resolved.
+  // PHASE_7C2: USDC on Arc is native => it has NO tokenAddress. Circle rejects
+  // a native transfer that carries a tokenAddress ("API parameter invalid"), so
+  // we MUST send tokenId. If we can't resolve one, fail with a clear message
+  // rather than sending an invalid body.
   const tokenId = await resolveUsdcTokenId(params.walletId).catch(() => null)
-  const tokenIdent = tokenId
-    ? { tokenId }
-    : { tokenAddress: USDC_ADDRESS, blockchain: BLOCKCHAIN as any }
+  if (!tokenId) {
+    throw new Error(
+      'Could not resolve a Circle USDC tokenId for the disbursement wallet. ' +
+      'Confirm the float is funded and visible via GET /payroll/disbursement/tokens.')
+  }
+  const tokenIdent = { tokenId }
 
   let res
   try {
