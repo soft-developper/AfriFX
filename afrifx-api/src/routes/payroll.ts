@@ -68,7 +68,7 @@ router.post('/batches', async (req, res) => {
 
   // Only the chains AfriFX settles on are valid payout targets. Anything
   // else is rejected rather than stored and failing silently at execute time.
-  const ALLOWED_CHAINS = ['arc', 'base', 'ethereum', 'arbitrum', 'polygon']
+  const ALLOWED_CHAINS = ['arc']  // PHASE_7H: Arc-only until a real cross-chain payout path exists
   const chain = String(destChain).toLowerCase()
   if (!ALLOWED_CHAINS.includes(chain)) {
     return res.status(400).json({ error: `Unsupported payout chain: ${destChain}` })
