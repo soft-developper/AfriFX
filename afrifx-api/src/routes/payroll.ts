@@ -1,7 +1,7 @@
 import { Router }     from 'express'
 import { db }         from '../db/client'
 import { sql }        from 'drizzle-orm'
-import { randomUUID } from 'crypto'
+import { randomUUID, createHash } from 'crypto'  // PHASE_7F: createHash for deterministic idempotency UUID
 
 const router = Router()
 
@@ -188,6 +188,22 @@ router.delete('/batches/:id', async (req, res) => {
 // Guard so the same batch isn't worked by two overlapping runs in one process.
 const runningBatches = new Set<string>()
 
+// PHASE_7F: deterministic UUID from an arbitrary string. Circle's SDK requires
+// idempotencyKey to be a valid UUID; a composite like `${batchId}:${recipientId}`
+// is rejected client-side ("API parameter invalid"). We hash the composite key
+// (SHA-1) and format it as a UUIDv5-style value: SAME input => SAME UUID, so a
+// retry of the same payout still dedupes exactly-once, and the SDK accepts it.
+function stableUuid(input: string): string {
+  const h = createHash('sha1').update(input).digest('hex')  // 40 hex chars
+  // Format 32 of them as 8-4-4-4-12, with version (5) and variant bits set.
+  const b = h.slice(0, 32).split('')
+  b[12] = '5'                                   // version 5
+  const variant = (parseInt(b[16], 16) & 0x3 | 0x8).toString(16)
+  b[16] = variant                               // variant 10xx
+  const u = b.join('')
+  return `${u.slice(0,8)}-${u.slice(8,12)}-${u.slice(12,16)}-${u.slice(16,20)}-${u.slice(20,32)}`
+}
+
 async function runBatchPayout(batchId: string): Promise<void> {
   if (runningBatches.has(batchId)) return
   runningBatches.add(batchId)
@@ -215,7 +231,7 @@ async function runBatchPayout(batchId: string): Promise<void> {
           destinationAddress: String(toAddress),
           amount,
           // Stable key => exactly-once even if this runs twice.
-          idempotencyKey:     `${batchId}:${recipientId}`,
+          idempotencyKey:     stableUuid(`${batchId}:${recipientId}`),  // PHASE_7F: valid, stable UUID
           refId:              memoRef ? String(memoRef) : undefined,
         })
 
