@@ -444,4 +444,21 @@ router.get('/disbursement/wallet-info', async (_req, res) => {
   }
 })
 
+// GET /payroll/disbursement/selftest   (PHASE_7E1 diagnostic)
+//
+// From inside the running service: fee-estimate a USDC transfer (no funds
+// move) to exercise the entity-secret/auth path and surface Circle's RAW
+// response, plus loaded-credential lengths. This is the definitive check for
+// an entity-secret mismatch or a truncated/newline-laden env value.
+router.get('/disbursement/selftest', async (_req, res) => {
+  const walletId = process.env.PAYROLL_DISBURSEMENT_WALLET_ID
+  if (!walletId) return res.status(400).json({ error: 'Disbursement wallet not configured' })
+  try {
+    const { disbursementSelfTest } = await import('../services/platformDisbursement')
+    res.json(await disbursementSelfTest(walletId))
+  } catch (err: any) {
+    res.status(502).json({ error: err.message })
+  }
+})
+
 export default router

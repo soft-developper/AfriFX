@@ -29,6 +29,7 @@ import {
 } from '@circle-fin/developer-controlled-wallets'
 import { randomUUID } from 'crypto'
 
+/* PHASE_7E1 diagnostics active */
 const BLOCKCHAIN = process.env.CIRCLE_BLOCKCHAIN ?? 'ARC-TESTNET'
 
 // USDC token id differs by environment; on Arc testnet USDC is the native gas
@@ -279,11 +280,14 @@ export async function sendUsdc(params: {
       .map((e: any) => [e?.location, e?.message].filter(Boolean).join(': '))
       .filter(Boolean)
       .join('; ')
-    console.error('[sendUsdc] Circle rejected contract execution:', JSON.stringify({
-      status:  err?.response?.status,
-      code:    data?.code,
-      message: data?.message,
-      errors,
+    // PHASE_7E1: dump EVERYTHING Circle sent back, not just .errors.
+    console.error('[sendUsdc] RAW Circle error:', JSON.stringify({
+      httpStatus:     err?.response?.status,
+      httpStatusText: err?.response?.statusText,
+      xRequestId:     err?.response?.headers?.['x-request-id'],
+      responseData:   err?.response?.data,          // the ENTIRE body
+      axiosCode:      err?.code,
+      axiosMessage:   err?.message,
     }))
     const detail = fieldMsgs || data?.message || err?.message || 'transfer rejected'
     throw new Error(detail)
@@ -308,6 +312,49 @@ function toBaseUnits(amount: number, decimals: number): string | null {
   const fracPadded = (frac + '0'.repeat(decimals)).slice(0, decimals)
   const combined = (whole + fracPadded).replace(/^0+(?=\d)/, '')
   return combined === '' ? '0' : combined
+}
+
+// PHASE_7E1 (diagnostic): exercise the mutating-request path WITHOUT moving
+// funds, and surface Circle's raw response. A fee-estimate for a USDC transfer
+// hits the same auth/entity-secret machinery a real transfer does, so if the
+// entity secret is mismatched this reproduces the failure with a readable
+// error. Also returns loaded-credential LENGTHS (never values) to catch a
+// trailing newline or truncation in the deployed env.
+export async function disbursementSelfTest(walletId: string): Promise<any> {
+  const apiKeyLen  = (process.env.CIRCLE_API_KEY ?? '').length
+  const secretLen  = (process.env.CIRCLE_ENTITY_SECRET ?? '').length
+  const secretHex  = /^[0-9a-fA-F]+$/.test(process.env.CIRCLE_ENTITY_SECRET ?? '')
+  const out: any = {
+    env: {
+      apiKeyLength:        apiKeyLen,
+      entitySecretLength:  secretLen,   // expect 64 (32-byte hex)
+      entitySecretIsHex:   secretHex,   // expect true
+      blockchain:          BLOCKCHAIN,
+    },
+  }
+  try {
+    const c = client()
+    // estimateContractExecutionFee mirrors the real payout call, no funds move.
+    const res = await (c as any).estimateContractExecutionFee({
+      walletId,
+      contractAddress:      process.env.CIRCLE_USDC_ERC20_ADDRESS ?? USDC_ADDRESS,
+      abiFunctionSignature: 'transfer(address,uint256)',
+      abiParameters:        [ '0x0000000000000000000000000000000000000001', '1' ],
+    } as any)
+    out.feeEstimate = res?.data ?? null
+    out.ok = true
+  } catch (err: any) {
+    out.ok = false
+    out.rawError = {
+      httpStatus:     err?.response?.status,
+      httpStatusText: err?.response?.statusText,
+      xRequestId:     err?.response?.headers?.['x-request-id'],
+      responseData:   err?.response?.data,
+      axiosCode:      err?.code,
+      axiosMessage:   err?.message,
+    }
+  }
+  return out
 }
 
 /** Poll a payout's status by transaction id (to learn its on-chain hash). */
