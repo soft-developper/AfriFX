@@ -204,11 +204,12 @@ function stableUuid(input: string): string {
   return `${u.slice(0,8)}-${u.slice(8,12)}-${u.slice(12,16)}-${u.slice(16,20)}-${u.slice(20,32)}`
 }
 
+// PHASE_7G active
 async function runBatchPayout(batchId: string): Promise<void> {
   if (runningBatches.has(batchId)) return
   runningBatches.add(batchId)
   try {
-    const { sendUsdc } = await import('../services/platformDisbursement')
+    const { sendUsdc, getPayoutStatus } = await import('../services/platformDisbursement')  // PHASE_7G
 
     const pending = parseRows(await db.run(sql`
       SELECT id, wallet_address, amount, memo_ref
@@ -249,6 +250,35 @@ async function runBatchPayout(batchId: string): Promise<void> {
         await db.run(sql`
           UPDATE payroll_recipients SET status = 'failed', tx_hash = ${'ERR: ' + reason}
           WHERE id = ${recipientId}`).catch(() => {})
+      }
+    }
+
+    // PHASE_7G: backfill real on-chain hashes. The send loop above recorded
+    // the Circle tx id (0x… hash isn't known at send time). Now poll each paid
+    // recipient briefly and replace tx_hash with the real hash once Circle has
+    // it. Bounded so a slow confirmation can't hang the batch; anything not
+    // ready keeps its id and a later re-execute backfills it.
+    const paidRows = parseRows(await db.run(sql`
+      SELECT id, tx_hash FROM payroll_recipients
+      WHERE batch_id = ${batchId} AND status = 'paid'`))
+    for (const pr of paidRows) {
+      const rid    = pr.id ?? pr[0]
+      const stored = String(pr.tx_hash ?? pr[1] ?? '')
+      if (stored.startsWith('0x')) continue
+      if (stored.startsWith('ERR:')) continue
+      const circleTxId = stored
+      for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+          const st = await getPayoutStatus(circleTxId)
+          if (st.txHash) {
+            await db.run(sql`
+              UPDATE payroll_recipients SET tx_hash = ${st.txHash}
+              WHERE id = ${rid}`).catch(() => {})
+            break
+          }
+          if (['FAILED', 'DENIED', 'CANCELLED'].includes(st.state)) break
+        } catch { /* transient - retry */ }
+        await new Promise(r => setTimeout(r, 3000))
       }
     }
 
@@ -422,58 +452,6 @@ router.get('/disbursement/funding', async (_req, res) => {
     res.json({ funding: rows })
   } catch (err: any) {
     res.status(500).json({ error: err.message })
-  }
-})
-
-// GET /payroll/disbursement/tokens   (PHASE_7C2 diagnostic)
-//
-// Show exactly what Circle reports for the funded disbursement wallet:
-// each token's id, symbol, isNative flag, address and amount. Use this to
-// confirm a real USDC tokenId resolves before re-running a batch. Safe to
-// remove once payouts are green.
-router.get('/disbursement/tokens', async (_req, res) => {
-  const walletId = process.env.PAYROLL_DISBURSEMENT_WALLET_ID
-  if (!walletId) return res.status(400).json({ error: 'Disbursement wallet not configured' })
-  try {
-    const { listWalletTokens } = await import('../services/platformDisbursement')
-    const tokens = await listWalletTokens(walletId)
-    res.json({ walletId, tokens })
-  } catch (err: any) {
-    res.status(502).json({ error: err.message })
-  }
-})
-
-// GET /payroll/disbursement/wallet-info   (PHASE_7D1 diagnostic)
-//
-// The wallet's REAL account type straight from Circle - the authoritative
-// check that the re-provisioned wallet is actually EOA (not still SCA). Safe
-// to remove once payouts are green.
-router.get('/disbursement/wallet-info', async (_req, res) => {
-  const walletId = process.env.PAYROLL_DISBURSEMENT_WALLET_ID
-  if (!walletId) return res.status(400).json({ error: 'Disbursement wallet not configured' })
-  try {
-    const { getDisbursementWalletInfo } = await import('../services/platformDisbursement')
-    const info = await getDisbursementWalletInfo(walletId)
-    res.json(info)
-  } catch (err: any) {
-    res.status(502).json({ error: err.message })
-  }
-})
-
-// GET /payroll/disbursement/selftest   (PHASE_7E1 diagnostic)
-//
-// From inside the running service: fee-estimate a USDC transfer (no funds
-// move) to exercise the entity-secret/auth path and surface Circle's RAW
-// response, plus loaded-credential lengths. This is the definitive check for
-// an entity-secret mismatch or a truncated/newline-laden env value.
-router.get('/disbursement/selftest', async (_req, res) => {
-  const walletId = process.env.PAYROLL_DISBURSEMENT_WALLET_ID
-  if (!walletId) return res.status(400).json({ error: 'Disbursement wallet not configured' })
-  try {
-    const { disbursementSelfTest } = await import('../services/platformDisbursement')
-    res.json(await disbursementSelfTest(walletId))
-  } catch (err: any) {
-    res.status(502).json({ error: err.message })
   }
 })
 

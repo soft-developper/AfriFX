@@ -152,29 +152,6 @@ async function resolveUsdcTokenId(walletId: string): Promise<string | null> {
   return id
 }
 
-/**
- * Diagnostic: list the raw token balances Circle reports for a wallet.
- * Used by GET /payroll/disbursement/tokens to confirm a real USDC tokenId
- * resolves before re-running a batch. Never logs secrets.
- */
-export async function listWalletTokens(walletId: string): Promise<Array<{
-  id: string | null; symbol: string | null; isNative: boolean;
-  tokenAddress: string | null; amount: string | null
-}>> {
-  const c = client()
-  const res = await c.getWalletTokenBalance({ id: walletId })
-  return (res.data?.tokenBalances ?? []).map(b => {
-    const t = (b.token ?? {}) as any
-    return {
-      id:           t.id ? String(t.id) : null,
-      symbol:       t.symbol ?? null,
-      isNative:     t.isNative === true,
-      tokenAddress: t.tokenAddress ?? null,
-      amount:       b.amount ?? null,
-    }
-  })
-}
-
 /** The on-chain address of the disbursement wallet (what employers fund). */
 export async function getDisbursementAddress(walletId: string): Promise<string> {
   const c = client()
@@ -182,26 +159,6 @@ export async function getDisbursementAddress(walletId: string): Promise<string> 
   const address = res.data?.wallet?.address
   if (!address) throw new Error('Could not read the disbursement wallet address')
   return address
-}
-
-// PHASE_7D1 (diagnostic): read the wallet's REAL account type from Circle.
-// getWallet returns accountType ('EOA' | 'SCA') and, for SCAs, scaCore. This
-// is the only authoritative way to confirm what was actually provisioned.
-export async function getDisbursementWalletInfo(walletId: string): Promise<{
-  id: string; address: string | null; blockchain: string | null;
-  accountType: string | null; scaCore: string | null; state: string | null
-}> {
-  const c = client()
-  const res = await c.getWallet({ id: walletId })
-  const w = (res.data?.wallet ?? {}) as any
-  return {
-    id:          String(w.id ?? walletId),
-    address:     w.address ?? null,
-    blockchain:  w.blockchain ?? null,
-    accountType: w.accountType ?? null,
-    scaCore:     w.scaCore ?? null,
-    state:       w.state ?? null,
-  }
 }
 
 /* PHASE_7D1 diagnostics active */
@@ -248,17 +205,6 @@ export async function sendUsdc(params: {
     throw new Error(`Invalid payout amount: ${params.amount}`)
   }
 
-  const _debugBody = {
-    walletId:             params.walletId,
-    contractAddress:      USDC_ERC20,
-    abiFunctionSignature: 'transfer(address,uint256)',
-    abiParameters:        [params.destinationAddress, baseUnits],
-    amountHuman:          params.amount,
-    decimals:             DECIMALS,
-    fee:                  { type: 'level', config: { feeLevel: 'MEDIUM' } },
-    refId:                params.refId ?? null,
-  }
-  console.log('[sendUsdc] contractExecution body:', JSON.stringify(_debugBody))
 
   let res
   try {
@@ -281,14 +227,6 @@ export async function sendUsdc(params: {
       .filter(Boolean)
       .join('; ')
     // PHASE_7E1: dump EVERYTHING Circle sent back, not just .errors.
-    console.error('[sendUsdc] RAW Circle error:', JSON.stringify({
-      httpStatus:     err?.response?.status,
-      httpStatusText: err?.response?.statusText,
-      xRequestId:     err?.response?.headers?.['x-request-id'],
-      responseData:   err?.response?.data,          // the ENTIRE body
-      axiosCode:      err?.code,
-      axiosMessage:   err?.message,
-    }))
     const detail = fieldMsgs || data?.message || err?.message || 'transfer rejected'
     throw new Error(detail)
   }
@@ -312,49 +250,6 @@ function toBaseUnits(amount: number, decimals: number): string | null {
   const fracPadded = (frac + '0'.repeat(decimals)).slice(0, decimals)
   const combined = (whole + fracPadded).replace(/^0+(?=\d)/, '')
   return combined === '' ? '0' : combined
-}
-
-// PHASE_7E1 (diagnostic): exercise the mutating-request path WITHOUT moving
-// funds, and surface Circle's raw response. A fee-estimate for a USDC transfer
-// hits the same auth/entity-secret machinery a real transfer does, so if the
-// entity secret is mismatched this reproduces the failure with a readable
-// error. Also returns loaded-credential LENGTHS (never values) to catch a
-// trailing newline or truncation in the deployed env.
-export async function disbursementSelfTest(walletId: string): Promise<any> {
-  const apiKeyLen  = (process.env.CIRCLE_API_KEY ?? '').length
-  const secretLen  = (process.env.CIRCLE_ENTITY_SECRET ?? '').length
-  const secretHex  = /^[0-9a-fA-F]+$/.test(process.env.CIRCLE_ENTITY_SECRET ?? '')
-  const out: any = {
-    env: {
-      apiKeyLength:        apiKeyLen,
-      entitySecretLength:  secretLen,   // expect 64 (32-byte hex)
-      entitySecretIsHex:   secretHex,   // expect true
-      blockchain:          BLOCKCHAIN,
-    },
-  }
-  try {
-    const c = client()
-    // estimateContractExecutionFee mirrors the real payout call, no funds move.
-    const res = await (c as any).estimateContractExecutionFee({
-      walletId,
-      contractAddress:      process.env.CIRCLE_USDC_ERC20_ADDRESS ?? USDC_ADDRESS,
-      abiFunctionSignature: 'transfer(address,uint256)',
-      abiParameters:        [ '0x0000000000000000000000000000000000000001', '1' ],
-    } as any)
-    out.feeEstimate = res?.data ?? null
-    out.ok = true
-  } catch (err: any) {
-    out.ok = false
-    out.rawError = {
-      httpStatus:     err?.response?.status,
-      httpStatusText: err?.response?.statusText,
-      xRequestId:     err?.response?.headers?.['x-request-id'],
-      responseData:   err?.response?.data,
-      axiosCode:      err?.code,
-      axiosMessage:   err?.message,
-    }
-  }
-  return out
 }
 
 /** Poll a payout's status by transaction id (to learn its on-chain hash). */
