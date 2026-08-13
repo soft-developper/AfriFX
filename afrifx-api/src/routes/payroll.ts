@@ -285,13 +285,19 @@ router.post('/batches/:id/execute', async (req, res) => {
     if (owed <= 0) return res.status(400).json({ error: 'Nothing left to pay in this batch' })
 
     // RULE 1 - balance gate: never start what the float can't finish.
+    // PHASE_7D: on Arc gas is paid in USDC from this same wallet, so the float
+    // must cover payouts PLUS a little gas. Require owed + a small buffer so a
+    // batch funded to the exact cent can't pass here then fail the last payout
+    // on gas. Buffer is tiny on Arc testnet; tune via CIRCLE_GAS_BUFFER_USDC.
+    const gasBuffer = Number(process.env.CIRCLE_GAS_BUFFER_USDC ?? '0.05')
+    const required  = owed + gasBuffer
     const { getDisbursementBalance } = await import('../services/platformDisbursement')
     const balance = await getDisbursementBalance(walletId)
-    if (balance < owed) {
+    if (balance < required) {
       return res.status(400).json({
-        error: `Float balance (${balance} USDC) is less than the ${owed} USDC still owed in this batch. Top up the float first.`,
+        error: `Float balance (${balance} USDC) is below the ${required} USDC needed (${owed} owed + ${gasBuffer} gas headroom) for this batch. Top up the float first.`,
         code:  'insufficient_float',
-        balance, owed,
+        balance, owed, gasBuffer, required,
       })
     }
 

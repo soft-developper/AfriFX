@@ -37,6 +37,12 @@ const BLOCKCHAIN = process.env.CIRCLE_BLOCKCHAIN ?? 'ARC-TESTNET'
 const USDC_ADDRESS =
   process.env.CIRCLE_USDC_ADDRESS ?? '0x3600000000000000000000000000000000000000'
 
+// PHASE_7D: account type for the disbursement wallet. EOA is the default and
+// the documented Arc payout path (SCA's ERC-1271 signature was rejected by
+// Circle). Env-driven so the mainnet wallet can be provisioned without a code
+// change; keep it EOA unless you have a specific reason for SCA.
+const ACCOUNT_TYPE = (process.env.CIRCLE_ACCOUNT_TYPE ?? 'EOA').toUpperCase()
+
 /** Lazily-built SDK client. Throws clearly if the env isn't configured. */
 let _client: ReturnType<typeof initiateDeveloperControlledWalletsClient> | null = null
 
@@ -59,8 +65,8 @@ export interface DisbursementWallet {
 /**
  * Provision the platform disbursement wallet set + wallet.
  *
- * Idempotent by intent: run once. It creates a wallet set and a single SCA
- * wallet on the primary chain and returns its id + address. Persist those
+ * Idempotent by intent: run once. It creates a wallet set and a single wallet
+ * (EOA by default, see ACCOUNT_TYPE) on the primary chain and returns its id + address. Persist those
  * (env or DB) - subsequent payouts reference the walletId. Safe to call again
  * only if you WANT another wallet; it does not dedupe, so guard the caller.
  *
@@ -79,7 +85,7 @@ export async function provisionDisbursementWallet(
     blockchains: [BLOCKCHAIN as any],
     count:       1,
     walletSetId,
-    accountType: 'SCA',
+    accountType: ACCOUNT_TYPE as any,   // PHASE_7D: EOA by default (see const)
   })
   const w = walletsRes.data?.wallets?.[0]
   if (!w?.id || !w?.address) throw new Error('Circle did not return a wallet')
