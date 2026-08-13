@@ -230,68 +230,84 @@ export async function sendUsdc(params: {
 }): Promise<PayoutResult> {
   const c = client()
 
-  // PHASE_7C2: USDC on Arc is native => it has NO tokenAddress. Circle rejects
-  // a native transfer that carries a tokenAddress ("API parameter invalid"), so
-  // we MUST send tokenId. If we can't resolve one, fail with a clear message
-  // rather than sending an invalid body.
-  const tokenId = await resolveUsdcTokenId(params.walletId).catch(() => null)
-  if (!tokenId) {
-    throw new Error(
-      'Could not resolve a Circle USDC tokenId for the disbursement wallet. ' +
-      'Confirm the float is funded and visible via GET /payroll/disbursement/tokens.')
-  }
-  const tokenIdent = { tokenId }
+  // PHASE_7E: On Arc, USDC is the native gas asset and Circle's token-transfer
+  // endpoint (createTransaction) rejects a plain tokenId transfer of it. The
+  // documented path is to call transfer(address,uint256) on the USDC ERC-20
+  // contract via createContractExecutionTransaction.
+  //
+  // DECIMALS: the ERC-20 USDC interface on Arc uses 6 decimals (the NATIVE gas
+  // representation uses 18 - do not use that here). Build the base-unit amount
+  // with integer math so no float rounding can corrupt it.
+  const USDC_ERC20 =
+    process.env.CIRCLE_USDC_ERC20_ADDRESS ?? USDC_ADDRESS  // 0x3600...0000
+  const DECIMALS = Number(process.env.CIRCLE_USDC_DECIMALS ?? '6')
 
-  // PHASE_7D1 (diagnostic): print the EXACT body we send Circle, so an
-  // "API parameter invalid" with empty errors[] can be read field-by-field.
-  const _debugBody = {
-    walletId:           params.walletId,
-    tokenIdent,
-    destinationAddress: params.destinationAddress,
-    amount:             [params.amount.toString()],
-    amountRaw:          params.amount,
-    amountType:         typeof params.amount,
-    fee:                { type: 'level', config: { feeLevel: 'MEDIUM' } },
-    refId:              params.refId ?? null,
+  const baseUnits = toBaseUnits(params.amount, DECIMALS)
+  if (baseUnits === null) {
+    throw new Error(`Invalid payout amount: ${params.amount}`)
   }
-  console.log('[sendUsdc] createTransaction body:', JSON.stringify(_debugBody))
+
+  const _debugBody = {
+    walletId:             params.walletId,
+    contractAddress:      USDC_ERC20,
+    abiFunctionSignature: 'transfer(address,uint256)',
+    abiParameters:        [params.destinationAddress, baseUnits],
+    amountHuman:          params.amount,
+    decimals:             DECIMALS,
+    fee:                  { type: 'level', config: { feeLevel: 'MEDIUM' } },
+    refId:                params.refId ?? null,
+  }
+  console.log('[sendUsdc] contractExecution body:', JSON.stringify(_debugBody))
 
   let res
   try {
-    res = await c.createTransaction({
-      walletId:           params.walletId,
-      ...tokenIdent,
-      destinationAddress: params.destinationAddress,
-      amount:             [params.amount.toString()],
-      idempotencyKey:     params.idempotencyKey ?? randomUUID(),
+    res = await c.createContractExecutionTransaction({
+      walletId:             params.walletId,
+      contractAddress:      USDC_ERC20,
+      abiFunctionSignature: 'transfer(address,uint256)',
+      abiParameters:        [params.destinationAddress, baseUnits],
+      idempotencyKey:       params.idempotencyKey ?? randomUUID(),
       fee: { type: 'level', config: { feeLevel: 'MEDIUM' } },
       ...(params.refId ? { refId: params.refId } : {}),
     } as any)
   } catch (err: any) {
-    // PHASE_7C3: Circle returns a data.errors[] naming the exact bad field;
-    // the top-level message is just "API parameter invalid". Log the full
-    // structured error (once) so failures are diagnosable, then surface a
-    // detailed-but-short reason to the caller/recipient row.
+    // Log Circle's FULL structured error (errors[] names the bad field when
+    // present); surface a short but specific reason to the caller/recipient.
     const data   = err?.response?.data
     const errors = Array.isArray(data?.errors) ? data.errors : []
     const fieldMsgs = errors
       .map((e: any) => [e?.location, e?.message].filter(Boolean).join(': '))
       .filter(Boolean)
       .join('; ')
-    console.error('[sendUsdc] Circle rejected transfer:', JSON.stringify({
+    console.error('[sendUsdc] Circle rejected contract execution:', JSON.stringify({
       status:  err?.response?.status,
       code:    data?.code,
       message: data?.message,
       errors,
     }))
-    const detail =
-      fieldMsgs || data?.message || err?.message || 'transfer rejected'
+    const detail = fieldMsgs || data?.message || err?.message || 'transfer rejected'
     throw new Error(detail)
   }
 
   const tx = res.data
   if (!tx?.id) throw new Error('Circle did not return a transaction id')
   return { id: String(tx.id), state: String(tx.state ?? 'INITIATED') }
+}
+
+/**
+ * PHASE_7E: convert a human USDC amount to base units (string) using integer
+ * math so floats can't round. Returns null for NaN/negative/over-precise input.
+ * e.g. toBaseUnits(3, 6) -> "3000000";  toBaseUnits(1.5, 6) -> "1500000".
+ */
+function toBaseUnits(amount: number, decimals: number): string | null {
+  if (!Number.isFinite(amount) || amount < 0) return null
+  const s = amount.toString()
+  if (s.includes('e') || s.includes('E')) return null  // reject sci-notation
+  const [whole, frac = ''] = s.split('.')
+  if (frac.length > decimals) return null               // more precision than the token allows
+  const fracPadded = (frac + '0'.repeat(decimals)).slice(0, decimals)
+  const combined = (whole + fracPadded).replace(/^0+(?=\d)/, '')
+  return combined === '' ? '0' : combined
 }
 
 /** Poll a payout's status by transaction id (to learn its on-chain hash). */
