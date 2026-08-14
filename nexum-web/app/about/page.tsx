@@ -7,7 +7,7 @@ interface Section { heading: string; body: string }
 
 async function getSections(): Promise<Section[]> {
   try {
-    const res = await fetch(`${API}/content/about`, { next: { revalidate: 60 } })
+    const res = await fetch(`${API}/content/about`, { next: { revalidate: 60 }, signal: AbortSignal.timeout(8000) })
     if (!res.ok) return []
     const data = await res.json()
     return Array.isArray(data.sections) ? data.sections : []

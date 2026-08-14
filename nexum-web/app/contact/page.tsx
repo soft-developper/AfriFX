@@ -11,7 +11,7 @@ interface Contact {
 
 async function getContact(): Promise<Contact> {
   try {
-    const res = await fetch(`${API}/content/contact`, { next: { revalidate: 60 } })
+    const res = await fetch(`${API}/content/contact`, { next: { revalidate: 60 }, signal: AbortSignal.timeout(8000) })
     if (!res.ok) return {}
     const data = await res.json()
     return data.contact ?? {}
