@@ -1,7 +1,7 @@
 import { Resend } from 'resend'
 
 const RESEND_KEY = process.env.RESEND_API_KEY
-const FROM_EMAIL = process.env.EMAIL_FROM ?? 'AfriFX <notifications@afrifx.xyz>'
+const FROM_EMAIL = process.env.EMAIL_FROM ?? 'Nexum <notifications@send.nexumpay.xyz>'
 
 if (!RESEND_KEY) {
   console.warn('[Email] RESEND_API_KEY not set, emails will be logged but not sent')
