@@ -9,6 +9,7 @@ import { useFXRates } from '@/hooks/useFXRate'
 import { ClientOnly } from '@/components/ui/client-only'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { ConnectButton } from '@/components/wallet/ConnectButton'
 import { formatAmount } from '@/lib/utils'
 import { CONTRACTS, USDC_DECIMALS } from '@/lib/contracts'
 import { USDC_ABI } from '@/lib/usdc'
@@ -361,9 +362,17 @@ function PayContent() {
           </div>
 
         ) : !isConnected ? (
-          <div className="rounded-xl bg-app-bg p-4 text-center text-sm text-app-muted">
-            <Wallet className="mx-auto mb-2 h-6 w-6" />
-            Connect your wallet to pay this invoice
+          <div className="rounded-xl bg-app-bg p-4 text-center">
+            <Wallet className="mx-auto mb-2 h-6 w-6 text-app-muted" />
+            <p className="mb-3 text-sm text-app-muted">
+              Connect your wallet to pay this invoice
+            </p>
+            <div className="flex justify-center">
+              <ConnectButton label="Connect wallet to pay" />
+            </div>
+            <p className="mt-2 text-[10px] text-app-muted">
+              MetaMask, WalletConnect or any injected wallet holding USDC on Arc. No account needed.
+            </p>
           </div>
 
         ) : !ratesLoaded && isLocalCcy ? (
