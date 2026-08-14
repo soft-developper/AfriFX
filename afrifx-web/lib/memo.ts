@@ -58,7 +58,7 @@ export const MEMO_ADDRESS = '0x5294E9927c3306DcBaDb03fe70b92e01cCede505' as cons
 
 // ── Nexum memo payload types ─────────────────────────────
 export interface AfriFXMemoPayload {
-  app:  'afrifx'
+  app:  'afrifx' | 'nexum'
   type: 'convert' | 'corridor-step1' | 'corridor-step2'
       | 'p2p-create' | 'p2p-accept'
       | 'p2p-taker-confirm' | 'p2p-maker-confirm'
@@ -89,11 +89,15 @@ export function encodeMemoData(payload: AfriFXMemoPayload): `0x${string}` {
 }
 
 // ── Decode memo bytes back to payload (for backend) ───────
+// Accept both tags during/after the AfriFX->Nexum rebrand. Past on-chain txs
+// are tagged 'afrifx' (immutable); 'nexum' is written only after the writer switch.
+export const ACCEPTED_APP_TAGS = ['afrifx', 'nexum'] as const
+
 export function decodeMemoData(memoHex: string): AfriFXMemoPayload | null {
   try {
     const json = Buffer.from(memoHex.replace('0x', ''), 'hex').toString('utf8')
     const parsed = JSON.parse(json)
-    if (parsed.app !== 'afrifx') return null
+    if (!ACCEPTED_APP_TAGS.includes(parsed.app)) return null
     return parsed as AfriFXMemoPayload
   } catch {
     return null

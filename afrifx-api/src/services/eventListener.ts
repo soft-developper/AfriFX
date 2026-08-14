@@ -24,11 +24,15 @@ interface AfriFXMemoPayload {
   step?:     number
 }
 
+// Accept both tags during/after the AfriFX->Nexum rebrand. Past on-chain txs
+// are tagged 'afrifx' (immutable); 'nexum' is written only after Phase B.
+const ACCEPTED_APP_TAGS = ['afrifx', 'nexum']
+
 function decodeMemo(memoHex: string): AfriFXMemoPayload | null {
   try {
     const json = Buffer.from(memoHex.replace('0x', ''), 'hex').toString('utf8')
     const parsed = JSON.parse(json)
-    return parsed.app === 'afrifx' ? parsed : null
+    return ACCEPTED_APP_TAGS.includes(parsed.app) ? parsed : null
   } catch { return null }
 }
 
