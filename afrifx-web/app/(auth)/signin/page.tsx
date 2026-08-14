@@ -131,7 +131,7 @@ function SignInInner() {
           <ArrowLeftRight className="h-6 w-6 text-app-accent-text" />
         </div>
         <div>
-          <h1 className="text-2xl font-semibold text-app-text">AfriFX</h1>
+          <h1 className="text-2xl font-semibold text-app-text">Nexum</h1>
           <p className="text-xs text-app-muted">Dollars that move like messages</p>
         </div>
       </div>

@@ -163,7 +163,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-app-border bg-app-surface px-4 md:hidden">
         <div className="flex items-center gap-2">
           <Shield className="h-5 w-5 text-app-accent-text" />
-          <span className="font-semibold text-app-text">AfriFX Admin</span>
+          <span className="font-semibold text-app-text">Nexum Admin</span>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -186,7 +186,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <div className="flex shrink-0 items-center justify-between border-b border-app-border px-4 py-4">
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-app-accent-text" />
-                <span className="font-semibold text-app-text">AfriFX Admin</span>
+                <span className="font-semibold text-app-text">Nexum Admin</span>
               </div>
               <button onClick={() => setDrawerOpen(false)}
                 className="rounded-lg p-1.5 text-app-muted hover:text-app-text"
@@ -206,7 +206,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <aside className="hidden md:flex md:w-56 md:shrink-0 flex-col border-r border-app-border bg-app-surface">
         <div className="flex items-center gap-2 border-b border-app-border px-4 py-4">
           <Shield className="h-5 w-5 text-app-accent-text" />
-          <span className="font-semibold text-app-text">AfriFX Admin</span>
+          <span className="font-semibold text-app-text">Nexum Admin</span>
         </div>
         <SidebarContent
           admin={admin} pathname={pathname} visibleNav={visibleNav}

@@ -134,7 +134,7 @@ export function LandingFeatures() {
     <section id="features" className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
       <Reveal>
         <div className="mx-auto max-w-2xl text-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-app-accent-text">Everything in AfriFX</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-app-accent-text">Everything in Nexum</span>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
             One app for African <span className="afx-gradient-text">money movement</span>
           </h2>

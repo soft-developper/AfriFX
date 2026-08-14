@@ -117,7 +117,7 @@ export function ProfileSetupClient() {
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-app-accent/20">
           <ArrowLeftRight className="h-5 w-5 text-app-accent-text" />
         </div>
-        <span className="text-xl font-semibold text-app-text">AfriFX</span>
+        <span className="text-xl font-semibold text-app-text">Nexum</span>
       </div>
 
       {step === 3 && (
@@ -133,7 +133,7 @@ export function ProfileSetupClient() {
             You can update your profile anytime from the sidebar.
           </p>
           <Button className="w-full" size="lg" onClick={() => router.push('/dashboard')}>
-            <Sparkles className="h-4 w-4" /> Enter AfriFX
+            <Sparkles className="h-4 w-4" /> Enter Nexum
           </Button>
         </div>
       )}
@@ -142,7 +142,7 @@ export function ProfileSetupClient() {
         <div className="w-full max-w-sm">
           <div className="mb-6 text-center">
             <h1 className="text-2xl font-semibold text-app-text">Create your profile</h1>
-            <p className="mt-1 text-sm text-app-muted">Your identity on AfriFX. Username is permanent.</p>
+            <p className="mt-1 text-sm text-app-muted">Your identity on Nexum. Username is permanent.</p>
           </div>
 
           <div className="mb-8 flex items-center gap-2">

@@ -2,7 +2,7 @@ import { BridgeCard } from '@/components/bridge/BridgeCard'
 import { BridgeHistory } from '@/components/bridge/BridgeHistory'
 import { ClientOnly } from '@/components/ui/client-only'
 
-export const metadata = { title: 'Bridge, AfriFX' }
+export const metadata = { title: 'Bridge, Nexum' }
 
 function BridgeSkeleton() {
   return (

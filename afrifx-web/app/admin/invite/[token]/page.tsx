@@ -43,7 +43,7 @@ export default function AcceptInvitePage() {
             <Shield className="h-7 w-7 text-app-accent-text" />
           </div>
           <h1 className="text-2xl font-bold text-app-text">Accept invitation</h1>
-          <p className="text-sm text-app-muted">Set up your AfriFX admin account</p>
+          <p className="text-sm text-app-muted">Set up your Nexum admin account</p>
         </div>
 
         <div className="rounded-2xl border border-app-border bg-app-surface p-6">

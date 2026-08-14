@@ -56,7 +56,7 @@ export const MEMO_ABI = [
 
 export const MEMO_ADDRESS = '0x5294E9927c3306DcBaDb03fe70b92e01cCede505' as const
 
-// ── AfriFX memo payload types ─────────────────────────────
+// ── Nexum memo payload types ─────────────────────────────
 export interface AfriFXMemoPayload {
   app:  'afrifx'
   type: 'convert' | 'corridor-step1' | 'corridor-step2'

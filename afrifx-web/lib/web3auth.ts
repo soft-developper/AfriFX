@@ -47,7 +47,7 @@ function buildWeb3Auth() {
     web3AuthNetwork,
     privateKeyProvider,
     uiConfig: {
-      appName:         'AfriFX',
+      appName:         'Nexum',
       mode:            'dark',
       defaultLanguage: 'en',
       theme:           { primary: '#D9A441' },

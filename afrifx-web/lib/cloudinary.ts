@@ -1,4 +1,4 @@
-// Cloudinary upload via AfriFX backend
+// Cloudinary upload via Nexum backend
 // API keys stay on the server never exposed to the browser
 // Backend endpoint: POST /chat/:offerId/upload
 

@@ -418,10 +418,10 @@ function PayContent() {
               <div className="h-px flex-1 bg-app-border" />
             </div>
             <Button variant="outline" className="w-full" onClick={handlePayWithCircle}>
-              {hasCircleSession() ? 'Pay with your AfriFX wallet' : 'Sign in to pay with AfriFX wallet'}
+              {hasCircleSession() ? 'Pay with your Nexum wallet' : 'Sign in to pay with Nexum wallet'}
             </Button>
             <p className="mt-2 text-[10px] text-app-muted">
-              Use your Circle-powered AfriFX wallet. New here? Signing in creates one for you.
+              Use your Circle-powered Nexum wallet. New here? Signing in creates one for you.
             </p>
           </div>
 

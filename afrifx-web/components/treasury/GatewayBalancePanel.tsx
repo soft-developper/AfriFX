@@ -9,8 +9,8 @@ import { fetchGatewayBalances, gatewayChains, isValidAddress } from '@/lib/gatew
   READ-ONLY view of the CONNECTED USER'S Circle Gateway unified balance.
 
   Gateway is permissionless and non-custodial, so this is a genuine user
-  feature: any AfriFX user can hold one USDC balance spendable across chains.
-  AfriFX's own company treasury uses the same feature with its own wallet, it
+  feature: any Nexum user can hold one USDC balance spendable across chains.
+  Nexum's own company treasury uses the same feature with its own wallet, it
   is not special-cased.
 
   Stage 2 of the Gateway work: this panel only LOOKS. It cannot deposit,
@@ -33,7 +33,7 @@ export function GatewayBalancePanel() {
 
   /*
     The CONNECTED USER'S wallet, not a hardcoded company address. /treasury is
-    a per-user page, so each user sees their own unified balance. AfriFX's own
+    a per-user page, so each user sees their own unified balance. Nexum's own
     company treasury is just another wallet using the same feature.
   */
   const { address } = useAccount()

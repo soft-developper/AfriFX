@@ -19,8 +19,8 @@ async function getContact(): Promise<Contact> {
 }
 
 export const metadata = {
-  title: 'Contact, AfriFX',
-  description: 'Get in touch with the AfriFX team.',
+  title: 'Contact, Nexum',
+  description: 'Get in touch with the Nexum team.',
 }
 
 export default async function ContactPage() {

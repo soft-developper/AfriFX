@@ -313,14 +313,14 @@ export default function AdminBroadcasts() {
                   Message from
                 </p>
                 <p className="font-semibold text-app-accent-text">{admin?.username ?? 'You'}</p>
-                <p className="mb-3 text-[10px] text-app-muted">Administrator · AfriFX</p>
+                <p className="mb-3 text-[10px] text-app-muted">Administrator · Nexum</p>
                 <p className="mb-2 text-app-text">Hi <span className="text-app-muted">[their name]</span>,</p>
                 <p className="whitespace-pre-wrap text-app-text">
                   {body || <span className="text-app-muted">Your message appears here…</span>}
                 </p>
                 <p className="mt-3 border-t border-app-border pt-2 text-app-muted">
                  , {admin?.username ?? 'You'}<br />
-                  <span className="text-[10px]">Administrator, AfriFX</span>
+                  <span className="text-[10px]">Administrator, Nexum</span>
                 </p>
               </div>
             )}

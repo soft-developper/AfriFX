@@ -10,7 +10,7 @@ import Link from 'next/link'
 export function AfriFXLogo({
   size = 'sm',
   href = '/',
-  showMark = true,
+  showMark = false, // NEXUM: hexagon mark dropped pending new design
 }: { size?: 'sm' | 'md' | 'lg'; href?: string; showMark?: boolean }) {
   const dims = {
     sm: { mark: 30, text: 'text-xl',  sub: 'text-[9px]' },
@@ -39,8 +39,7 @@ export function AfriFXLogo({
       )}
       <span className="flex flex-col leading-none">
         <span className={`font-extrabold tracking-tight ${dims.text}`}>
-          <span className="afx-gradient-text">Afri</span>
-          <span className="afx-gradient-text-bright">FX</span>
+          <span className="afx-gradient-text">Nex</span><span className="afx-gradient-text-bright">um</span>
         </span>
         {size === 'lg' && (
           <span className={`mt-1 font-medium uppercase tracking-[0.2em] text-app-muted ${dims.sub}`}>

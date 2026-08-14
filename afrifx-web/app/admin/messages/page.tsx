@@ -150,7 +150,7 @@ export default function AdminMessagesPage() {
                         {m.subject && <p className="mb-1 text-sm font-medium text-app-text">{m.subject}</p>}
                         <p className="whitespace-pre-wrap text-sm text-app-muted">{m.message}</p>
                         <div className="mt-3 flex flex-wrap gap-2">
-                          <a href={`mailto:${m.email}?subject=Re: ${encodeURIComponent(m.subject || 'Your message to AfriFX')}`}
+                          <a href={`mailto:${m.email}?subject=Re: ${encodeURIComponent(m.subject || 'Your message to Nexum')}`}
                             className="inline-flex items-center gap-1.5 rounded-lg bg-app-accent px-3 py-1.5 text-xs font-medium text-app-on-accent hover:bg-app-accent-hover">
                             <Reply className="h-3.5 w-3.5" /> Reply by email
                           </a>

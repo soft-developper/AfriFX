@@ -73,7 +73,7 @@ export function MobileDrawer({ open, onClose }: Props) {
       <div className="md:hidden fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-app-surface shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-app-border px-4 py-4">
-          <span className="font-semibold text-app-text">AfriFX</span>
+          <span className="font-semibold text-app-text">Nexum</span>
           <button onClick={onClose} className="rounded-lg p-1.5 text-app-muted hover:text-app-text">
             <X className="h-5 w-5" />
           </button>

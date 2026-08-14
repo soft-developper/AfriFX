@@ -15,7 +15,7 @@ export default function PublicPayPage() {
       {/* Minimal public header — no app navigation */}
       <header className="border-b border-app-border">
         <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
-          <Link href="/" className="text-sm font-semibold text-app-text">AfriFX</Link>
+          <Link href="/" className="text-sm font-semibold text-app-text">Nexum</Link>
           <span className="text-[11px] text-app-muted">Secure invoice payment</span>
         </div>
       </header>
@@ -29,7 +29,7 @@ export default function PublicPayPage() {
         </div>
 
         <p className="mt-6 text-center text-[11px] text-app-muted">
-          You don’t need an AfriFX account. Connect any wallet holding USDC on Arc to pay.
+          You don’t need an Nexum account. Connect any wallet holding USDC on Arc to pay.
         </p>
       </main>
     </div>

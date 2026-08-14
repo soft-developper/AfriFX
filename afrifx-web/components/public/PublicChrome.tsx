@@ -34,7 +34,7 @@ export function PublicFooter() {
   return (
     <footer className="border-t border-app-border">
       <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 px-4 py-6 text-xs text-app-muted sm:flex-row">
-        <span>© {new Date().getFullYear()} AfriFX. Stablecoin FX on Arc.</span>
+        <span>© {new Date().getFullYear()} Nexum. Stablecoin FX on Arc.</span>
         <div className="flex gap-4">
           <Link href="/" className="hover:text-app-text">Home</Link>
           <Link href="/about" className="hover:text-app-text">About</Link>

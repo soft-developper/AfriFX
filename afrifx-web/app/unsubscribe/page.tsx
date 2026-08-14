@@ -54,7 +54,7 @@ function UnsubscribeInner() {
               Unsubscribe from announcements?
             </h1>
             <p className="mt-2 text-sm text-app-muted">
-              You'll stop receiving AfriFX announcements and product updates.
+              You'll stop receiving Nexum announcements and product updates.
             </p>
             <p className="mt-3 rounded-lg bg-app-accent/[0.07] px-3 py-2 text-xs text-app-muted">
               You'll still receive essential emails about your own trades, disputes
@@ -70,7 +70,7 @@ function UnsubscribeInner() {
         )}
 
         <Link href="/" className="mt-5 inline-block text-xs text-app-muted hover:text-app-accent-text">
-          Back to AfriFX
+          Back to Nexum
         </Link>
       </div>
     </div>

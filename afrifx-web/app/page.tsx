@@ -10,7 +10,7 @@ import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { ShieldCheck, Zap, Coins } from 'lucide-react'
 
 export const metadata = {
-  title: 'AfriFX, Stablecoin FX & cross-border payments on Arc',
+  title: 'Nexum, Stablecoin FX & cross-border payments on Arc',
   description:
     'Trade USDC for local currency peer-to-peer with on-chain escrow, bridge funds across Arc, Ethereum and Base, and track live African FX rates.',
 }
@@ -71,7 +71,7 @@ function Hero() {
         </h1>
 
         <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-app-muted sm:text-lg">
-          AfriFX is a decentralized FX and cross-border payments platform. Trade USDC for
+          Nexum is a decentralized FX and cross-border payments platform. Trade USDC for
           local currency peer-to-peer with on-chain escrow, move funds between Arc, Ethereum,
           Base and more, and track live rates across 13 African currencies.
         </p>
@@ -135,7 +135,7 @@ function LandingFooter() {
           </div>
         </div>
         <div className="mt-10 border-t border-app-border pt-6 text-xs text-app-muted">
-          © {new Date().getFullYear()} AfriFX. Stablecoin FX on Arc.
+          © {new Date().getFullYear()} Nexum. Stablecoin FX on Arc.
         </div>
       </div>
     </footer>

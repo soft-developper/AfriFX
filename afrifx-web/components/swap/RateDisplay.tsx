@@ -32,7 +32,7 @@ export function RateDisplay({ fromCurrency, toCurrency, rate, spreadFee, network
         </span>
       </div>
       <div className="flex items-center justify-between text-xs">
-        <span className="text-app-muted">AfriFX spread ({SPREAD_BPS / 100}%)</span>
+        <span className="text-app-muted">Nexum spread ({SPREAD_BPS / 100}%)</span>
         <span className="font-mono text-app-text">${formatAmount(spreadFee, 4)} USDC</span>
       </div>
       <div className="flex items-center justify-between text-xs">

@@ -9,7 +9,7 @@
 // chain. Circle's own guidance is explicit that CCTP remains the better fit for
 // ad-hoc point-to-point transfers which is what our user-facing bridge does.
 //
-// For AfriFX's TREASURY it's a strong fit, and one number makes it compelling:
+// For Nexum's TREASURY it's a strong fit, and one number makes it compelling:
 //
 //   DEPOSIT FINALITY (Circle's published figures)
 //     Arc       ~0.5 seconds     <-- our home chain
@@ -80,7 +80,7 @@ export interface GatewayChain {
 }
 
 /*
-  A deliberately SHORT list: the chains AfriFX actually settles on. Gateway
+  A deliberately SHORT list: the chains Nexum actually settles on. Gateway
   supports many more, but each one we show should be one we've reasoned about.
   Arc is home; Base matters because that's where Flutterwave settles.
 */
@@ -114,11 +114,11 @@ export function gatewayChainByDomain(domain: number, env: GatewayEnv = GATEWAY_E
   /treasury is a PER-USER page (it reads the connected wallet), so the Gateway
   panel must show the CONNECTED USER'S OWN unified balance, never a hardcoded
   company address. An earlier draft of this file used a single
-  NEXT_PUBLIC_TREASURY_ADDRESS, which would have shown AfriFX's operational
+  NEXT_PUBLIC_TREASURY_ADDRESS, which would have shown Nexum's operational
   balance to every user: confusing, and a disclosure of company finances.
 
   Gateway is permissionless and non-custodial, so every user can have their own
-  unified balance keyed to their own wallet. AfriFX's company treasury is simply
+  unified balance keyed to their own wallet. Nexum's company treasury is simply
   one more wallet, it isn't special-cased here.
 */
 export function isValidAddress(a?: string | null): boolean {

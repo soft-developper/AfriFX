@@ -77,7 +77,7 @@ function SettlementsContent() {
       rows.push([
         'FX Conversion', tx.reference ?? tx.id, fromAmt, fromCcy,
         usdVal.toFixed(2),
-        'AfriFX Vault',
+        'Nexum Vault',
         new Date((Number(tx.created_at) || 0) * 1000).toISOString(),
         tx.status, tx.arc_tx_hash ?? '',
       ].join(','))
@@ -209,7 +209,7 @@ function SettlementsContent() {
                 const usdVal   = activeTab === 'transactions'
                   ? (toCcy === 'USDC' ? toAmt : fromCcy === 'USDC' ? fromAmt : toUSD(fromAmt, fromCcy))
                   : toUSD(Number(amount), currency)
-                const counterparty = item.recipient_address ?? item.sender_address ?? item.creator_address ?? 'AfriFX Vault'
+                const counterparty = item.recipient_address ?? item.sender_address ?? item.creator_address ?? 'Nexum Vault'
                 const date     = new Date((Number(item.created_at) || 0) * 1000).toLocaleDateString()
                 const status   = item.status ?? 'settled'
                 const hash     = item.arc_tx_hash ?? item.payment_tx_hash
