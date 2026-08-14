@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { InvoiceQR } from '@/components/invoice/InvoiceQR'
 import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { useInvoice, useUpdateInvoiceStatus } from '@/hooks/useInvoices'
 import { ClientOnly } from '@/components/ui/client-only'
@@ -124,6 +125,7 @@ function InvoiceDetail() {
               <p className="text-xs text-app-muted">
                 Share this link with your payer. They visit it, connect their wallet, and pay on-chain.
               </p>
+          <div className="mt-4"><InvoiceQR memoRef={invoice.memo_ref} /></div>
               {invoice.status === 'draft' && (
                 <Button className="mt-3 w-full" size="sm"
                   onClick={() => updateStatus.mutateAsync({ id: invoice.id, status: 'sent' })}>

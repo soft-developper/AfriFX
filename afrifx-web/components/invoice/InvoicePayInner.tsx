@@ -30,7 +30,7 @@ type PayStatus =
   | 'failed'
   | 'error'
 
-export default function PayPage() {
+export function InvoicePayInner() {
   return <ClientOnly><PayContent /></ClientOnly>
 }
 
