@@ -13,8 +13,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 
-export const ACCOUNT_TOKEN_KEY = 'afrifx_token'
-export const ACCOUNT_KEY       = 'afrifx_account'
+export const ACCOUNT_TOKEN_KEY = 'nexum_token'
+export const ACCOUNT_KEY       = 'nexum_account'
 
 export interface Account {
   id:            string

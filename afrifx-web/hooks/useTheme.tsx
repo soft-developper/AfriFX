@@ -14,7 +14,7 @@ interface ThemeCtx {
 
 const Ctx = createContext<ThemeCtx | null>(null)
 
-const STORAGE_KEY = 'afrifx_theme' // stores 'light' | 'dark' when manual; absent = auto
+const STORAGE_KEY = 'nexum_theme' // stores 'light' | 'dark' when manual; absent = auto
 
 // Clock-based default: light during the day (06:00–17:59), dark in the evening/night.
 export function themeForNow(date = new Date()): Theme {

@@ -2,8 +2,8 @@
 import { useState, useEffect, useRef } from 'react'
 
 const API        = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
-export const TOKEN_KEY = 'afrifx_admin_token'
-export const ADMIN_KEY = 'afrifx_admin'
+export const TOKEN_KEY = 'nexum_admin_token'
+export const ADMIN_KEY = 'nexum_admin'
 
 export interface AdminSession {
   id:           string

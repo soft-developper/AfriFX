@@ -41,7 +41,14 @@ export const viewport: Viewport = {
 const themeInitScript = `
 (function() {
   try {
-    var stored = localStorage.getItem('afrifx_theme');
+    // ── AfriFX→Nexum one-time storage-key migration (runs before hooks) ──
+    // Move each old key's value to the new name, then drop the old key. Runs
+    // once: after the first load the old keys are gone and this no-ops.
+    var LS = [['afrifx_token','nexum_token'],['afrifx_account','nexum_account'],['afrifx_theme','nexum_theme']];
+    for (var i=0;i<LS.length;i++){var o=LS[i][0],n=LS[i][1];try{if(localStorage.getItem(n)===null){var v=localStorage.getItem(o);if(v!==null){localStorage.setItem(n,v);localStorage.removeItem(o);}}}catch(e){}}
+    var SS = [['afrifx_admin_token','nexum_admin_token'],['afrifx_admin','nexum_admin']];
+    for (var j=0;j<SS.length;j++){var so=SS[j][0],sn=SS[j][1];try{if(sessionStorage.getItem(sn)===null){var sv=sessionStorage.getItem(so);if(sv!==null){sessionStorage.setItem(sn,sv);sessionStorage.removeItem(so);}}}catch(e){}}
+    var stored = localStorage.getItem('nexum_theme');
     var theme;
     if (stored === 'light' || stored === 'dark') {
       theme = stored;
