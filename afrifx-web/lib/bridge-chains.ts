@@ -61,7 +61,7 @@ export function rpcUrlFor(chainId: number): string | undefined {
     [baseSepolia.id]:     process.env.NEXT_PUBLIC_BASE_RPC_URL    ?? 'https://sepolia.base.org',
     [sepolia.id]:         process.env.NEXT_PUBLIC_ETH_RPC_URL     ?? 'https://ethereum-sepolia-rpc.publicnode.com',
     [arbitrumSepolia.id]: process.env.NEXT_PUBLIC_ARB_RPC_URL     ?? 'https://sepolia-rollup.arbitrum.io/rpc',
-    [polygonAmoy.id]:     process.env.NEXT_PUBLIC_POLYGON_RPC_URL ?? 'https://rpc-amoy.polygon.technology',
+    [polygonAmoy.id]:     process.env.NEXT_PUBLIC_POLYGON_RPC_URL ?? 'https://polygon-amoy-bor-rpc.publicnode.com',
     [base.id]:            process.env.NEXT_PUBLIC_BASE_RPC_URL    ?? 'https://mainnet.base.org',
     [mainnet.id]:         process.env.NEXT_PUBLIC_ETH_RPC_URL,
     [arbitrum.id]:        process.env.NEXT_PUBLIC_ARB_RPC_URL     ?? 'https://arb1.arbitrum.io/rpc',

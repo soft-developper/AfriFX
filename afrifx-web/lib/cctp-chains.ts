@@ -104,7 +104,7 @@ const TESTNET_CHAINS: CctpChain[] = [
   {
     key: 'ethereum', name: 'Ethereum Sepolia', domain: 0, chainId: 11155111,
     usdc: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
-    rpcUrl:  process.env.NEXT_PUBLIC_ETH_RPC_URL ?? 'https://rpc.sepolia.org',
+    rpcUrl:  process.env.NEXT_PUBLIC_ETH_RPC_URL ?? 'https://ethereum-sepolia-rpc.publicnode.com',
     explorer: 'https://sepolia.etherscan.io',
   },
   {
@@ -116,7 +116,7 @@ const TESTNET_CHAINS: CctpChain[] = [
   {
     key: 'polygon', name: 'Polygon Amoy', domain: 7, chainId: 80002,
     usdc: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',
-    rpcUrl:  process.env.NEXT_PUBLIC_POLYGON_RPC_URL ?? 'https://rpc-amoy.polygon.technology',
+    rpcUrl:  process.env.NEXT_PUBLIC_POLYGON_RPC_URL ?? 'https://polygon-amoy-bor-rpc.publicnode.com',
     explorer: 'https://amoy.polygonscan.com',
   },
 ]
