@@ -13,13 +13,13 @@
 
 export const BRAND = {
   /** Display name, e.g. in email copy and headings. */
-  name: process.env.BRAND_NAME ?? 'AfriFX',
+  name: process.env.BRAND_NAME ?? 'Nexum',
 
   /** Lowercase machine-ish form, e.g. in URLs or slugs. */
-  slug: process.env.BRAND_SLUG ?? 'afrifx',
+  slug: process.env.BRAND_SLUG ?? 'nexum',
 
   /** Public site, used in emails and links. */
-  url: process.env.BRAND_URL ?? 'https://afrifx.vercel.app',
+  url: process.env.BRAND_URL ?? 'https://nexumpay.xyz',
 
   /** From address for transactional mail. */
   supportEmail: process.env.BRAND_SUPPORT_EMAIL ?? 'support@afrifx.com',
