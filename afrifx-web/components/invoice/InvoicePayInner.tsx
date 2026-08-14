@@ -123,7 +123,7 @@ function PayContent() {
       if (useMemo) {
         const args = buildMemoTransferArgs(
           CONTRACTS.USDC, target, usdcAmount, USDC_DECIMALS, memoId,
-          { app: 'afrifx', type: 'p2p-create', ref: invoice.memo_ref },
+          { app: 'nexum', type: 'p2p-create', ref: invoice.memo_ref },
         )
         hash = await writeContractAsync(args)
       } else {

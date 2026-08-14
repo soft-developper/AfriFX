@@ -62,7 +62,7 @@ export interface AfriFXMemoPayload {
   type: 'convert' | 'corridor-step1' | 'corridor-step2'
       | 'p2p-create' | 'p2p-accept'
       | 'p2p-taker-confirm' | 'p2p-maker-confirm'
-  ref?: string          // AFX-YYYYMMDD-XXXX
+  ref?: string          // NEX-YYYYMMDD-XXXX (legacy: AFX-)
   pair?: string         // e.g. "NGN/USDC"
   rate?: number
   corridorId?: string   // CRD-YYYYMMDD-XXXX
@@ -73,14 +73,14 @@ export interface AfriFXMemoPayload {
 // ── memoId generation ─────────────────────────────────────
 // Per docs: memoId is a bytes32 your app defines for lookup
 export function buildMemoId(seed: string): `0x${string}` {
-  return keccak256(stringToHex(`afrifx-${seed}-${Date.now()}`))
+  return keccak256(stringToHex(`nexum-${seed}-${Date.now()}`))
 }
 
 // Human-readable reference stored in DB (not on-chain)
 export function buildReference(): string {
   const date   = new Date().toISOString().slice(0, 10).replace(/-/g, '')
   const suffix = Math.random().toString(36).slice(2, 6).toUpperCase()
-  return `AFX-${date}-${suffix}`
+  return `NEX-${date}-${suffix}`
 }
 
 // ── Encode memo payload as UTF-8 bytes ───────────────────
