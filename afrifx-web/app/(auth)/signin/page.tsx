@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeftRight, Mail, AlertCircle, Loader2, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,14 +25,15 @@ type Stage = 'choose' | 'email' | 'sent'
  * choose a username. If you've been here before you land on the
  * dashboard. Nothing is asked for up front.
  */
-export default function SignInPage() {
+function SignInInner() {
   const router = useRouter()
+  const returnTo = useSearchParams().get('returnTo') || '/dashboard'
   const { account, loading } = useAuth()
 
   // Already signed in (e.g. opened /signin from a bookmark, or bounced
   // here by the guard after the session was restored): don't ask again.
   useEffect(() => {
-    if (!loading && account) router.replace('/dashboard')
+    if (!loading && account) router.replace(returnTo)
   }, [loading, account, router])
 
   const [stage, setStage] = useState<Stage>('choose')
@@ -81,7 +82,7 @@ export default function SignInPage() {
 
       // ProfileGuard sends anyone without a profile to /profile/setup,
       // so the dashboard is the right destination either way.
-      router.push('/dashboard')
+      router.push(returnTo)
     } catch {
       setError('Could not reach the server. Check your connection and try again.')
       setBusy(null)
@@ -203,5 +204,13 @@ export default function SignInPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignInInner />
+    </Suspense>
   )
 }

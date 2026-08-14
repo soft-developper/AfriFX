@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
-import { useParams } from 'next/navigation'
-import { useAccount, useWriteContract, usePublicClient } from 'wagmi'
+import { useParams, useRouter } from 'next/navigation'
+import { useAccount, useWriteContract, usePublicClient, useConfig, useChainId } from 'wagmi'
 import { parseUnits } from 'viem'
 import { useInvoiceByRef } from '@/hooks/useInvoices'
 import { useCreatePayment } from '@/hooks/usePayments'
@@ -15,6 +15,8 @@ import { CONTRACTS, USDC_DECIMALS } from '@/lib/contracts'
 import { USDC_ABI } from '@/lib/usdc'
 import { buildMemoId, buildMemoTransferArgs, MEMO_ADDRESS } from '@/lib/memo'
 import { arcTestnet } from '@/lib/arc-chain'
+import { ensureArcChain } from '@/lib/ensure-arc-chain'
+import { useInvoiceCirclePay, hasCircleSession } from '@/hooks/useInvoiceCirclePay'
 import {
   FileText, CheckCircle, AlertCircle,
   Loader2, ExternalLink, Wallet, XCircle,
@@ -37,12 +39,16 @@ export function InvoicePayInner() {
 
 function PayContent() {
   const { ref }                          = useParams()
+  const router                          = useRouter()
+  const { payWithCircle, step: circleStep } = useInvoiceCirclePay()
   const { address, isConnected }         = useAccount()
   const publicClient                     = usePublicClient({ chainId: arcTestnet.id })
   const { data: invoice, isLoading }     = useInvoiceByRef(ref as string)
   const { data: rates = [] }             = useFXRates()
   const createPayment                    = useCreatePayment()
   const { writeContractAsync }           = useWriteContract()
+  const wagmiConfig                      = useConfig()
+  const currentChainId                   = useChainId()
 
   const [status, setStatus] = useState<PayStatus>('idle')
   const [txHash, setTxHash] = useState<string | null>(null)
@@ -101,6 +107,9 @@ function PayContent() {
     let hash: `0x${string}` | null = null
 
     try {
+      // Make sure the external wallet is on Arc (adds the chain if missing).
+      await ensureArcChain(wagmiConfig, currentChainId)
+
       // Always transfer in USDC regardless of invoice currency
       const usdcRaw = parseUnits(usdcAmount.toFixed(6), USDC_DECIMALS)
       const memoId  = buildMemoId(`invoice-${invoice.memo_ref}`)
@@ -181,6 +190,36 @@ function PayContent() {
           body:    JSON.stringify({ txHash: hash, status: 'failed' }),
         }).catch(() => {})
       }
+    }
+  }
+
+  async function handlePayWithCircle() {
+    if (!invoice || usdcAmount <= 0) return
+    setStatus('submitting'); setErrMsg(null); setTxHash(null)
+    try {
+      const target = invoice.creator_address as string
+      const outcome = await payWithCircle(target, usdcAmount)
+      if (outcome.needsSignin) {
+        // No live Circle session: send them to sign in, then back here.
+        router.push('/signin?returnTo=' + encodeURIComponent('/pay/' + invoice.memo_ref))
+        return
+      }
+      const hash = outcome.result.txHash as `0x${string}` | undefined
+      if (hash) setTxHash(hash)
+      // Persist invoice-paid + payment record (same as the external path).
+      await fetch(`${API}/invoices/ref/${invoice.memo_ref}/pay`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ txHash: hash ?? null, payerAddress: null, usdcAmount }),
+      }).catch(() => {})
+      await createPayment.mutateAsync({
+        recipientAddress: invoice.creator_address,
+        amount: usdcAmount, currency: 'USDC',
+        description: invoice.description ?? invoice.memo_ref,
+        invoiceRef: invoice.memo_ref, arcTxHash: hash,
+      } as any).catch(() => {})
+      setStatus('success')
+    } catch (err: any) {
+      setStatus('error'); setErrMsg(err?.shortMessage ?? err?.message ?? 'Circle payment failed')
     }
   }
 
@@ -372,6 +411,17 @@ function PayContent() {
             </div>
             <p className="mt-2 text-[10px] text-app-muted">
               MetaMask, WalletConnect or any injected wallet holding USDC on Arc. No account needed.
+            </p>
+            <div className="my-3 flex items-center gap-2">
+              <div className="h-px flex-1 bg-app-border" />
+              <span className="text-[10px] text-app-muted">or</span>
+              <div className="h-px flex-1 bg-app-border" />
+            </div>
+            <Button variant="outline" className="w-full" onClick={handlePayWithCircle}>
+              {hasCircleSession() ? 'Pay with your AfriFX wallet' : 'Sign in to pay with AfriFX wallet'}
+            </Button>
+            <p className="mt-2 text-[10px] text-app-muted">
+              Use your Circle-powered AfriFX wallet. New here? Signing in creates one for you.
             </p>
           </div>
 
