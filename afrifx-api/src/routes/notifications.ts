@@ -157,7 +157,7 @@ router.post('/test-email', async (req, res) => {
         + '<h1 style="color:#378ADD;margin:0 0 16px;font-size:20px;">AfriFX notifications</h1>'
         + '<p style="color:#64748B;font-size:14px;line-height:1.6;margin:0 0 16px;">Hi ' + name + ',</p>'
         + '<p style="color:#64748B;font-size:14px;line-height:1.6;margin:0 0 16px;">Your email notifications are set up and working correctly. You will now receive alerts for trades, disputes, and invoice payments.</p>'
-        + '<p style="color:#64748B;font-size:12px;margin:24px 0 0;">AfriFX &middot; <a href="https://afrifx.xyz" style="color:#378ADD;">afrifx.xyz</a></p>'
+        + '<p style="color:#64748B;font-size:12px;margin:24px 0 0;">AfriFX &middot; <a href="https://nexumpay.xyz" style="color:#378ADD;">nexumpay.xyz</a></p>'
         + '</div></body></html>',
     })
 

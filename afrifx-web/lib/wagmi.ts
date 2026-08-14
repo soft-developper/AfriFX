@@ -23,7 +23,7 @@ const wallets = hasWeb3Auth
 
 export const wagmiConfig = getDefaultConfig({
   appName:    'Nexum',
-  appIcon:    'https://afrifx.xyz/favicon.svg',
+  appIcon:    'https://nexumpay.xyz/favicon.svg',
   projectId,
   wallets,
   chains:     activeChains() as any,

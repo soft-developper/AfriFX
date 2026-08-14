@@ -17,7 +17,7 @@ const BORDER      = '#2A2418'
 const TEXT        = '#F2E9D8'
 const MUTED       = '#9C8A6E'
 
-const APP_URL = process.env.APP_URL ?? 'https://afrifx.xyz'
+const APP_URL = process.env.APP_URL ?? 'https://nexumpay.xyz'
 
 export interface BroadcastTemplateParams {
   recipientName:  string      // personalises the greeting
@@ -118,7 +118,7 @@ export function broadcastEmail(p: BroadcastTemplateParams): { subject: string; h
             : 'You received this because you have an account on AfriFX.'}
         </p>
         <p style="margin:0 0 10px;font-size:11px;color:${MUTED};">
-          <a href="${APP_URL}" style="color:${GOLD};text-decoration:none;">afrifx.xyz</a>
+          <a href="${APP_URL}" style="color:${GOLD};text-decoration:none;">nexumpay.xyz</a>
           ${p.unsubscribeUrl ? `
             &nbsp;·&nbsp;
             <a href="${p.unsubscribeUrl}" style="color:${MUTED};text-decoration:underline;">

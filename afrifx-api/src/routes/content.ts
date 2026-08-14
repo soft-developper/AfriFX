@@ -21,7 +21,7 @@ const DEFAULTS: Record<string, any> = {
     { heading: 'About AfriFX', body: 'AfriFX is a decentralized foreign-exchange and cross-border payments platform built on the Arc blockchain.' },
   ],
   contact: {
-    email: 'support@afrifx.xyz', phone: '', address: '',
+    email: 'support@nexumpay.xyz', phone: '', address: '',
     supportHours: '', twitter: '', telegram: '', discord: '',
   },
 }
@@ -127,7 +127,7 @@ router.post('/contact/message', async (req, res) => {
     // Notify the platform inbox. The recipient is the support address the
     // admin set on the Contact page (falls back to a sensible default).
     const contact = await readContent('contact')
-    const inbox   = (contact && contact.email) ? contact.email : 'support@afrifx.xyz'
+    const inbox   = (contact && contact.email) ? contact.email : 'support@nexumpay.xyz'
 
     await sendEmail({
       to:      inbox,

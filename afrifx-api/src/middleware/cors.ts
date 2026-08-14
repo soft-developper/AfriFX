@@ -5,6 +5,8 @@ export const corsMiddleware = cors({
     'http://localhost:3000',
     'https://afrifx.xyz',
     'https://www.afrifx.xyz',
+    'https://nexumpay.xyz',
+    'https://www.nexumpay.xyz',
     'https://afrifx.vercel.app',
     process.env.FRONTEND_URL ?? '',
   ].filter(Boolean),

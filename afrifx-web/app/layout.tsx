@@ -3,7 +3,7 @@ import { Providers } from './providers'
 import '@/styles/globals.css'
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://afrifx.xyz'),
+  metadataBase: new URL('https://nexumpay.xyz'),
   title: 'Nexum, Stablecoin FX & cross-border payments on Arc',
   description: 'Convert between USDC and African currencies, send across borders, and trade peer-to-peer, settled on the Arc blockchain in seconds.',
   icons: {
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     siteName:    'Nexum',
     title:       'Nexum, Stablecoin FX & cross-border payments on Arc',
     description: 'Convert between USDC and African currencies, send across borders, and trade peer-to-peer, settled on Arc in seconds.',
-    url:         'https://afrifx.xyz',
+    url:         'https://nexumpay.xyz',
     images:      [{ url: '/brand/og-image.png', width: 1200, height: 630, alt: 'Nexum, stablecoin FX on Arc' }],
   },
   twitter: {

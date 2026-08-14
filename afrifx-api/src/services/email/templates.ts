@@ -11,7 +11,7 @@ const SUCCESS_COLOR   = '#10B981'
 const WARNING_COLOR   = '#F59E0B'
 const DANGER_COLOR    = '#EF4444'
 
-const APP_URL = process.env.APP_URL ?? 'https://afrifx.xyz'
+const APP_URL = process.env.APP_URL ?? 'https://nexumpay.xyz'
 
 function baseLayout(content: string, options: { previewText?: string } = {}) {
   return `
@@ -53,7 +53,7 @@ ${options.previewText ? `<div style="display:none;font-size:1px;line-height:1px;
           <td style="padding-top:24px;text-align:center;color:${TEXT_SECONDARY};font-size:12px;line-height:1.6;">
             <p style="margin:0 0 8px;">AfriFX, Stablecoin-powered cross-border payments on Arc</p>
             <p style="margin:0;">
-              <a href="${APP_URL}" style="color:${BRAND_COLOR};">afrifx.xyz</a> ·
+              <a href="${APP_URL}" style="color:${BRAND_COLOR};">nexumpay.xyz</a> ·
               <a href="${APP_URL}/profile" style="color:${TEXT_SECONDARY};">Notification settings</a>
             </p>
           </td>
@@ -299,7 +299,7 @@ const TEXT_PRI      = '#E2E8F0'
 const TEXT_SEC      = '#64748B'
 const SUCCESS_2     = '#10B981'
 const WARNING_2     = '#F59E0B'
-const APP_URL_2     = process.env.APP_URL ?? 'https://afrifx.xyz'
+const APP_URL_2     = process.env.APP_URL ?? 'https://nexumpay.xyz'
 
 function base2(content: string, preview?: string) {
   return `
@@ -321,7 +321,7 @@ ${content}
 <tr><td style="padding-top:24px;text-align:center;color:${TEXT_SEC};font-size:12px;line-height:1.6;">
 <p style="margin:0 0 8px;">AfriFX, Stablecoin-powered cross-border payments on Arc</p>
 <p style="margin:0;">
-<a href="${APP_URL_2}" style="color:${BRAND_2};">afrifx.xyz</a> ·
+<a href="${APP_URL_2}" style="color:${BRAND_2};">nexumpay.xyz</a> ·
 <a href="${APP_URL_2}/profile" style="color:${TEXT_SEC};">Notification settings</a>
 </p></td></tr>
 </table></td></tr></table>
@@ -591,7 +591,7 @@ const BORDER_3 = '#1B2B4B'
 const TP      = '#E2E8F0'
 const TS3     = '#64748B'
 const SU      = '#10B981'
-const APP3    = process.env.APP_URL ?? 'https://afrifx.xyz'
+const APP3    = process.env.APP_URL ?? 'https://nexumpay.xyz'
 
 function base3(content: string, preview?: string) {
   return `
@@ -612,7 +612,7 @@ ${content}
 </td></tr>
 <tr><td style="padding-top:24px;text-align:center;color:${TS3};font-size:12px;line-height:1.6;">
 <p style="margin:0 0 8px;">AfriFX, Stablecoin-powered cross-border payments on Arc</p>
-<p style="margin:0;"><a href="${APP3}" style="color:${BRAND_3};">afrifx.xyz</a> · <a href="${APP3}/profile" style="color:${TS3};">Notification settings</a></p>
+<p style="margin:0;"><a href="${APP3}" style="color:${BRAND_3};">nexumpay.xyz</a> · <a href="${APP3}/profile" style="color:${TS3};">Notification settings</a></p>
 </td></tr></table></td></tr></table>
 </body></html>`.trim()
 }

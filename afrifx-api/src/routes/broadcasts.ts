@@ -26,7 +26,7 @@ function parseRows(r: any): any[] {
   return []
 }
 const val = (row: any, key: string, i: number) => Array.isArray(row) ? row[i] : row[key]
-const APP_URL = process.env.APP_URL ?? 'https://afrifx.xyz'
+const APP_URL = process.env.APP_URL ?? 'https://nexumpay.xyz'
 
 interface Recipient {
   email: string

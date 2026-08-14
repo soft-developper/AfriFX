@@ -116,7 +116,7 @@ export default function AdminContentPage() {
   }
 
   const contactFields: { key: keyof Contact; label: string; placeholder: string }[] = [
-    { key: 'email',        label: 'Support email', placeholder: 'support@afrifx.xyz' },
+    { key: 'email',        label: 'Support email', placeholder: 'support@nexumpay.xyz' },
     { key: 'phone',        label: 'Phone',         placeholder: '+234 …' },
     { key: 'address',      label: 'Address',       placeholder: 'Office address' },
     { key: 'supportHours', label: 'Support hours', placeholder: 'Mon–Fri, 9am–5pm WAT' },

@@ -278,7 +278,7 @@ router.post('/forgot-password', async (req, res) => {
 
     const adminId = admin.id ?? admin[0]
     const token   = await createPasswordReset(adminId)
-    const APP_URL = process.env.APP_URL ?? 'https://afrifx.xyz'
+    const APP_URL = process.env.APP_URL ?? 'https://nexumpay.xyz'
 
     await sendEmail({
       to:      admin.email,
@@ -363,7 +363,7 @@ router.post('/invite', requireAdmin, async (req: any, res) => {
     }
 
     const token = await createInvitation(email, req.admin.id, JSON.stringify(permissions), duty)
-    const APP_URL = process.env.APP_URL ?? 'https://afrifx.xyz'
+    const APP_URL = process.env.APP_URL ?? 'https://nexumpay.xyz'
 
     await sendEmail({
       to:      email,
