@@ -38,7 +38,7 @@ const GROUPS: Group[] = [
       {
         icon: Send,
         name: 'Send',
-        overview: 'Send USDC to any address on any supported chain. Same-chain transfers go direct, cross-chain draws on your unified balance.',
+        overview: 'Send USDC to any address on Arc, instantly and with near-zero fees.',
         useCase: 'Pay a supplier on Base while your funds sit on Arc, in one step, with no bridging beforehand.',
       },
     ],
@@ -86,7 +86,7 @@ const GROUPS: Group[] = [
       {
         icon: Building2,
         name: 'Treasury',
-        overview: 'One unified USDC balance spendable across chains, plus rules that auto-convert to local currency.',
+        overview: 'Rules that auto-convert incoming USDC to local currency. (A unified cross-chain balance is planned for a future release.)',
         useCase: 'Hold funds once and pay out on whichever chain a partner needs, without bridging first.',
       },
       {

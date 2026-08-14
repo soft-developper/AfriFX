@@ -1,3 +1,33 @@
+#!/usr/bin/env bash
+# =============================================================================
+# deprecate-send-gateway.sh
+#
+# Removes the cross-chain / unified-balance (Circle Gateway) path from Send,
+# leaving the proven same-chain Arc->Arc transfer. Mirrors what we did for
+# payroll: don't ship a half-working path, be honest that it's parked.
+#
+# Changes:
+#   1. afrifx-web/app/(app)/send/page.tsx  -> same-chain-only rewrite
+#   2. afrifx-web/components/landing/LandingFeatures.tsx -> drop cross-chain copy
+#   3. afrifx-web/components/treasury/GatewayBalancePanel.tsx -> "parked" note
+#
+# The unified balance stays VISIBLE (read-only) on Treasury, honestly labeled
+# as not-yet-useful, so it's reversible when Gateway cross-chain actually works.
+#
+#   cd ~/AfriFX && bash deprecate-send-gateway.sh
+# =============================================================================
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WEB="$ROOT/afrifx-web"
+[ -d "$WEB" ] || { echo "ERR: run from the AfriFX repo root"; exit 1; }
+
+SEND="$WEB/app/(app)/send/page.tsx"
+LAND="$WEB/components/landing/LandingFeatures.tsx"
+PANEL="$WEB/components/treasury/GatewayBalancePanel.tsx"
+
+# ---- 1. Rewrite Send page (same-chain only) --------------------------------
+echo "==> Rewriting Send page (same-chain only)"
+cat > "$SEND" <<'SEND_EOF'
 'use client'
 import { SectionGuard } from '@/components/layout/SectionGuard'
 import { useState } from 'react'
@@ -206,3 +236,22 @@ export default function SendPage() {
   )
 }
 
+SEND_EOF
+
+# ---- 2. Landing copy: drop cross-chain promises ----------------------------
+echo "==> Updating landing copy"
+if grep -q "cross-chain draws on your unified balance" "$LAND"; then
+  perl -0pi -e "s/Send USDC to any address on any supported chain\. Same-chain transfers go direct, cross-chain draws on your unified balance\./Send USDC to any address on Arc, instantly and with near-zero fees./g" "$LAND"
+fi
+if grep -q "One unified USDC balance spendable across chains" "$LAND"; then
+  perl -0pi -e "s/One unified USDC balance spendable across chains, plus rules that auto-convert to local currency\./Rules that auto-convert incoming USDC to local currency. (A unified cross-chain balance is planned for a future release.)/g" "$LAND"
+fi
+
+# ---- 3. Treasury panel: honest "parked" note -------------------------------
+echo "==> Adding parked note to the unified balance panel"
+if ! grep -q "PARKED_NOTE_MARKER" "$PANEL"; then
+  perl -0pi -e "s/(export function GatewayBalancePanel\(\) \{)/\/* PARKED_NOTE_MARKER: The unified balance is read-only and currently serves\n   no purpose in the product \x2d\x2d cross-chain send via Gateway does not yet complete\n   a mint on this network, so nothing spends from it. It is kept visible so the\n   groundwork stays in place; we will revisit how to make it useful once Gateway\n   cross-chain works end to end. *\/\n\$1/" "$PANEL"
+fi
+
+echo "==> Done. Type-check and build before pushing:"
+echo "    cd afrifx-web && rm -rf .next && npx tsc --noEmit && npm run build"

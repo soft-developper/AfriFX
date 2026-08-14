@@ -17,6 +17,11 @@ import { fetchGatewayBalances, gatewayChains, isValidAddress } from '@/lib/gatew
   transfer or withdraw, those need a signer and are deliberately not wired up
   yet.
 */
+/* PARKED_NOTE_MARKER: The unified balance is read-only and currently serves
+   no purpose in the product -- cross-chain send via Gateway does not yet complete
+   a mint on this network, so nothing spends from it. It is kept visible so the
+   groundwork stays in place; we will revisit how to make it useful once Gateway
+   cross-chain works end to end. */
 export function GatewayBalancePanel() {
   const [showDeposit, setShowDeposit] = useState(false)
   // Collapsed by default: the chain list only grows as Gateway adds chains,
