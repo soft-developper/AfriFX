@@ -7,7 +7,7 @@ import { privateKeyToAccount } from 'viem/accounts'
 import { arcTestnet, arcClient } from './arc'
 
 const PRIVATE_KEY   = process.env.PLATFORM_WALLET_PRIVATE_KEY as `0x${string}`
-const VAULT_ADDRESS = process.env.AFRIFX_VAULT_ADDRESS as `0x${string}`
+const VAULT_ADDRESS = (process.env.NEXUM_VAULT_ADDRESS || process.env.AFRIFX_VAULT_ADDRESS) as `0x${string}`
 
 // Minimal ABI for release + cancel
 const VAULT_ABI = [
@@ -44,7 +44,7 @@ function getWalletClient() {
  * Release USDC to taker called automatically when both sides confirm.
  */
 export async function releasePlatform(offerId: `0x${string}`): Promise<`0x${string}`> {
-  if (!VAULT_ADDRESS) throw new Error('AFRIFX_VAULT_ADDRESS not set in .env')
+  if (!VAULT_ADDRESS) throw new Error('Vault address not set: set NEXUM_VAULT_ADDRESS (or legacy AFRIFX_VAULT_ADDRESS) in .env')
   const wallet = getWalletClient()
 
   const hash = await wallet.writeContract({
@@ -65,7 +65,7 @@ export async function cancelPlatform(
   offerId: `0x${string}`,
   reason:  string,
 ): Promise<`0x${string}`> {
-  if (!VAULT_ADDRESS) throw new Error('AFRIFX_VAULT_ADDRESS not set in .env')
+  if (!VAULT_ADDRESS) throw new Error('Vault address not set: set NEXUM_VAULT_ADDRESS (or legacy AFRIFX_VAULT_ADDRESS) in .env')
   const wallet = getWalletClient()
 
   const hash = await wallet.writeContract({
