@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: afrifx-api
+        working-directory: nexum-api
     steps:
       - uses: actions/checkout@v4
 
@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: afrifx-api/package-lock.json
+          cache-dependency-path: nexum-api/package-lock.json
 
       # npm ci is the CI-correct install: it's faster and installs EXACTLY the
       # locked versions, failing if package.json and the lockfile disagree.
@@ -52,12 +52,12 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: afrifx-web
+        working-directory: nexum-web
     # Build-time NEXT_PUBLIC_* vars all have '' fallbacks in code, so the build
     # compiles with placeholders — CI needs no real secrets. Set here so any
     # future strict check has non-empty values to work with.
     env:
-      NEXT_PUBLIC_API_URL: https://afrifx-api.onrender.com
+      NEXT_PUBLIC_API_URL: https://nexum-api.onrender.com
       NEXT_PUBLIC_WEB3AUTH_CLIENT_ID: ci-placeholder
       NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ci-placeholder
       NEXT_PUBLIC_ARC_RPC_URL: https://rpc.example.invalid
@@ -71,7 +71,7 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: afrifx-web/package-lock.json
+          cache-dependency-path: nexum-web/package-lock.json
 
       - name: Install
         run: npm ci

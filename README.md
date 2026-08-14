@@ -94,7 +94,7 @@ It is strictly advisory. It never decides, never messages users and never touche
 ## Live Platform
 
 - **Frontend:** [afrifx.xyz](https://afrifx.xyz)
-- **API:** [afrifx-api.onrender.com](https://afrifx-api.onrender.com)
+- **API:** [nexum-api.onrender.com](https://nexum-api.onrender.com)
 - **Home chain:** Arc Testnet (Chain ID 5042002)
 - **Bridged chains:** Ethereum Sepolia, Base Sepolia, Arbitrum Sepolia, Polygon Amoy
 - **Explorer:** [testnet.arcscan.app](https://testnet.arcscan.app)
@@ -120,13 +120,13 @@ git clone https://github.com/soft-developper/AfriFX.git
 cd AfriFX
 
 # Backend
-cd afrifx-api
+cd nexum-api
 npm install
 cp .env.example .env        # fill in your credentials
 npm run dev
 
 # Frontend (new terminal)
-cd afrifx-web
+cd nexum-web
 npm install
 cp .env.local.example .env.local    # fill in your credentials
 npm run dev

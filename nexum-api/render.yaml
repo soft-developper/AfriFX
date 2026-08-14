@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: afrifx-api
+    name: nexum-api
     runtime: node
     buildCommand: npm install && npm run build
     startCommand: npm run start
