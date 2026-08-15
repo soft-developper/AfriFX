@@ -41,7 +41,7 @@ export const viewport: Viewport = {
 const themeInitScript = `
 (function() {
   try {
-    // ── AfriFX→Nexum one-time storage-key migration (runs before hooks) ──
+    // ── Nexum→Nexum one-time storage-key migration (runs before hooks) ──
     // Move each old key's value to the new name, then drop the old key. Runs
     // once: after the first load the old keys are gone and this no-ops.
     var LS = [['afrifx_token','nexum_token'],['afrifx_account','nexum_account'],['afrifx_theme','nexum_theme']];

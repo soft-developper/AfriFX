@@ -136,7 +136,7 @@ export function LandingFeatures() {
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs font-semibold uppercase tracking-[0.2em] text-app-accent-text">Everything in Nexum</span>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
-            One app for African <span className="afx-gradient-text">money movement</span>
+            One app for African <span className="nx-gradient-text">money movement</span>
           </h2>
           <p className="mt-4 text-app-muted">
             From simple conversions to business payroll, here’s what you can do, and when you’d reach for it.
@@ -181,7 +181,7 @@ export function LandingFeatures() {
       {/* Closing CTA */}
       <div className="mt-20 overflow-hidden rounded-3xl border border-app-border bg-app-surface p-10 text-center">
         <h3 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-          Ready to move money the <span className="afx-gradient-text">modern way?</span>
+          Ready to move money the <span className="nx-gradient-text">modern way?</span>
         </h3>
         <p className="mx-auto mt-3 max-w-xl text-app-muted">
           Connect a wallet or sign in with Google, you’ll be transacting on Arc in under a minute.

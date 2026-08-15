@@ -89,7 +89,7 @@ export function encodeMemoData(payload: AfriFXMemoPayload): `0x${string}` {
 }
 
 // ── Decode memo bytes back to payload (for backend) ───────
-// Accept both tags during/after the AfriFX->Nexum rebrand. Past on-chain txs
+// Accept both tags during/after the Nexum->Nexum rebrand. Past on-chain txs
 // are tagged 'afrifx' (immutable); 'nexum' is written only after the writer switch.
 export const ACCEPTED_APP_TAGS = ['afrifx', 'nexum'] as const
 

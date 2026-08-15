@@ -67,7 +67,7 @@ function Hero() {
         <h1 className="mx-auto mt-6 max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
           Move money across Africa,
           <br className="hidden sm:block" />
-          <span className="afx-gradient-text">settled in seconds.</span>
+          <span className="nx-gradient-text">settled in seconds.</span>
         </h1>
 
         <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-app-muted sm:text-lg">

@@ -105,26 +105,26 @@ input[type='number']::-webkit-inner-spin-button {
   gradient; "FX" uses a brighter gold so the pair reads with a colorful accent
   without leaving the brand palette. Works in both themes.
 */
-.afx-gradient-text {
+.nx-gradient-text {
   background: linear-gradient(120deg, #EAC15C 0%, #D9A441 45%, #B9822A 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
-.afx-gradient-text-bright {
+.nx-gradient-text-bright {
   background: linear-gradient(120deg, #F5D77E 0%, #E9B84E 60%, #D9A441 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
-.light .afx-gradient-text {
+.light .nx-gradient-text {
   background: linear-gradient(120deg, #B9822A 0%, #8A5E13 60%, #6E4A0F 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent; color: transparent;
 }
-.light .afx-gradient-text-bright {
+.light .nx-gradient-text-bright {
   background: linear-gradient(120deg, #C48F2E 0%, #A9741B 60%, #8A5E13 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent; color: transparent;
@@ -132,10 +132,10 @@ input[type='number']::-webkit-inner-spin-button {
 
 /* Subtle scrollbar for capped-height lists (live-rates panels, long currency
    lists). Keeps the scroll area from looking like a heavy OS scrollbar. */
-.afx-scroll { scrollbar-width: thin; scrollbar-color: var(--app-border) transparent; }
-.afx-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-.afx-scroll::-webkit-scrollbar-track { background: transparent; }
-.afx-scroll::-webkit-scrollbar-thumb {
+.nx-scroll { scrollbar-width: thin; scrollbar-color: var(--app-border) transparent; }
+.nx-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.nx-scroll::-webkit-scrollbar-track { background: transparent; }
+.nx-scroll::-webkit-scrollbar-thumb {
   background: var(--app-border); border-radius: 9999px;
 }
-.afx-scroll::-webkit-scrollbar-thumb:hover { background: var(--app-muted); }
+.nx-scroll::-webkit-scrollbar-thumb:hover { background: var(--app-muted); }

@@ -31,7 +31,7 @@ export function LandingHowItWorks() {
           <div className="mx-auto max-w-2xl text-center">
             <span className="text-xs font-semibold uppercase tracking-[0.2em] text-app-accent-text">How it works</span>
             <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Three steps to your first <span className="afx-gradient-text">on-chain payment</span>
+              Three steps to your first <span className="nx-gradient-text">on-chain payment</span>
             </h2>
           </div>
         </Reveal>

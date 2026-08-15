@@ -25,7 +25,7 @@ export function LandingRates() {
         // Cap the height to about two-and-a-half rows and let the rest scroll,
         // so the full 13-currency list doesn't dominate the hero. The custom
         // scrollbar keeps it subtle.
-        <div className="grid max-h-[13rem] grid-cols-2 gap-2 overflow-y-auto pr-1 afx-scroll sm:grid-cols-3">
+        <div className="grid max-h-[13rem] grid-cols-2 gap-2 overflow-y-auto pr-1 nx-scroll sm:grid-cols-3">
           {rates.map((r) => {
             const ccy = r.pair.split('/')[0]
             const up = (r.change24h ?? 0) >= 0

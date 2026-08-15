@@ -24,7 +24,7 @@ export default function RatesPage() {
 
       {isLoading && <p className="text-sm text-app-muted">Fetching rates…</p>}
 
-      <div className="max-h-[32rem] space-y-2 overflow-y-auto pr-1 afx-scroll">
+      <div className="max-h-[32rem] space-y-2 overflow-y-auto pr-1 nx-scroll">
         {(rates ?? []).map((r) => {
           const [from] = r.pair.split('/')
           const up = r.change24h >= 0
