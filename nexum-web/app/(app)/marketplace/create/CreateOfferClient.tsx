@@ -10,7 +10,7 @@ import { useUSDCBalance } from '@/hooks/useUSDCBalance'
 import { useRate } from '@/hooks/useFXRate'
 import { ArrowLeft, Info, CheckCircle, TrendingUp, Sliders, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
-import { LOCAL_CURRENCIES as CURRENCIES, CURRENCY_FLAG } from '@/lib/corridor'
+import { CurrencyCombobox } from '@/components/marketplace/CurrencyCombobox'
 
 const TIMER_OPTIONS = [
   { label: '30 min',  value: 1800 },
@@ -148,12 +148,9 @@ export function CreateOfferClient() {
             </span>
           </div>
           <div className="flex gap-2">
-            <select value={localCurrency} onChange={(e) => setLocalCurrency(e.target.value)}
-              className="rounded-lg border border-app-border bg-app-bg px-3 py-2 text-sm text-app-text outline-none">
-              {CURRENCIES.map(c => (
-                <option key={c} value={c}>{CURRENCY_FLAG[c]} {c}</option>
-              ))}
-            </select>
+            <div className="min-w-[11rem]">
+              <CurrencyCombobox value={localCurrency} onChange={setLocalCurrency} />
+            </div>
             <Input type="number" placeholder="0.00" value={usdcAmount}
               onChange={(e) => setUsdcAmount(e.target.value)}
               className={`flex-1 font-mono text-lg ${insufficientUsdc ? 'border-red-500/50' : ''}`} />
