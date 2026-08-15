@@ -1,7 +1,7 @@
 'use client'
 import { SectionGuard } from '@/components/layout/SectionGuard'
 import { useState } from 'react'
-import { useWaitForTransactionReceipt } from 'wagmi'
+import { useWaitForTransactionReceipt, usePublicClient } from 'wagmi'
 import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { sendUsdc, NeedsReauthError } from '@/hooks/useCircleTx'
 import { useWalletReady } from '@/hooks/useWalletReady'
@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { useUSDCBalance } from '@/hooks/useUSDCBalance'
 import { AlertCircle, CheckCircle, Loader2, Zap } from 'lucide-react'
+
+const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 
 /*
   Send is same-chain (Arc -> Arc) only.
@@ -25,6 +27,7 @@ import { AlertCircle, CheckCircle, Loader2, Zap } from 'lucide-react'
 */
 function SendPageInner() {
   const { address, isConnected }  = useAccount()
+  const publicClient              = usePublicClient()
   const { ready: walletReady }    = useWalletReady()
   const [to,      setTo]          = useState('')
   const [amount,  setAmount]      = useState('')
@@ -59,6 +62,32 @@ function SendPageInner() {
       const result = await sendUsdc({ to, amount }, setTxStep)
       if (result.txHash) {
         setTxHash(result.txHash as `0x${string}`)
+        // Record this send so it appears in History (GET /transactions?wallet=).
+        // Same-asset USDC→USDC movement on Arc.
+        if (address) {
+          const hash = result.txHash as `0x${string}`
+          fetch(`${API}/transactions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              walletAddress: address,
+              fromCurrency: 'USDC', toCurrency: 'USDC',
+              fromAmount: Number(amount), toAmount: Number(amount),
+              arcTxHash: hash,
+            }),
+          }).catch(() => {})
+          // Confirm on-chain, then mark settled/failed.
+          if (publicClient) {
+            publicClient.waitForTransactionReceipt({ hash }).then(r => {
+              const ok = r.status === 'success'
+              fetch(`${API}/transactions/${hash}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: ok ? 'settled' : 'failed' }),
+              }).catch(() => {})
+            }).catch(() => {})
+          }
+        }
       } else {
         // Approved and broadcast, but Circle hasn't surfaced the hash yet.
         // Say so plainly rather than ending in silence, which reads as a
