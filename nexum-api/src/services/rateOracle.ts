@@ -130,11 +130,15 @@ function buildRates(raw: Record<string, number>, source: string): FXRate[] {
   // hardcoded last-resort value when a feed omits a currency.
   // Driven by LOCAL_CURRENCIES so every supported currency gets a pair; adding
   // one to that list is all it takes for its rate to appear here.
-  const rates: FXRate[] = LOCAL_CURRENCIES.map(cur => {
-    const rate = raw[cur] ?? HARDCODED[cur]
-    const pair = `${cur}/USDC`
-    return { pair, rate, change24h: pct(prev[pair], rate), source, fetchedAt: now }
-  })
+  const rates: FXRate[] = LOCAL_CURRENCIES
+    .map(cur => {
+      const rate = raw[cur] ?? HARDCODED[cur]
+      const pair = `${cur}/USDC`
+      return { pair, rate, change24h: pct(prev[pair], rate), source, fetchedAt: now }
+    })
+    // Omit currencies with no usable rate — "hide untracked": a currency only
+    // appears if the feed (or HARDCODED fallback) actually has a value for it.
+    .filter(r => typeof r.rate === 'number' && isFinite(r.rate) && r.rate > 0)
 
   // EURC is priced off the EUR rate and isn't in LOCAL_CURRENCIES.
   const eur = raw.EUR ?? HARDCODED.EUR

@@ -25,7 +25,7 @@ export default function RatesPage() {
       {isLoading && <p className="text-sm text-app-muted">Fetching rates…</p>}
 
       <div className="max-h-[32rem] space-y-2 overflow-y-auto pr-1 nx-scroll">
-        {(rates ?? []).map((r) => {
+        {(rates ?? []).filter((r: any) => r && r.rate != null).map((r) => {
           const [from] = r.pair.split('/')
           const up = r.change24h >= 0
           return (
@@ -36,7 +36,7 @@ export default function RatesPage() {
                 <p className="text-xs text-app-muted">Arc Testnet · USDC settlement</p>
               </div>
               <div className="text-right">
-                <p className="font-mono text-lg font-medium text-app-text">{r.rate.toLocaleString()}</p>
+                <p className="font-mono text-lg font-medium text-app-text">{(r.rate ?? 0).toLocaleString()}</p>
                 <p className={`flex items-center justify-end gap-0.5 text-xs ${up ? 'text-emerald-400' : 'text-red-400'}`}>
                   {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                   {up ? '+' : ''}{r.change24h.toFixed(2)}%

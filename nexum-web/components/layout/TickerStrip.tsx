@@ -21,7 +21,7 @@ export function TickerStrip() {
           return (
             <span key={i} className="inline-flex items-center gap-2 text-xs">
               <span className="font-medium text-app-text">{r.pair}</span>
-              <span className="font-mono text-app-text">{r.rate.toLocaleString()}</span>
+              <span className="font-mono text-app-text">{(r.rate ?? 0).toLocaleString()}</span>
               <span className={up ? 'text-emerald-400' : 'text-red-400'}>
                 {up ? '+' : ''}{r.change24h.toFixed(2)}%
               </span>

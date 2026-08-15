@@ -37,7 +37,7 @@ export function LandingRates() {
                 </span>
                 <span className="text-right">
                   <span className="block font-mono text-sm text-app-text">
-                    {r.rate.toLocaleString(undefined, { maximumFractionDigits: 3 })}
+                    {(r.rate ?? 0).toLocaleString(undefined, { maximumFractionDigits: 3 })}
                   </span>
                   <span className={`flex items-center justify-end gap-0.5 text-[10px] ${up ? 'text-emerald-400' : 'text-red-400'}`}>
                     {up ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
