@@ -16,11 +16,32 @@ export default function HistoryPage() {
   useEffect(() => {
     if (!address) return
     setLoading(true)
-    fetch(`${API}/transactions?wallet=${address}`)
-      .then(r => r.json())
-      .then(data => setTxs(Array.isArray(data) ? data : []))
-      .catch(() => setTxs([]))
-      .finally(() => setLoading(false))
+    // Fetch core transactions AND bridge transfers, then merge by time.
+    // Bridge rows live in their own table (/bridge); we read, not duplicate.
+    Promise.all([
+      fetch(`${API}/transactions?wallet=${address}`).then(r => r.json()).catch(() => []),
+      fetch(`${API}/bridge?wallet=${address}`).then(r => r.json()).catch(() => []),
+    ]).then(([txData, brData]) => {
+      const core = Array.isArray(txData) ? txData : []
+      const bridges = (Array.isArray(brData) ? brData : []).map((b) => {
+        const raw = String(b.status ?? 'pending').toLowerCase()
+        const status = raw === 'completed' ? 'settled'
+                     : (raw === 'failed' || raw === 'error') ? 'failed'
+                     : 'pending'
+        return {
+          __bridge: true,
+          id: b.id,
+          from_currency: b.from_chain, to_currency: b.to_chain,
+          from_amount: Number(b.amount ?? 0), to_amount: Number(b.amount ?? 0),
+          arc_tx_hash: b.mint_tx ?? b.burn_tx ?? '',
+          status,
+          created_at: b.created_at,
+        }
+      })
+      setTxs([...core, ...bridges].sort(
+        (a, b) => Number(b.created_at ?? 0) - Number(a.created_at ?? 0)
+      ))
+    }).finally(() => setLoading(false))
   }, [address])
 
   const filtered: any[] = txs.filter(
@@ -112,6 +133,7 @@ export default function HistoryPage() {
 }
 
 function TxRow({ tx, isCorridorStep = false }: { tx: any; isCorridorStep?: boolean }) {
+  const isBridge = tx.__bridge === true
   const fromCcy   = tx.from_currency ?? tx.fromCurrency  ?? ''
   const toCcy     = tx.to_currency   ?? tx.toCurrency    ?? ''
   const fromAmt   = Number(tx.from_amount  ?? tx.fromAmount  ?? 0)
@@ -134,6 +156,7 @@ function TxRow({ tx, isCorridorStep = false }: { tx: any; isCorridorStep?: boole
             <span className="mr-1.5 text-[10px] text-app-muted">Step {step}</span>
           )}
           {fromCcy} → {toCcy}
+          {isBridge && <span className="ml-1.5 align-middle"><Badge variant="arc">Bridge</Badge></span>}
         </p>
         <div className="flex items-center gap-2 text-[10px] text-app-muted">
           <span>{new Date(createdAt * 1000).toLocaleString()}</span>
@@ -155,11 +178,14 @@ function TxRow({ tx, isCorridorStep = false }: { tx: any; isCorridorStep?: boole
         }>
           {status}
         </Badge>
-        {hash && (
+        {hash && !isBridge && (
           <a href={`https://testnet.arcscan.app/tx/${hash}`}
             target="_blank" rel="noopener noreferrer">
             <ExternalLink className="h-3 w-3 text-app-muted hover:text-app-accent-text" />
           </a>
+        )}
+        {hash && isBridge && (
+          <span className="font-mono text-[9px] text-app-muted" title="Bridge tx — view on source-chain explorer">{hash.slice(0,6)}…{hash.slice(-4)}</span>
         )}
       </div>
     </div>
