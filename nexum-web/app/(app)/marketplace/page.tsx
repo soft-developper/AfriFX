@@ -13,7 +13,8 @@ import { useP2P } from '@/hooks/useP2P'
 import { arcTestnet } from '@/lib/arc-chain'
 import { Plus, Clock, Zap, ShieldCheck, Loader2, ArrowRight, CheckCircle } from 'lucide-react'
 import type { P2POffer } from '@/types'
-import { LOCAL_CURRENCIES, CURRENCY_FLAG } from '@/lib/corridor'
+import { CurrencyCombobox } from '@/components/marketplace/CurrencyCombobox'
+import { CURRENCY_BY_CODE } from '@/lib/currencies'
 import type { Currency } from '@/types'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
@@ -205,15 +206,22 @@ function MarketplacePageInner() {
 
       {/* Filter */}
       <div className="mb-4 flex flex-wrap gap-2">
-        {['all', ...LOCAL_CURRENCIES].map(c => (
-          <button key={c} onClick={() => setCurrency(c)}
-            className={`rounded-full px-3 py-1 text-xs transition-colors
-              ${currency === c
-                ? 'bg-app-accent text-app-on-accent'
-                : 'border border-app-border text-app-muted hover:text-app-text'}`}>
-            {c === 'all' ? 'All' : `${CURRENCY_FLAG[c as Currency]} ${c}`}
+        <button onClick={() => setCurrency('all')}
+          className={`rounded-full px-3 py-1 text-xs transition-colors
+            ${currency === 'all'
+              ? 'bg-app-accent text-app-on-accent'
+              : 'border border-app-border text-app-muted hover:text-app-text'}`}>
+          All
+        </button>
+        <div className="w-56">
+          <CurrencyCombobox value={currency === 'all' ? '' : currency} onChange={setCurrency} />
+        </div>
+        {currency !== 'all' && (
+          <button onClick={() => setCurrency('all')}
+            className="rounded-full border border-app-border px-3 py-1 text-xs text-app-muted hover:text-app-text">
+            Clear
           </button>
-        ))}
+        )}
         <button onClick={load}
           className="ml-auto rounded-full border border-app-border px-3 py-1 text-xs text-app-muted hover:text-app-text">
           ↻ Refresh
@@ -250,7 +258,7 @@ function MarketplacePageInner() {
                 ${isBusy ? 'border-app-accent/40' : 'border-app-border'}`}>
               <div className="flex items-center gap-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-app-bg text-xl">
-                  {CURRENCY_FLAG[offer.local_currency as Currency] ?? '🌍'}
+                  {CURRENCY_BY_CODE[offer.local_currency]?.flag ?? '🌍'}
                 </div>
 
                 <div className="flex-1 min-w-0">

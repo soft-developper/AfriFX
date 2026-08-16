@@ -11,6 +11,7 @@ import { useRate } from '@/hooks/useFXRate'
 import { ArrowLeft, Info, CheckCircle, TrendingUp, Sliders, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { CurrencyCombobox } from '@/components/marketplace/CurrencyCombobox'
+import { NeedsReauthError } from '@/hooks/useCircleTx'
 
 const TIMER_OPTIONS = [
   { label: '30 min',  value: 1800 },
@@ -84,7 +85,14 @@ export function CreateOfferClient() {
       })
       setSubmitted(true)
       setTimeout(() => router.push('/marketplace'), 2500)
-    } catch (_e) {}
+    } catch (err: any) {
+      // Do NOT swallow - an expired Circle signing session throws NeedsReauthError.
+      // createOffer already sets the visible error; if it is a reauth, guide the
+      // user to sign in again and come back to finish creating the offer.
+      if (err instanceof NeedsReauthError) {
+        router.push('/signin?returnTo=/marketplace/create')
+      }
+    }
   }
 
   if (!isConnected) {
