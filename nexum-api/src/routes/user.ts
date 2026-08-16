@@ -123,12 +123,21 @@ router.get('/:address/stats', async (req, res) => {
 
     // ── Volume in USD ─────────────────────────────────────
     const monthTxs = txs.filter(t => t.created_at > now - month)
+    // Send volume = USDC->USDC transfers (from === to). Excludes deprecated
+    // conversion/corridor rows so the figure matches the 'Send volume' label.
     const monthVol = monthTxs.reduce((s, t) => s + t._usdVol, 0)
     const allVol   = txs.reduce((s, t) => s + t._usdVol, 0)
+    const isSend = (t: any) => (t.from_currency ?? '') === (t.to_currency ?? '')
+    const sendVol    = monthTxs.filter(isSend).reduce((s, t) => s + t._usdVol, 0)
+    const sendVolAll = txs.filter(isSend).reduce((s, t) => s + t._usdVol, 0)
+    const sendCount     = monthTxs.filter(isSend).length
+    const sendCountAll  = txs.filter(isSend).length
 
     // Also count P2P released volume (USDC = USD)
     const p2pReleased = offers.filter(o => o.status === 'released')
     const p2pVol      = p2pReleased.reduce((s, o) => s + o.usdc_amount, 0)
+    const p2pVolMonth = p2pReleased.filter(o => o.created_at > now - month).reduce((s, o) => s + o.usdc_amount, 0)
+    const p2pCountMonth = p2pReleased.filter(o => o.created_at > now - month).length
 
     // P2P stats
     const completedTrades = p2pReleased.length
@@ -232,6 +241,19 @@ router.get('/:address/stats', async (req, res) => {
       allTime: {
         totalVolume: parseFloat((allVol + p2pVol).toFixed(2)),
         txCount:     txs.length,
+      },
+      // Split volumes for the dashboard (Send transfers vs P2P released).
+      send: {
+        month:      parseFloat(sendVol.toFixed(2)),
+        allTime:    parseFloat(sendVolAll.toFixed(2)),
+        countMonth: sendCount,
+        countAll:   sendCountAll,
+      },
+      p2pVolume: {
+        month:      parseFloat(p2pVolMonth.toFixed(2)),
+        allTime:    parseFloat(p2pVol.toFixed(2)),
+        countMonth: p2pCountMonth,
+        countAll:   p2pReleased.length,
       },
       p2p: { completedTrades, activeTrades, openOffers },
       disputeWarnings,

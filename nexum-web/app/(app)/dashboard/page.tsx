@@ -2,7 +2,6 @@
 import { useAccount }        from 'wagmi'
 import Link                  from 'next/link'
 import { useUSDCBalance }    from '@/hooks/useUSDCBalance'
-import { useFXRates }        from '@/hooks/useFXRate'
 import { useDashboardStats } from '@/hooks/useDashboardStats'
 import { useProfile }        from '@/hooks/useProfile'
 import { formatAmount }      from '@/lib/utils'
@@ -16,28 +15,29 @@ import {
   ResponsiveContainer, Cell,
 } from 'recharts'
 import {
-  TrendingUp, TrendingDown, ArrowLeftRight,
+  TrendingUp, ArrowLeftRight,
   ExternalLink, RefreshCw, Wallet,
-  Store, AlertTriangle,
+  Store, AlertTriangle, Send,
 } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────
 interface ChartDay { label: string; volume: number }
 interface FlowDay  { label: string; inflow: number; outflow: number }
-interface PairStat { pair: string; volume: number; txs: number }
 interface RecentTx {
   id: string; fromCurrency: string; toCurrency: string
   fromAmount: number; toAmount: number; usdVolume: number
   status: string; reference: string; arcTxHash: string; createdAt: number
 }
+interface VolumeSplit { month: number; allTime: number; countMonth: number; countAll: number }
 interface DashboardStats {
   monthly:         { volume: number; txCount: number }
   allTime:         { totalVolume: number; txCount: number }
+  send:            VolumeSplit
+  p2pVolume:       VolumeSplit
   p2p:             { completedTrades: number; activeTrades: number; openOffers: number }
   disputeWarnings: number
   chartData:       ChartDay[]
   flowData:        FlowDay[]
-  pairBreakdown:   PairStat[]
   recent:          RecentTx[]
 }
 
@@ -60,7 +60,6 @@ function DashboardContent() {
   const t                      = useTokens()
   const { address }            = useAccount()
   const { formatted: balance } = useUSDCBalance()
-  const { data: rates }        = useFXRates()
   const { data: profile }      = useProfile()
   const { data: stats, isLoading, refetch } =
     useDashboardStats() as { data: DashboardStats | undefined; isLoading: boolean; refetch: () => void }
@@ -75,18 +74,18 @@ function DashboardContent() {
       highlight: true,
     },
     {
-      label: 'Volume (30d)',
-      value: stats ? `$${formatAmount(stats.monthly.volume)}` : '-',
-      sub:   `${stats?.monthly.txCount ?? 0} conversions this month`,
-      icon:  TrendingUp,
+      label: 'Send volume',
+      value: stats ? `$${formatAmount(stats.send.month)}` : '-',
+      sub:   `${stats?.send.countMonth ?? 0} transfers (30d) · $${formatAmount(stats?.send.allTime ?? 0)} all-time`,
+      icon:  Send,
       color: 'text-emerald-400',
       highlight: false,
     },
     {
-      label: 'All-time volume',
-      value: stats ? `$${formatAmount(stats.allTime.totalVolume)}` : '-',
-      sub:   `${stats?.allTime.txCount ?? 0} total transactions`,
-      icon:  TrendingUp,
+      label: 'P2P volume',
+      value: stats ? `$${formatAmount(stats.p2pVolume.month)}` : '-',
+      sub:   `${stats?.p2pVolume.countMonth ?? 0} released (30d) · $${formatAmount(stats?.p2pVolume.allTime ?? 0)} all-time`,
+      icon:  Store,
       color: 'text-app-accent-text',
       highlight: false,
     },
@@ -168,9 +167,9 @@ function DashboardContent() {
         ))}
       </div>
 
-      {/* Row 1: Weekly volume + Top pairs */}
-      <div className="mb-4 grid gap-4 grid-cols-1 lg:grid-cols-3">
-        <div className="lg:col-span-2 rounded-2xl border border-app-border bg-app-surface p-5">
+      {/* Row 1: Weekly volume (full width) */}
+      <div className="mb-4 grid gap-4 grid-cols-1">
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5">
           <p className="mb-4 text-sm font-medium text-app-text">Weekly volume (USDC)</p>
           {isLoading ? (
             <div className="flex h-40 items-center justify-center">
@@ -198,28 +197,6 @@ function DashboardContent() {
           )}
         </div>
 
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5">
-          <p className="mb-4 text-sm font-medium text-app-text">Top pairs</p>
-          {isLoading ? (
-            <div className="space-y-2">
-              {[1,2,3].map(i => <div key={i} className="h-8 animate-pulse rounded bg-app-border" />)}
-            </div>
-          ) : stats?.pairBreakdown.length ? (
-            <div className="space-y-2.5">
-              {stats.pairBreakdown.map((p: PairStat) => (
-                <div key={p.pair} className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-app-text">{p.pair}</span>
-                  <div className="text-right">
-                    <p className="font-mono text-app-text">${formatAmount(Number(p.volume))}</p>
-                    <p className="text-app-muted">{p.txs} txs</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-app-muted">No transactions yet</p>
-          )}
-        </div>
       </div>
 
       {/* Row 2: Inflow / Outflow */}
@@ -296,8 +273,8 @@ function DashboardContent() {
         )}
       </div>
 
-      {/* Row 3: Recent activity + Live rates */}
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+      {/* Row 3: Recent activity (full width) */}
+      <div className="grid gap-4 grid-cols-1">
         <div className="rounded-2xl border border-app-border bg-app-surface p-5">
           <p className="mb-4 text-sm font-medium text-app-text">Recent activity</p>
           {isLoading ? (
@@ -315,8 +292,11 @@ function DashboardContent() {
                     <p className="text-xs font-medium text-app-text">
                       {tx.fromCurrency} → {tx.toCurrency}
                     </p>
-                    <p className="truncate font-mono text-[10px] text-app-muted">
-                      {tx.reference ?? tx.id.slice(0,16) + '…'}
+                    <p className="font-mono text-[10px] text-app-muted">
+                      {new Date(tx.createdAt * 1000).toLocaleString([], {
+                        year: 'numeric', month: 'short', day: 'numeric',
+                        hour: '2-digit', minute: '2-digit',
+                      })}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
@@ -342,32 +322,14 @@ function DashboardContent() {
                 <ArrowLeftRight className="h-4 w-4 text-app-accent-text" />
               </span>
               <p className="text-sm text-app-text">No activity yet</p>
-              <p className="mt-0.5 text-xs text-app-muted">Your conversions and swaps will show up here.</p>
-              <Link href="/convert" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-app-accent px-3 py-1.5 text-xs font-medium text-app-on-accent hover:bg-app-accent-hover">
-                Make your first conversion
+              <p className="mt-0.5 text-xs text-app-muted">Your transfers and trades will show up here.</p>
+              <Link href="/send" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-app-accent px-3 py-1.5 text-xs font-medium text-app-on-accent hover:bg-app-accent-hover">
+                Make your first transfer
               </Link>
             </div>
           )}
         </div>
 
-        <div className="rounded-2xl border border-app-border bg-app-surface p-5">
-          <p className="mb-4 text-sm font-medium text-app-text">Live rates</p>
-          <div className="space-y-2.5">
-            {(rates ?? []).map(r => {
-              const up = r.change24h >= 0
-              return (
-                <div key={r.pair} className="flex items-center justify-between text-xs">
-                  <span className="text-app-muted">{r.pair}</span>
-                  <span className="font-mono text-app-text">{r.rate.toLocaleString()}</span>
-                  <span className={`flex items-center gap-0.5 ${up ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                    {up ? '+' : ''}{r.change24h.toFixed(2)}%
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
       </div>
     </div>
   )
