@@ -112,16 +112,20 @@ export function ProfileSetupClient() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
-      <div className="mb-8 flex items-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-app-accent/20">
-          <ArrowLeftRight className="h-5 w-5 text-app-accent-text" />
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12">
+      <div aria-hidden className="pointer-events-none absolute left-1/2 top-24 h-72 w-72 -translate-x-1/2 rounded-full bg-app-accent/10 blur-3xl" />
+      <div className="relative z-10 mb-8 flex items-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-app-accent/30 bg-app-accent/15">
+          <ArrowLeftRight className="h-6 w-6 text-app-accent-text" />
         </div>
-        <span className="text-xl font-semibold text-app-text">Nexum</span>
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-app-text">Nexum</h1>
+          <p className="text-xs text-app-muted">Dollars that move like messages</p>
+        </div>
       </div>
 
       {step === 3 && (
-        <div className="w-full max-w-sm text-center">
+        <div className="relative z-10 w-full max-w-sm text-center">
           <div className="mb-6 flex justify-center">
             <ProfileAvatar displayName={displayName} avatarColor={avatarColor} size="xl" />
           </div>
@@ -139,7 +143,7 @@ export function ProfileSetupClient() {
       )}
 
       {step < 3 && (
-        <div className="w-full max-w-sm">
+        <div className="relative z-10 w-full max-w-sm">
           <div className="mb-6 text-center">
             <h1 className="text-2xl font-semibold text-app-text">Create your profile</h1>
             <p className="mt-1 text-sm text-app-muted">Your identity on Nexum. Username is permanent.</p>

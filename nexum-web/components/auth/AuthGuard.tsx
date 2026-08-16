@@ -12,9 +12,11 @@ import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useIdleSignOut } from '@/hooks/useIdleSignOut'
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { account, loading } = useAuth()
+  useIdleSignOut()
   const router   = useRouter()
   const pathname = usePathname()
 
