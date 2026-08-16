@@ -205,6 +205,11 @@ export async function executeChallenge(
   challengeId: string, userToken: string, encryptionKey: string,
 ): Promise<void> {
   const instance = await getSdk()
+  // Circle's SDK no-ops execute() until the device id is fetched.
+  // Login primes it, but a user with a live session can reach a
+  // signing screen without logging in this tab — prime it here so
+  // the challenge callback actually fires.
+  await getDeviceId()
   instance.setAuthentication({ userToken, encryptionKey })
 
   await new Promise<void>((resolve, reject) => {
@@ -227,6 +232,11 @@ export async function executeSigningChallenge(
   challengeId: string, userToken: string, encryptionKey: string,
 ): Promise<string> {
   const instance = await getSdk()
+  // Circle's SDK no-ops execute() until the device id is fetched.
+  // Login primes it, but a user with a live session can reach a
+  // signing screen without logging in this tab — prime it here so
+  // the challenge callback actually fires.
+  await getDeviceId()
   instance.setAuthentication({ userToken, encryptionKey })
 
   return new Promise<string>((resolve, reject) => {
