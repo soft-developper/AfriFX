@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeftRight, ArrowRight, ExternalLink } from 'lucide-react'
+import { chainByKey } from '@/lib/cctp-chains'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 type StatusFilter = 'all' | 'settled' | 'pending' | 'failed'
@@ -31,7 +32,9 @@ export default function HistoryPage() {
         return {
           __bridge: true,
           id: b.id,
-          from_currency: b.from_chain, to_currency: b.to_chain,
+          // CCTP moves USDC only; keep the chain route in dedicated fields.
+          from_currency: 'USDC', to_currency: 'USDC',
+          from_chain: b.from_chain, to_chain: b.to_chain,
           from_amount: Number(b.amount ?? 0), to_amount: Number(b.amount ?? 0),
           arc_tx_hash: b.mint_tx ?? b.burn_tx ?? '',
           status,
@@ -136,6 +139,9 @@ function TxRow({ tx, isCorridorStep = false }: { tx: any; isCorridorStep?: boole
   const isBridge = tx.__bridge === true
   const fromCcy   = tx.from_currency ?? tx.fromCurrency  ?? ''
   const toCcy     = tx.to_currency   ?? tx.toCurrency    ?? ''
+  // Bridge rows carry chain keys; show friendly names for the route.
+  const fromChainName = tx.from_chain ? (chainByKey(tx.from_chain)?.name ?? tx.from_chain) : ''
+  const toChainName   = tx.to_chain   ? (chainByKey(tx.to_chain)?.name   ?? tx.to_chain)   : ''
   const fromAmt   = Number(tx.from_amount  ?? tx.fromAmount  ?? 0)
   const toAmt     = Number(tx.to_amount    ?? tx.toAmount    ?? 0)
   const createdAt = Number(tx.created_at   ?? tx.createdAt   ?? 0)
@@ -155,7 +161,7 @@ function TxRow({ tx, isCorridorStep = false }: { tx: any; isCorridorStep?: boole
           {isCorridorStep && step && (
             <span className="mr-1.5 text-[10px] text-app-muted">Step {step}</span>
           )}
-          {fromCcy} → {toCcy}
+          {isBridge ? `${fromChainName} → ${toChainName}` : `${fromCcy} → ${toCcy}`}
           {isBridge && <span className="ml-1.5 align-middle"><Badge variant="arc">Bridge</Badge></span>}
         </p>
         <div className="flex items-center gap-2 text-[10px] text-app-muted">
@@ -165,10 +171,10 @@ function TxRow({ tx, isCorridorStep = false }: { tx: any; isCorridorStep?: boole
       </div>
       <div className="shrink-0 text-right">
         <p className="font-mono text-sm text-red-400">
-          -{fromAmt.toLocaleString(undefined, { maximumFractionDigits: 4 })} {fromCcy}
+          -{fromAmt.toLocaleString(undefined, { maximumFractionDigits: 4 })} {fromCcy || 'USDC'}
         </p>
         <p className="font-mono text-sm text-emerald-400">
-          +{toAmt.toFixed(4)} {toCcy}
+          +{toAmt.toFixed(4)} {toCcy || 'USDC'}
         </p>
       </div>
       <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
