@@ -8,6 +8,8 @@ import { ClientOnly } from '@/components/ui/client-only'
 import { UserDisplay } from '@/components/profile/UserDisplay'
 import { ArrowRight, Plus, ExternalLink } from 'lucide-react'
 import type { P2POffer } from '@/types'
+import { usePaged } from '@/hooks/usePaged'
+import { Pager } from '@/components/ui/pager'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 const CURRENCY_FLAG: Record<string, string> = {
@@ -56,6 +58,7 @@ export default function MyTradesPage() {
   }, [address])
 
   const filtered = filter === 'all' ? offers : offers.filter(o => o.status === filter)
+  const pg = usePaged(filtered, 20)
 
   if (!isConnected) {
     return (
@@ -106,7 +109,7 @@ export default function MyTradesPage() {
       )}
 
       <div className="space-y-3">
-        {filtered.map((offer) => {
+        {pg.pageItems.map((offer) => {
           const isMaker  = address?.toLowerCase() === offer.maker_address?.toLowerCase()
           const isTaker  = address?.toLowerCase() === offer.taker_address?.toLowerCase()
           const myRole   = isMaker ? 'Seller' : 'Buyer'
@@ -172,6 +175,8 @@ export default function MyTradesPage() {
           )
         })}
       </div>
+
+      <Pager {...pg} label="trades" />
     </div>
   )
 }

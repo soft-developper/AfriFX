@@ -4,6 +4,8 @@ import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeftRight, ArrowRight, ExternalLink } from 'lucide-react'
 import { chainByKey } from '@/lib/cctp-chains'
+import { usePaged } from '@/hooks/usePaged'
+import { Pager } from '@/components/ui/pager'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 type StatusFilter = 'all' | 'settled' | 'pending' | 'failed'
@@ -66,6 +68,8 @@ export default function HistoryPage() {
     }
   })
 
+  const pg = usePaged(standalone, 20)
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
@@ -125,12 +129,14 @@ export default function HistoryPage() {
         })}
 
         {/* Standalone */}
-        {standalone.map((tx: any) => (
+        {pg.pageItems.map((tx: any) => (
           <div key={tx.id} className="rounded-xl border border-app-border bg-app-surface">
             <TxRow tx={tx} />
           </div>
         ))}
       </div>
+
+      <Pager {...pg} label="transactions" />
     </div>
   )
 }

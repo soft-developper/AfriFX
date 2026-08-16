@@ -5,6 +5,8 @@ import { CheckCircle, Clock, AlertTriangle, ExternalLink, RefreshCw, Loader2 } f
 import { useCompleteBridge } from '@/hooks/useCompleteBridge'
 import { useAttestationStatus, finalityHint } from '@/hooks/useAttestationStatus'
 import { chainByKey } from '@/lib/cctp-chains'
+import { usePaged } from '@/hooks/usePaged'
+import { Pager } from '@/components/ui/pager'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 
@@ -68,6 +70,8 @@ export function BridgeHistory() {
     return () => clearInterval(t)
   }, [rows, load])
 
+  const pg = usePaged(rows, 20)
+
   if (!address || (!rows.length && !loading)) return null
 
   const chip = (status: string) => {
@@ -91,7 +95,7 @@ export function BridgeHistory() {
       </div>
 
       <div className="space-y-2">
-        {rows.slice(0, 8).map(r => {
+        {pg.pageItems.map(r => {
           const c = chip(r.status)
           const Icon = c.icon
           const fromC = chainByKey(r.from_chain)
@@ -181,6 +185,8 @@ export function BridgeHistory() {
           )
         })}
       </div>
+
+      <Pager {...pg} label="bridges" />
     </div>
   )
 }
