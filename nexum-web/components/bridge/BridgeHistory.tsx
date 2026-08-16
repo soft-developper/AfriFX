@@ -170,7 +170,9 @@ export function BridgeHistory() {
                   {finish.busyId === r.id && finish.note && (
                     <p className="mt-1 text-[10px] text-app-muted">{finish.note}</p>
                   )}
-                  {finish.error && finish.busyId === null && (
+                  {/* Only show a failure on the row that actually failed —
+                      never under a transfer that is merely waiting to attest. */}
+                  {finish.errorId === r.id && finish.busyId === null && finish.error && (
                     <p className="mt-1 text-[10px] text-red-700 dark:text-red-300">{finish.error}</p>
                   )}
                 </div>

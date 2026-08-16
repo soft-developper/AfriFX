@@ -37,12 +37,13 @@ export type CompleteStep = 'idle' | 'checking' | 'minting' | 'done' | 'error'
 export function useCompleteBridge() {
   const [step,   setStep]   = useState<CompleteStep>('idle')
   const [error,  setError]  = useState<string | null>(null)
+  const [errorId, setErrorId] = useState<string | null>(null)
   const [mintTx, setMintTx] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [note,   setNote]   = useState<string | null>(null)
 
   const reset = useCallback(() => {
-    setStep('idle'); setError(null); setMintTx(null); setBusyId(null); setNote(null)
+    setStep('idle'); setError(null); setErrorId(null); setMintTx(null); setBusyId(null); setNote(null)
   }, [])
 
   const complete = useCallback(async (bridge: {
@@ -52,12 +53,12 @@ export function useCompleteBridge() {
     burn_tx?: string | null
   }) => {
     if (!bridge.burn_tx) {
-      setStep('error'); setError('No burn transaction recorded for this transfer.')
+      setStep('error'); setError('No burn transaction recorded for this transfer.'); setErrorId(bridge.id)
       return
     }
 
     setBusyId(bridge.id)
-    setStep('checking'); setError(null); setNote(null)
+    setStep('checking'); setError(null); setErrorId(null); setNote(null)
 
     try {
       const from = chainByKey(bridge.from_chain)
@@ -117,11 +118,11 @@ export function useCompleteBridge() {
           body: JSON.stringify({ mintTx: 'already-minted' }),
         }).catch(() => {})
       }
-      setStep('error'); setError(message); setNote(null)
+      setStep('error'); setError(message); setErrorId(bridge.id); setNote(null)
     } finally {
       setBusyId(null)
     }
   }, [])
 
-  return { step, error, mintTx, busyId, note, complete, reset }
+  return { step, error, errorId, mintTx, busyId, note, complete, reset }
 }
