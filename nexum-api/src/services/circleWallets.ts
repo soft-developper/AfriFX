@@ -48,7 +48,7 @@ export const PRIMARY_BLOCKCHAIN = process.env.CIRCLE_BLOCKCHAIN ?? 'ARC-TESTNET'
  * change.
  */
 export const CCTP_BRIDGE_CHAINS: string[] =
-  (process.env.CIRCLE_BRIDGE_CHAINS ?? 'BASE-SEPOLIA,ETH-SEPOLIA,ARB-SEPOLIA,MATIC-AMOY')
+  (process.env.CIRCLE_BRIDGE_CHAINS ?? 'BASE-SEPOLIA,ETH-SEPOLIA,ARB-SEPOLIA,MATIC-AMOY,OP-SEPOLIA,AVAX-FUJI,UNI-SEPOLIA,MONAD-TESTNET')
     .split(',')
     .map(s => s.trim().toUpperCase())
     .filter(Boolean)
