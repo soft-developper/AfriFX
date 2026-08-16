@@ -17,16 +17,14 @@ import {
 import { useState } from 'react'
 import { formatAmount } from '@/lib/utils'
 import { useTokens } from '@/lib/tokens'
-
-const CURRENCY_FLAG: Record<string, string> = {
-  NGN: '🇳🇬', GHS: '🇬🇭', KES: '🇰🇪', ZAR: '🇿🇦', EGP: '🇪🇬'
-}
+import { useAllChainUsdcBalances } from '@/hooks/useAllChainUsdcBalances'
 
 export function WalletContent() {
   const t                         = useTokens()
   const { address }               = useAccount()
   const { data: profile }         = useProfile()
   const { data, isLoading, refetch } = useWallet()
+  const { balances: chainBalances } = useAllChainUsdcBalances()
   const [copied, setCopied]       = useState(false)
 
   function copyAddress() {
@@ -40,29 +38,29 @@ export function WalletContent() {
   const escrowUSD  = data?.escrow.locked ?? 0
   const grandTotal = totalUSD + escrowUSD
 
-  // Local currency colors
-  const LOCAL_COLORS: Record<string, string> = {
-    NGN: '#16A34A', GHS: '#DC2626',
-    KES: '#9333EA', ZAR: '#0891B2', EGP: '#C2410C',
+  // Per-chain USDC palette. Chains beyond this list fall back to indigo, so a
+  // newly added chain still gets a slice/legend colour without a code change.
+  const CHAIN_COLORS: Record<string, string> = {
+    arc: '#B8860B', base: '#0052FF', ethereum: '#627EEA', arbitrum: '#28A0F0',
+    polygon: '#8247E5', optimism: '#FF0420', avalanche: '#E84142',
+    unichain: '#F50DB4', monad: '#836EF9',
   }
+  const chainColor = (key: string) => CHAIN_COLORS[key] ?? '#6366F1'
 
-  // Local currency slices USD equivalent (localAmount / rate = usdcBalance)
-  const localSlices = (data?.localEquiv ?? [])
-    .map(({ currency, amount, rate }) => ({
-      name:  currency,
-      value: rate > 0 ? parseFloat((amount / rate).toFixed(2)) : 0,
-      color: LOCAL_COLORS[currency] ?? '#6366F1',
-    }))
-    .filter(d => d.value > 0)
+  // USDC held on each supported chain (USDC = USD 1:1). All chains listed,
+  // even at 0, so users see the full footprint; new chains appear automatically.
+  const chainSlices = chainBalances.map(b => ({
+    name:  `USDC · ${b.name}`,
+    value: parseFloat(b.balance.toFixed(2)),
+    color: chainColor(b.key),
+  }))
 
-  // Full pie: tokens + escrow + local equivalents
+  // Pie shows only non-zero slices (a pie of zeros renders nothing useful),
+  // plus the Escrow slice. The legend/table below lists every chain incl. 0.
   const pieData = [
-    ...(data?.tokens ?? []).map(t => ({
-      name: t.symbol, value: t.usdValue, color: t.color,
-    })),
+    ...chainSlices.filter(d => d.value > 0),
     ...(escrowUSD > 0 ? [{ name: 'Escrow', value: escrowUSD, color: '#F59E0B' }] : []),
-    ...localSlices,
-  ].filter(d => d.value > 0)
+  ]
 
   return (
     <div>
@@ -178,7 +176,7 @@ export function WalletContent() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="mt-2 max-h-44 overflow-y-auto space-y-1.5 pr-1">
-                {pieData.map(d => (
+                {[...chainSlices, ...(escrowUSD > 0 ? [{ name: 'Escrow', value: escrowUSD, color: '#F59E0B' }] : [])].map(d => (
                   <div key={d.name} className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-1.5">
                       <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: d.color }} />
@@ -189,7 +187,7 @@ export function WalletContent() {
                 ))}
               </div>
               <p className="mt-2 border-t border-app-border pt-2 text-[10px] text-app-muted">
-                Local currencies show USD equivalent of your USDC holdings
+                USDC balance held on each supported chain
               </p>
             </>
           )}
@@ -251,26 +249,25 @@ export function WalletContent() {
             </div>
           </div>
 
-          {/* Local currency equivalent cards */}
-          {(data?.localEquiv ?? []).map(({ currency, flag, rate, amount }) => (
-            <div key={currency}
+          {/* Per-chain USDC cards. Every supported chain shows, even at 0.
+              Maps chainBalances so new chains appear with no code change. */}
+          {chainBalances.map(b => (
+            <div key={b.key}
               className="flex items-center gap-3 rounded-xl border border-app-border bg-app-bg p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-app-border text-xl">
-                {flag}
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                style={{ background: chainColor(b.key) }}>
+                USDC
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-app-text">{currency}</p>
+                  <p className="text-sm font-medium text-app-text">USDC</p>
                   <p className="font-mono text-sm font-semibold text-app-text">
-                    {isLoading
-                      ? <span className="inline-block h-4 w-20 animate-pulse rounded bg-app-border" />
-                      : amount.toLocaleString(undefined, { maximumFractionDigits: 0 })
-                    }
+                    {formatAmount(b.balance)}
                   </p>
                 </div>
                 <div className="flex items-center justify-between">
-                  <p className="text-xs text-app-muted">USDC equivalent</p>
-                  <p className="text-xs text-app-muted">1 USDC = {rate.toLocaleString()}</p>
+                  <p className="text-xs text-app-muted">{b.name}{b.isHome ? ' (home)' : ''}</p>
+                  <p className="text-xs text-app-muted">≈ ${formatAmount(b.balance)}</p>
                 </div>
               </div>
             </div>
