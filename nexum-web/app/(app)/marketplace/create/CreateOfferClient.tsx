@@ -32,7 +32,6 @@ export function CreateOfferClient() {
   const [timerOption,   setTimerOption]   = useState(1800)
   const [customTimer,   setCustomTimer]   = useState('')
   const [submitted,     setSubmitted]     = useState(false)
-  const [debugMsg,      setDebugMsg]      = useState('') // DEBUG
 
   // Payout details where the buyer sends the local-currency payment.
   const [paymentMethod, setPaymentMethod] = useState<'bank' | 'mobile_money'>('bank')
@@ -69,14 +68,7 @@ export function CreateOfferClient() {
   const rateVsMarket = orderType === 'limit' ? limitOffset : 0
 
   async function handleCreate() {
-    console.error('[CREATE] click: usdcAmount=', usdcAmount, 'localAmount=', localAmount, 'timerSeconds=', timerSeconds, 'insufficientUsdc=', insufficientUsdc, 'payoutComplete=', payoutComplete, 'marketRate=', marketRate, 'address=', address)
-    if (!usdcAmount || localAmount <= 0 || timerSeconds < 300 || insufficientUsdc || !payoutComplete) {
-      console.error('[CREATE] BLOCKED by guard')
-      setDebugMsg('Guard blocked: check amount / rate / timer / payout')
-      return
-    }
-    setDebugMsg('Submitting...')
-    console.error('[CREATE] guard passed, calling createOffer')
+    if (!usdcAmount || localAmount <= 0 || timerSeconds < 300 || insufficientUsdc || !payoutComplete) return
     try {
       await createOffer({
         usdcAmount:        parseFloat(usdcAmount),
@@ -97,8 +89,6 @@ export function CreateOfferClient() {
       // Do NOT swallow - an expired Circle signing session throws NeedsReauthError.
       // createOffer already sets the visible error; if it is a reauth, guide the
       // user to sign in again and come back to finish creating the offer.
-      console.error('[CREATE] threw:', err?.name, err?.message, err)
-      setDebugMsg('Error: ' + (err?.message ?? String(err)))
       if (err instanceof NeedsReauthError) {
         router.push('/signin?returnTo=/marketplace/create')
       }
@@ -363,10 +353,6 @@ export function CreateOfferClient() {
               ? 'Add your payout details'
               : `Create ${orderType} order, ${usdcAmount || '0'} USDC`}
           </Button>
-        )}
-
-        {debugMsg && (
-          <div className="rounded-lg bg-amber-900/20 px-4 py-3 text-xs text-amber-300">DEBUG: {debugMsg}</div>
         )}
 
         {error && (
