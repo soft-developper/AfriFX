@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { AdminShell } from '@/components/admin/AdminShell'
+import { usePaged } from '@/hooks/usePaged'
+import { Pager } from '@/components/ui/pager'
 import { adminFetch } from '@/hooks/useAdminAuth'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -20,6 +22,7 @@ function norm(r: any) {
 
 export default function AdminOffers() {
   const [offers,  setOffers]  = useState<any[]>([])
+  const offersPg = usePaged(offers, 20)
   const [loading, setLoading] = useState(true)
   const [filter,  setFilter]  = useState('all')
   const [busy,    setBusy]    = useState<string|null>(null)
@@ -99,7 +102,7 @@ export default function AdminOffers() {
         <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-app-accent-text" /></div>
       ) : (
         <div className="space-y-2">
-          {offers.map(o => (
+          {offersPg.pageItems.map(o => (
             <div key={o.id} className="rounded-xl border border-app-border bg-app-surface p-4">
               <div className="flex items-center gap-4">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-app-bg text-lg">
@@ -149,6 +152,7 @@ export default function AdminOffers() {
           {offers.length === 0 && <p className="py-8 text-center text-sm text-app-muted">No offers found</p>}
         </div>
       )}
+      <Pager {...offersPg} label="offers" />
     </AdminShell>
   )
 }

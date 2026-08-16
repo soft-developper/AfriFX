@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { AdminShell }    from '@/components/admin/AdminShell'
+import { usePaged } from '@/hooks/usePaged'
+import { Pager } from '@/components/ui/pager'
 import { Badge }         from '@/components/ui/badge'
 import { Button }        from '@/components/ui/button'
 import { adminFetch, useAdminAuth } from '@/hooks/useAdminAuth'
@@ -16,6 +18,7 @@ import {
 export default function AdminDisputesPage() {
   const { admin }                     = useAdminAuth()
   const [disputes,   setDisputes]     = useState<any[]>([])
+  const disputesPg = usePaged(disputes, 20)
   const [loading,    setLoading]      = useState(true)
   const [filter,     setFilter]       = useState<'open'|'in_review'|'resolved'|'all'>('open')
   const [resolving,  setResolving]    = useState<string|null>(null)
@@ -138,7 +141,7 @@ export default function AdminDisputesPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {disputes.map((d: any) => {
+          {disputesPg.pageItems.map((d: any) => {
             const id           = d.id            ?? d[0]
             const offerId      = d.offer_id      ?? d[1]
             const raisedBy     = d.raised_by     ?? d[2]
@@ -343,6 +346,7 @@ export default function AdminDisputesPage() {
           })}
         </div>
       )}
+      <Pager {...disputesPg} label="disputes" />
     </AdminShell>
   )
 }

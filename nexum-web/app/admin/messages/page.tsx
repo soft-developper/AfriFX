@@ -1,6 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { AdminShell } from '@/components/admin/AdminShell'
+import { usePaged } from '@/hooks/usePaged'
+import { Pager } from '@/components/ui/pager'
 import { adminFetch, useAdminAuth } from '@/hooks/useAdminAuth'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -22,6 +24,7 @@ export default function AdminMessagesPage() {
   const canView = hasPermission('view_messages')
 
   const [messages, setMessages] = useState<Message[]>([])
+  const messagesPg = usePaged(messages, 20)
   const [unread,   setUnread]   = useState(0)
   const [filter,   setFilter]   = useState<Filter>('all')
   const [loading,  setLoading]  = useState(true)
@@ -116,7 +119,7 @@ export default function AdminMessagesPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {messages.map(m => {
+            {messagesPg.pageItems.map(m => {
               const isOpen = expanded === m.id
               return (
                 <Card key={m.id} className={m.status === 'new' ? 'border-app-accent/40' : ''}>
@@ -174,6 +177,7 @@ export default function AdminMessagesPage() {
             })}
           </div>
         )}
+        <Pager {...messagesPg} label="messages" />
       </div>
     </AdminShell>
   )

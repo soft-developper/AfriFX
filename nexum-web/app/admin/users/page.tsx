@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { AdminShell } from '@/components/admin/AdminShell'
+import { usePaged } from '@/hooks/usePaged'
+import { Pager } from '@/components/ui/pager'
 import { adminFetch } from '@/hooks/useAdminAuth'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -45,6 +47,7 @@ function relativeDays(ts: number | null | undefined) {
 
 export default function AdminUsers() {
   const [users,   setUsers]   = useState<any[]>([])
+  const usersPg = usePaged(users, 20)
   const [loading, setLoading] = useState(true)
   const [search,  setSearch]  = useState('')
   const [busy,    setBusy]    = useState<string | null>(null)
@@ -135,7 +138,7 @@ export default function AdminUsers() {
         </div>
       ) : (
         <div className="space-y-2">
-          {users.map(u => {
+          {usersPg.pageItems.map(u => {
             const isOpen = openRow === u.wallet_address
             // A high dispute rate on a meaningful number of trades is the thing
             // an admin most needs to notice.
@@ -278,6 +281,7 @@ export default function AdminUsers() {
           )}
         </div>
       )}
+      <Pager {...usersPg} label="users" />
     </AdminShell>
   )
 }

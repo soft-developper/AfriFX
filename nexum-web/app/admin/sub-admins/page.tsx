@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { DutyHoursPicker, type DutyValue } from '@/components/admin/DutyHoursPicker'
+import { usePaged } from '@/hooks/usePaged'
+import { Pager } from '@/components/ui/pager'
 import { DutyOverview } from '@/components/admin/DutyOverview'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { adminFetch, useAdminAuth } from '@/hooks/useAdminAuth'
@@ -15,6 +17,7 @@ import {
 export default function AdminSubAdmins() {
   const { admin, invite } = useAdminAuth()
   const [admins,  setAdmins]  = useState<any[]>([])
+  const adminsPg = usePaged(admins, 20)
   const [permMeta, setPermMeta] = useState<any>({})
   const [allPerms, setAllPerms] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
@@ -232,7 +235,7 @@ export default function AdminSubAdmins() {
         <div className="flex h-40 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-app-accent-text" /></div>
       ) : (
         <div className="space-y-3">
-          {admins.map(a => (
+          {adminsPg.pageItems.map(a => (
             <div key={a.id} className="rounded-xl border border-app-border bg-app-surface p-5">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
@@ -326,6 +329,7 @@ export default function AdminSubAdmins() {
           ))}
         </div>
       )}
+      <Pager {...adminsPg} label="sub-admins" />
     </AdminShell>
   )
 }
