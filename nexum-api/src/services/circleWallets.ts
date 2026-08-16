@@ -357,6 +357,8 @@ export function cctpBlockchainFor(key: string): string | null {
   const testnet: Record<string, string> = {
     arc: 'ARC-TESTNET', base: 'BASE-SEPOLIA', ethereum: 'ETH-SEPOLIA',
     arbitrum: 'ARB-SEPOLIA', polygon: 'MATIC-AMOY',
+    optimism: 'OP-SEPOLIA', avalanche: 'AVAX-FUJI',
+    unichain: 'UNI-SEPOLIA', monad: 'MONAD-TESTNET',
   }
   const mainnet: Record<string, string> = {
     arc: 'ARC-TESTNET', base: 'BASE', ethereum: 'ETH',

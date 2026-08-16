@@ -119,6 +119,30 @@ const TESTNET_CHAINS: CctpChain[] = [
     rpcUrl:  process.env.NEXT_PUBLIC_POLYGON_RPC_URL ?? 'https://polygon-amoy-bor-rpc.publicnode.com',
     explorer: 'https://amoy.polygonscan.com',
   },
+  {
+    key: 'optimism', name: 'OP Sepolia', domain: 2, chainId: 11155420,
+    usdc: '0x5fd84259d66Cd46123540766Be93DFE6D43130D7',
+    rpcUrl:  process.env.NEXT_PUBLIC_OP_RPC_URL ?? 'https://sepolia.optimism.io',
+    explorer: 'https://sepolia-optimism.etherscan.io',
+  },
+  {
+    key: 'avalanche', name: 'Avalanche Fuji', domain: 1, chainId: 43113,
+    usdc: '0x5425890298aed601595a70AB815c96711a31Bc65',
+    rpcUrl:  process.env.NEXT_PUBLIC_AVAX_RPC_URL ?? 'https://api.avax-test.network/ext/bc/C/rpc',
+    explorer: 'https://testnet.snowtrace.io',
+  },
+  {
+    key: 'unichain', name: 'Unichain Sepolia', domain: 10, chainId: 1301,
+    usdc: '0x31d0220469e10c4E71834a79b1f276d740d3768F',
+    rpcUrl:  process.env.NEXT_PUBLIC_UNICHAIN_RPC_URL ?? 'https://sepolia.unichain.org',
+    explorer: 'https://sepolia.uniscan.xyz',
+  },
+  {
+    key: 'monad', name: 'Monad Testnet', domain: 15, chainId: 10143,
+    usdc: '0x534b2f3A21130d7a60830c2Df862319e593943A3',
+    rpcUrl:  process.env.NEXT_PUBLIC_MONAD_RPC_URL ?? 'https://testnet-rpc.monad.xyz',
+    explorer: 'https://testnet.monadexplorer.com',
+  },
 ]
 
 const MAINNET_CHAINS: CctpChain[] = [

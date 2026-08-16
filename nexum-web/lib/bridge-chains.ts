@@ -16,14 +16,33 @@ import { defineChain } from 'viem'
 import {
   base, baseSepolia, mainnet, sepolia,
   arbitrum, arbitrumSepolia, polygon, polygonAmoy,
+  optimism, optimismSepolia, avalanche, avalancheFuji,
 } from 'viem/chains'
 import { arcTestnet } from './arc-chain'
 import { CCTP_ENV } from './cctp-chains'
+
+// Chains viem doesn't ship a built-in for — defined from verified network params.
+export const unichainSepolia = defineChain({
+  id: 1301, name: 'Unichain Sepolia',
+  nativeCurrency: { name: 'Sepolia Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrls: { default: { http: ['https://sepolia.unichain.org'] } },
+  blockExplorers: { default: { name: 'Uniscan', url: 'https://sepolia.uniscan.xyz' } },
+  testnet: true,
+})
+
+export const monadTestnet = defineChain({
+  id: 10143, name: 'Monad Testnet',
+  nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 },
+  rpcUrls: { default: { http: ['https://testnet-rpc.monad.xyz'] } },
+  blockExplorers: { default: { name: 'Monad Explorer', url: 'https://testnet.monadexplorer.com' } },
+  testnet: true,
+})
 
 // Re-export the stock viem chains we use, so callers have one import site.
 export {
   base, baseSepolia, mainnet, sepolia,
   arbitrum, arbitrumSepolia, polygon, polygonAmoy,
+  optimism, optimismSepolia, avalanche, avalancheFuji,
 }
 export { arcTestnet }
 
@@ -36,6 +55,7 @@ export { arcTestnet }
 */
 export const TESTNET_CHAINS = [
   arcTestnet, baseSepolia, sepolia, arbitrumSepolia, polygonAmoy,
+  optimismSepolia, avalancheFuji, unichainSepolia, monadTestnet,
 ] as const
 
 export const MAINNET_CHAINS = [
@@ -62,6 +82,10 @@ export function rpcUrlFor(chainId: number): string | undefined {
     [sepolia.id]:         process.env.NEXT_PUBLIC_ETH_RPC_URL     ?? 'https://ethereum-sepolia-rpc.publicnode.com',
     [arbitrumSepolia.id]: process.env.NEXT_PUBLIC_ARB_RPC_URL     ?? 'https://sepolia-rollup.arbitrum.io/rpc',
     [polygonAmoy.id]:     process.env.NEXT_PUBLIC_POLYGON_RPC_URL ?? 'https://polygon-amoy-bor-rpc.publicnode.com',
+    [optimismSepolia.id]: process.env.NEXT_PUBLIC_OP_RPC_URL       ?? 'https://sepolia.optimism.io',
+    [avalancheFuji.id]:   process.env.NEXT_PUBLIC_AVAX_RPC_URL     ?? 'https://api.avax-test.network/ext/bc/C/rpc',
+    [unichainSepolia.id]: process.env.NEXT_PUBLIC_UNICHAIN_RPC_URL ?? 'https://sepolia.unichain.org',
+    [monadTestnet.id]:    process.env.NEXT_PUBLIC_MONAD_RPC_URL    ?? 'https://testnet-rpc.monad.xyz',
     [base.id]:            process.env.NEXT_PUBLIC_BASE_RPC_URL    ?? 'https://mainnet.base.org',
     [mainnet.id]:         process.env.NEXT_PUBLIC_ETH_RPC_URL,
     [arbitrum.id]:        process.env.NEXT_PUBLIC_ARB_RPC_URL     ?? 'https://arb1.arbitrum.io/rpc',
@@ -75,6 +99,8 @@ export function evmChainId(key: string): number | undefined {
   const testnet: Record<string, number> = {
     arc: arcTestnet.id, base: baseSepolia.id, ethereum: sepolia.id,
     arbitrum: arbitrumSepolia.id, polygon: polygonAmoy.id,
+    optimism: optimismSepolia.id, avalanche: avalancheFuji.id,
+    unichain: unichainSepolia.id, monad: monadTestnet.id,
   }
   const main: Record<string, number> = {
     arc: 0, base: base.id, ethereum: mainnet.id,

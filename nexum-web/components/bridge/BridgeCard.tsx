@@ -6,7 +6,8 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useBridge } from '@/hooks/useBridge'
-import { cctpChains, chainByKey, isRouteSupported } from '@/lib/cctp-chains'
+import { chainByKey, isRouteSupported } from '@/lib/cctp-chains'
+import { ChainCombobox } from '@/components/bridge/ChainCombobox'
 import { useChainUsdcBalance } from '@/hooks/useChainUsdcBalance'
 
 /*
@@ -48,7 +49,6 @@ export function BridgeCard() {
   const { address, isConnected } = useAccount()
   const { step, bridgeId, burnTx, mintTx, error, inFlight, waitedSec, note, bridge, reset, env } = useBridge()
 
-  const chains = cctpChains()
   const [fromKey, setFromKey] = useState('arc')
   const [toKey,   setToKey]   = useState('base')
   const [amount,  setAmount]  = useState('')
@@ -96,14 +96,9 @@ export function BridgeCard() {
 
       {/* From */}
       <label className="mb-1 block text-xs text-app-muted">From</label>
-      <select
-        value={fromKey}
-        onChange={e => setFromKey(e.target.value)}
-        disabled={busy}
-        className="mb-3 w-full rounded-lg border border-app-border bg-app-bg px-3 py-2.5 text-sm text-app-text outline-none disabled:opacity-50"
-      >
-        {chains.map(c => <option key={c.key} value={c.key}>{c.name}</option>)}
-      </select>
+      <div className="mb-3">
+        <ChainCombobox value={fromKey} onChange={setFromKey} disabled={busy} exclude={toKey} />
+      </div>
 
       <div className="my-1 flex justify-center">
         <button
@@ -118,14 +113,9 @@ export function BridgeCard() {
 
       {/* To */}
       <label className="mb-1 block text-xs text-app-muted">To</label>
-      <select
-        value={toKey}
-        onChange={e => setToKey(e.target.value)}
-        disabled={busy}
-        className="mb-3 w-full rounded-lg border border-app-border bg-app-bg px-3 py-2.5 text-sm text-app-text outline-none disabled:opacity-50"
-      >
-        {chains.map(c => <option key={c.key} value={c.key}>{c.name}</option>)}
-      </select>
+      <div className="mb-3">
+        <ChainCombobox value={toKey} onChange={setToKey} disabled={busy} exclude={fromKey} />
+      </div>
 
       {/* Amount */}
       <div className="mb-1 flex items-center justify-between">

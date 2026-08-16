@@ -12,10 +12,12 @@ export function CurrencyCombobox({
   value,
   onChange,
   placeholder = 'Search country or currency…',
+  includeUsdc = false,
 }: {
   value: string
   onChange: (code: string) => void
   placeholder?: string
+  includeUsdc?: boolean
 }) {
   const { data: rates } = useFXRates()
   const [open, setOpen] = useState(false)
@@ -29,14 +31,25 @@ export function CurrencyCombobox({
       const code = r.pair.split('/')[0]
       if (code) set.add(code)
     }
+    if (includeUsdc) set.add('USDC')
     return set
-  }, [rates])
+  }, [rates, includeUsdc])
 
   // Available = live ∩ registry, filtered by the search query.
+  const USDC_META: CurrencyMeta = {
+    code: 'USDC', name: 'USD Coin', country: 'Stablecoin', flag: '💵', countries: ['USDC'],
+  }
+
   const results = useMemo(() => {
     const matches = searchCurrencies(query)
-    return matches.filter(m => liveCodes.has(m.code))
-  }, [query, liveCodes])
+    const base = matches.filter(m => liveCodes.has(m.code))
+    if (!includeUsdc) return base
+    const q = query.trim().toLowerCase()
+    const usdcMatches = !q || 'usdc'.includes(q) || 'usd coin'.includes(q) || 'stablecoin'.includes(q)
+    // USDC first, and never duplicated if the registry ever adds it.
+    const withoutUsdc = base.filter(m => m.code !== 'USDC')
+    return usdcMatches ? [USDC_META, ...withoutUsdc] : withoutUsdc
+  }, [query, liveCodes, includeUsdc])
 
   // Close on outside click.
   useEffect(() => {
@@ -47,7 +60,8 @@ export function CurrencyCombobox({
     return () => document.removeEventListener('mousedown', onDoc)
   }, [])
 
-  const selected: CurrencyMeta | undefined = CURRENCY_BY_CODE[value]
+  const selected: CurrencyMeta | undefined =
+    CURRENCY_BY_CODE[value] ?? (value === 'USDC' ? USDC_META : undefined)
 
   return (
     <div ref={boxRef} className="relative">
