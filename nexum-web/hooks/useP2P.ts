@@ -116,11 +116,14 @@ export function useP2P() {
     setIsLoading(true); setError(null); setNote(null)
     try {
       const usdcRaw  = parseUnits(params.usdcAmount.toFixed(6), USDC_DECIMALS)
-      const localRaw = BigInt(Math.round(params.localAmount))
+      // DEBUG: floor at 1 so high-value fiat can't round to 0 (vault reverts on 0).
+      const localRaw = BigInt(Math.max(1, Math.round(params.localAmount)))
+      console.error('[CREATE] step 1: localAmount=', params.localAmount, 'localRaw=', localRaw.toString(), 'currency=', params.localCurrency, 'vault=', vault)
       const orderN   = params.orderType === 'limit' ? 1 : 0
       const memoId   = buildMemoId(`p2p-create-${address}`)
       const ref      = buildReference()
 
+      console.error('[CREATE] step 2: calling approve on USDC ->', vault)
       // 1. Approve the vault to pull the maker's USDC.
       await executeContractCall({
         chainKey:             'arc',
@@ -129,6 +132,7 @@ export function useP2P() {
         abiParameters:        [vault, usdcRaw.toString()],
       }, setNote)
 
+      console.error('[CREATE] step 3: approve returned, calling createP2POffer')
       // 2. Create the offer.
       const createResult = await executeContractCall({
         chainKey:             'arc',
@@ -143,6 +147,7 @@ export function useP2P() {
         ],
       }, setNote)
 
+      console.error('[CREATE] step 4: createP2POffer returned', createResult)
       const hash = (createResult.txHash ?? '') as `0x${string}`
       if (!hash) {
         throw new Error(

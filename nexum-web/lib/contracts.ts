@@ -24,8 +24,8 @@ export const CONTRACTS = {
   MULTICALL3: '0xcA11bde05977b3631167028862bE2a173976CA11' as `0x${string}`,
 
   // Nexum deployed contracts from .env.local
-  AFRIFX_VAULT:    (process.env.NEXT_PUBLIC_AFRIFX_VAULT    || ZERO) as `0x${string}`,
-  AFRIFX_EXCHANGE: (process.env.NEXT_PUBLIC_AFRIFX_EXCHANGE || ZERO) as `0x${string}`,
+  AFRIFX_VAULT:    (process.env.NEXT_PUBLIC_NEXUM_VAULT || process.env.NEXT_PUBLIC_AFRIFX_VAULT || ZERO) as `0x${string}`,
+  AFRIFX_EXCHANGE: (process.env.NEXT_PUBLIC_NEXUM_EXCHANGE || process.env.NEXT_PUBLIC_AFRIFX_EXCHANGE || ZERO) as `0x${string}`,
 } as const
 
 export const ARC_CHAIN_ID  = 5042002
