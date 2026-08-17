@@ -22,8 +22,8 @@ export const BRAND = {
   url: process.env.BRAND_URL ?? 'https://nexumpay.xyz',
 
   /** From address for transactional mail. */
-  supportEmail: process.env.BRAND_SUPPORT_EMAIL ?? 'support@nexumpay.xyz',
+  supportEmail: process.env.BRAND_SUPPORT_EMAIL ?? 'support@afrifx.com',
 } as const
 
-/** e.g. "Welcome to Nexum" */
+/** e.g. "Welcome to AfriFX" */
 export const brandSubject = (s: string) => `${s} ${BRAND.name}`.trim()

@@ -15,10 +15,10 @@ export interface ReceiptData {
 }
 
 // Brand colors (kept literal PDF is theme-independent)
-const GOLD  = '#0E7C86'
-const INK   = '#141B33'
-const MUTED = '#5C6784'
-const LINE  = '#DDE3F0'
+const GOLD  = '#8A5E13'
+const INK   = '#2B2416'
+const MUTED = '#6B5F49'
+const LINE  = '#E4D9C4'
 
 // Render the receipt to a PDF and return it as a Buffer.
 export function generateReceiptPdf(data: ReceiptData): Promise<Buffer> {
@@ -31,7 +31,7 @@ export function generateReceiptPdf(data: ReceiptData): Promise<Buffer> {
       doc.on('error', reject)
 
       // ── Header ──────────────────────────────────────────────
-      doc.fillColor(GOLD).fontSize(22).font('Helvetica-Bold').text('Nexum', 50, 50)
+      doc.fillColor(GOLD).fontSize(22).font('Helvetica-Bold').text('AfriFX', 50, 50)
       doc.fillColor(MUTED).fontSize(9).font('Helvetica')
         .text('Stablecoin FX & cross-border payments on Arc', 50, 76)
 
@@ -72,11 +72,11 @@ export function generateReceiptPdf(data: ReceiptData): Promise<Buffer> {
 
       // ── Footer ──────────────────────────────────────────────
       doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(
-        'This receipt was generated automatically by Nexum. The transaction is recorded on the Arc blockchain and can be verified at testnet.arcscan.app using the transaction hash above.',
+        'This receipt was generated automatically by AfriFX. The transaction is recorded on the Arc blockchain and can be verified at testnet.arcscan.app using the transaction hash above.',
         50, y, { width: 495, align: 'left' },
       )
       doc.fillColor(MUTED).fontSize(8)
-        .text('© ' + new Date().getFullYear() + ' Nexum', 50, y + 40, { align: 'center', width: 495 })
+        .text('© ' + new Date().getFullYear() + ' AfriFX', 50, y + 40, { align: 'center', width: 495 })
 
       doc.end()
     } catch (err) {

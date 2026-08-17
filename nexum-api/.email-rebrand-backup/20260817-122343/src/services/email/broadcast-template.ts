@@ -1,21 +1,21 @@
-// Nexum broadcast email template the branded shell for admin announcements.
+// AfriFX broadcast email template the branded shell for admin announcements.
 //
 // Uses the CURRENT gold brand (the older transactional templates in
 // templates.ts still use the pre-rebrand blue; those are left alone here).
 //
 // Every broadcast carries the marks of an authentic platform email:
-//   * the Nexum wordmark + flow-N mark in the header
+//   * the AfriFX wordmark + hexagon mark in the header
 //   * the sending admin's name and role, so it's clear who it's from
 //   * the recipient's own name in the greeting
 //   * a footer explaining WHY they received it, plus a working unsubscribe link
 
-const GOLD        = '#3DD6E0'
-const GOLD_BRIGHT = '#2E8CE0'
-const BG          = '#0B1020'
-const CARD        = '#141B33'
-const BORDER      = '#26314F'
-const TEXT        = '#E8ECF6'
-const MUTED       = '#8592B0'
+const GOLD        = '#D9A441'
+const GOLD_BRIGHT = '#EAC15C'
+const BG          = '#12100B'
+const CARD        = '#1C1810'
+const BORDER      = '#2A2418'
+const TEXT        = '#F2E9D8'
+const MUTED       = '#9C8A6E'
 
 const APP_URL = process.env.APP_URL ?? 'https://nexumpay.xyz'
 
@@ -90,7 +90,7 @@ export function broadcastEmail(p: BroadcastTemplateParams): { subject: string; h
               ${p.senderName}
             </p>
             <p style="margin:2px 0 0;font-size:12px;color:${MUTED};">
-              ${p.senderRole} · Nexum
+              ${p.senderRole} · AfriFX
             </p>
           </td></tr>
         </table>
@@ -106,7 +106,7 @@ export function broadcastEmail(p: BroadcastTemplateParams): { subject: string; h
         <!-- Sign-off -->
         <p style="margin:24px 0 0;padding-top:18px;border-top:1px solid ${BORDER};font-size:14px;color:${MUTED};">
          , ${p.senderName}<br/>
-          <span style="font-size:12px;">${p.senderRole}, Nexum</span>
+          <span style="font-size:12px;">${p.senderRole}, AfriFX</span>
         </p>
       </td></tr>
 
@@ -114,8 +114,8 @@ export function broadcastEmail(p: BroadcastTemplateParams): { subject: string; h
       <tr><td style="padding-top:20px;text-align:center;">
         <p style="margin:0 0 8px;font-size:11px;color:${MUTED};line-height:1.5;">
           ${p.isInternal
-            ? 'You received this because you are a Nexum sub-administrator.'
-            : 'You received this because you have an account on Nexum.'}
+            ? 'You received this because you are an AfriFX sub-administrator.'
+            : 'You received this because you have an account on AfriFX.'}
         </p>
         <p style="margin:0 0 10px;font-size:11px;color:${MUTED};">
           <a href="${APP_URL}" style="color:${GOLD};text-decoration:none;">nexumpay.xyz</a>

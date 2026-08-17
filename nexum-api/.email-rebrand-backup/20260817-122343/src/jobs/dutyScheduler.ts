@@ -70,7 +70,7 @@ async function sendUpcomingReminders(now: number) {
     try {
       await sendEmail({
         to: email,
-        subject: '🕒 Your Nexum duty session starts in 3 minutes',
+        subject: '🕒 Your AfriFX duty session starts in 3 minutes',
         html: `
           <p>Hi ${username},</p>
           <p>Your dispute-handling session is about to begin.</p>
@@ -78,7 +78,7 @@ async function sendUpcomingReminders(now: number) {
              <strong>Ends:</strong> ${endsAt}</p>
           <p>Open your admin dashboard and click <strong>Resume duty</strong> to go
              on duty. You can only accept new disputes while on duty.</p>
-          <p>Nexum</p>`,
+          <p>AfriFX</p>`,
       })
       await db.run(sql`
         UPDATE admins SET duty_notified_at = ${now} WHERE id = ${id}`)

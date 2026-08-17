@@ -1,15 +1,15 @@
-// Nexum email templates branded, mobile-responsive
+// AfriFX email templates branded, mobile-responsive
 // Designed to render correctly in Gmail, Yahoo, Outlook
 
-const BRAND_COLOR     = '#3DD6E0'
-const BG_COLOR        = '#0B1020'
-const CARD_COLOR      = '#141B33'
-const BORDER_COLOR    = '#26314F'
-const TEXT_PRIMARY    = '#E8ECF6'
-const TEXT_SECONDARY  = '#8592B0'
-const SUCCESS_COLOR   = '#34D399'
+const BRAND_COLOR     = '#378ADD'
+const BG_COLOR        = '#080D1B'
+const CARD_COLOR      = '#0F1729'
+const BORDER_COLOR    = '#1B2B4B'
+const TEXT_PRIMARY    = '#E2E8F0'
+const TEXT_SECONDARY  = '#64748B'
+const SUCCESS_COLOR   = '#10B981'
 const WARNING_COLOR   = '#F59E0B'
-const DANGER_COLOR    = '#F87171'
+const DANGER_COLOR    = '#EF4444'
 
 const APP_URL = process.env.APP_URL ?? 'https://nexumpay.xyz'
 
@@ -20,7 +20,7 @@ function baseLayout(content: string, options: { previewText?: string } = {}) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nexum</title>
+<title>AfriFX</title>
 <style>
   body { margin: 0; padding: 0; background: ${BG_COLOR}; color: ${TEXT_PRIMARY}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
   table { border-collapse: collapse; }
@@ -37,7 +37,7 @@ ${options.previewText ? `<div style="display:none;font-size:1px;line-height:1px;
         <tr>
           <td style="padding-bottom:24px;text-align:center;">
             <div style="display:inline-block;padding:8px 16px;border-radius:8px;background:${CARD_COLOR};border:1px solid ${BORDER_COLOR};">
-              <span style="color:${BRAND_COLOR};font-weight:600;font-size:18px;letter-spacing:0.5px;">Nexum</span>
+              <span style="color:${BRAND_COLOR};font-weight:600;font-size:18px;letter-spacing:0.5px;">AfriFX</span>
               <span style="color:${TEXT_SECONDARY};font-size:11px;margin-left:8px;">Arc Testnet</span>
             </div>
           </td>
@@ -51,7 +51,7 @@ ${options.previewText ? `<div style="display:none;font-size:1px;line-height:1px;
         <!-- Footer -->
         <tr>
           <td style="padding-top:24px;text-align:center;color:${TEXT_SECONDARY};font-size:12px;line-height:1.6;">
-            <p style="margin:0 0 8px;">Nexum, stablecoin-powered cross-border payments on Arc</p>
+            <p style="margin:0 0 8px;">AfriFX, Stablecoin-powered cross-border payments on Arc</p>
             <p style="margin:0;">
               <a href="${APP_URL}" style="color:${BRAND_COLOR};">nexumpay.xyz</a> ·
               <a href="${APP_URL}/profile" style="color:${TEXT_SECONDARY};">Notification settings</a>
@@ -182,7 +182,7 @@ ${infoCard([
 ${ctaButton('View on ArcScan', `https://testnet.arcscan.app/tx/${params.txHash}`)}
 
 <p style="margin:16px 0 0;color:${TEXT_SECONDARY};font-size:12px;line-height:1.5;">
-  This trade is now part of your Nexum reputation. Keep trading to build trust and unlock verified status.
+  This trade is now part of your AfriFX reputation. Keep trading to build trust and unlock verified status.
 </p>`
 
   return { subject, html: baseLayout(content, { previewText }), previewText }
@@ -215,7 +215,7 @@ export function disputeRaisedEmail(params: {
 </p>
 <p style="margin:0 0 16px;color:${TEXT_SECONDARY};font-size:14px;line-height:1.6;">
   <strong style="color:${TEXT_PRIMARY};">${params.raisedByName}</strong> ${disputeReason}.
-  A Nexum admin will review the case and contact both parties.
+  An AfriFX admin will review the case and contact both parties.
 </p>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;margin:20px 0;">
@@ -291,20 +291,20 @@ ${ctaButton('View invoice', `${APP_URL}/invoices/${params.invoiceId}`)}
 // Wave 2 Templates
 // ─────────────────────────────────────────────────────────────
 
-const BRAND_2       = '#3DD6E0'
-const BG_2          = '#0B1020'
-const CARD_2        = '#141B33'
-const BORDER_2      = '#26314F'
-const TEXT_PRI      = '#E8ECF6'
-const TEXT_SEC      = '#8592B0'
-const SUCCESS_2     = '#34D399'
+const BRAND_2       = '#378ADD'
+const BG_2          = '#080D1B'
+const CARD_2        = '#0F1729'
+const BORDER_2      = '#1B2B4B'
+const TEXT_PRI      = '#E2E8F0'
+const TEXT_SEC      = '#64748B'
+const SUCCESS_2     = '#10B981'
 const WARNING_2     = '#F59E0B'
 const APP_URL_2     = process.env.APP_URL ?? 'https://nexumpay.xyz'
 
 function base2(content: string, preview?: string) {
   return `
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Nexum</title></head>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AfriFX</title></head>
 <body style="margin:0;padding:0;background:${BG_2};color:${TEXT_PRI};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
 ${preview ? `<div style="display:none;font-size:1px;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">${preview}</div>` : ''}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BG_2};padding:32px 16px;">
@@ -312,14 +312,14 @@ ${preview ? `<div style="display:none;font-size:1px;line-height:1px;max-height:0
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
 <tr><td style="padding-bottom:24px;text-align:center;">
 <div style="display:inline-block;padding:8px 16px;border-radius:8px;background:${CARD_2};border:1px solid ${BORDER_2};">
-<span style="color:${BRAND_2};font-weight:600;font-size:18px;letter-spacing:0.5px;">Nexum</span>
+<span style="color:${BRAND_2};font-weight:600;font-size:18px;letter-spacing:0.5px;">AfriFX</span>
 <span style="color:${TEXT_SEC};font-size:11px;margin-left:8px;">Arc Testnet</span>
 </div></td></tr>
 <tr><td style="background:${CARD_2};border:1px solid ${BORDER_2};border-radius:12px;padding:32px 28px;">
 ${content}
 </td></tr>
 <tr><td style="padding-top:24px;text-align:center;color:${TEXT_SEC};font-size:12px;line-height:1.6;">
-<p style="margin:0 0 8px;">Nexum, stablecoin-powered cross-border payments on Arc</p>
+<p style="margin:0 0 8px;">AfriFX, Stablecoin-powered cross-border payments on Arc</p>
 <p style="margin:0;">
 <a href="${APP_URL_2}" style="color:${BRAND_2};">nexumpay.xyz</a> ·
 <a href="${APP_URL_2}/profile" style="color:${TEXT_SEC};">Notification settings</a>
@@ -349,25 +349,25 @@ ${rows.map((r, i) => `
 
 // ─── 1. Welcome email ───────────────────────────────────────
 export function welcomeEmail(params: { username: string, displayName: string }) {
-  const subject = 'Welcome to Nexum'
+  const subject = 'Welcome to AfriFX'
   const preview = 'Your account is ready. Here is how to get started.'
 
   const content = `
 <h1 style="margin:0 0 12px;color:${TEXT_PRI};font-size:22px;font-weight:600;line-height:1.3;">
-Welcome to Nexum 👋
+Welcome to AfriFX 👋
 </h1>
 <p style="margin:0 0 8px;color:${TEXT_SEC};font-size:14px;line-height:1.6;">
 Hi ${params.displayName},
 </p>
 <p style="margin:0 0 16px;color:${TEXT_SEC};font-size:14px;line-height:1.6;">
-Your Nexum account <strong style="color:${TEXT_PRI};">@${params.username}</strong> is ready.
-You can now trade stablecoins for currencies worldwide with anyone, anywhere on the platform.
+Your AfriFX account <strong style="color:${TEXT_PRI};">@${params.username}</strong> is ready.
+You can now trade stablecoins for African currencies with anyone on the platform.
 </p>
 
 <div style="background:${BG_2};border:1px solid ${BORDER_2};border-radius:10px;padding:16px;margin:20px 0;">
 <p style="margin:0 0 12px;color:${TEXT_PRI};font-size:14px;font-weight:500;">Here is what you can do:</p>
 <ul style="margin:0;padding:0 0 0 20px;color:${TEXT_SEC};font-size:13px;line-height:1.8;">
-<li>Convert USDC ↔ 160+ currencies worldwide at live rates</li>
+<li>Convert USDC ↔ NGN, GHS, KES, ZAR, EGP and more at live rates</li>
 <li>Trade peer-to-peer with any wallet at agreed prices</li>
 <li>Generate invoices with shareable payment links</li>
 <li>Track all your trades and payments in one place</li>
@@ -377,7 +377,7 @@ You can now trade stablecoins for currencies worldwide with anyone, anywhere on 
 ${btn2('Open dashboard', `${APP_URL_2}/convert`)}
 
 <p style="margin:16px 0 0;color:${TEXT_SEC};font-size:12px;line-height:1.5;">
-Every trade on Nexum is secured by smart contract escrow on Arc. Your funds are never at risk of third-party mismanagement.
+Every trade on AfriFX is secured by smart contract escrow on Arc. Your funds are never at risk of third-party mismanagement.
 </p>`
 
   return { subject, html: base2(content, preview), previewText: preview }
@@ -584,19 +584,19 @@ Auto-cancellation happens when either party does not act within the timer window
 // Wave 3 Templates
 // ─────────────────────────────────────────────────────────────
 
-const BRAND_3 = '#3DD6E0'
-const BG_3    = '#0B1020'
-const CARD_3  = '#141B33'
-const BORDER_3 = '#26314F'
-const TP      = '#E8ECF6'
-const TS3     = '#8592B0'
-const SU      = '#34D399'
+const BRAND_3 = '#378ADD'
+const BG_3    = '#080D1B'
+const CARD_3  = '#0F1729'
+const BORDER_3 = '#1B2B4B'
+const TP      = '#E2E8F0'
+const TS3     = '#64748B'
+const SU      = '#10B981'
 const APP3    = process.env.APP_URL ?? 'https://nexumpay.xyz'
 
 function base3(content: string, preview?: string) {
   return `
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Nexum</title></head>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AfriFX</title></head>
 <body style="margin:0;padding:0;background:${BG_3};color:${TP};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
 ${preview ? `<div style="display:none;font-size:1px;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">${preview}</div>` : ''}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BG_3};padding:32px 16px;">
@@ -604,14 +604,14 @@ ${preview ? `<div style="display:none;font-size:1px;line-height:1px;max-height:0
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
 <tr><td style="padding-bottom:24px;text-align:center;">
 <div style="display:inline-block;padding:8px 16px;border-radius:8px;background:${CARD_3};border:1px solid ${BORDER_3};">
-<span style="color:${BRAND_3};font-weight:600;font-size:18px;letter-spacing:0.5px;">Nexum</span>
+<span style="color:${BRAND_3};font-weight:600;font-size:18px;letter-spacing:0.5px;">AfriFX</span>
 <span style="color:${TS3};font-size:11px;margin-left:8px;">Arc Testnet</span>
 </div></td></tr>
 <tr><td style="background:${CARD_3};border:1px solid ${BORDER_3};border-radius:12px;padding:32px 28px;">
 ${content}
 </td></tr>
 <tr><td style="padding-top:24px;text-align:center;color:${TS3};font-size:12px;line-height:1.6;">
-<p style="margin:0 0 8px;">Nexum, stablecoin-powered cross-border payments on Arc</p>
+<p style="margin:0 0 8px;">AfriFX, Stablecoin-powered cross-border payments on Arc</p>
 <p style="margin:0;"><a href="${APP3}" style="color:${BRAND_3};">nexumpay.xyz</a> · <a href="${APP3}/profile" style="color:${TS3};">Notification settings</a></p>
 </td></tr></table></td></tr></table>
 </body></html>`.trim()
@@ -640,11 +640,11 @@ export function paymentReceiptEmail(params: {
   const timeStr  = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 
   const subject     = params.type === 'trade'
-    ? 'Nexum Trade Receipt'
-    : 'Nexum Payment Receipt'
+    ? 'AfriFX Trade Receipt'
+    : 'AfriFX Payment Receipt'
   const previewText = isSender
-    ? 'Your payment receipt from Nexum.'
-    : 'Your funds receipt from Nexum.'
+    ? 'Your payment receipt from AfriFX.'
+    : 'Your funds receipt from AfriFX.'
 
   const content = `
 <div style="text-align:center;margin-bottom:24px;">
@@ -681,7 +681,7 @@ ${params.localAmount && params.localCcy ? `<div style="font-size:14px;color:${TS
 </div>
 
 <p style="margin:24px 0 0;color:${TS3};font-size:11px;line-height:1.6;text-align:center;">
-This receipt is automatically generated by Nexum. The on-chain transaction is the authoritative record. Keep this email for your records.
+This receipt is automatically generated by AfriFX. The on-chain transaction is the authoritative record. Keep this email for your records.
 </p>`
 
   return { subject, html: base3(content, previewText), previewText }
@@ -701,7 +701,7 @@ export function adminAuditSummaryEmail(params: {
   activeAdmins:         { name: string, resolved: number }[]
   unclaimedDisputes:    number
 }) {
-  const subject     = 'Nexum Weekly Audit Summary'
+  const subject     = 'AfriFX Weekly Audit Summary'
   const previewText = `${params.disputesOpened} disputes opened, ${params.disputesResolved} resolved this week.`
 
   const adminRows = params.activeAdmins.map(a =>
@@ -712,7 +712,7 @@ export function adminAuditSummaryEmail(params: {
   const content = `
 <h1 style="margin:0 0 12px;color:${TP};font-size:22px;font-weight:600;">Weekly audit summary</h1>
 <p style="margin:0 0 4px;color:${TS3};font-size:13px;">${params.periodStart}, ${params.periodEnd}</p>
-<p style="margin:0 0 20px;color:${TS3};font-size:14px;">Hi ${params.adminName}, here is what happened on Nexum this past week.</p>
+<p style="margin:0 0 20px;color:${TS3};font-size:14px;">Hi ${params.adminName}, here is what happened on AfriFX this past week.</p>
 
 <!-- Key metrics -->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0;">
@@ -747,7 +747,7 @@ export function adminAuditSummaryEmail(params: {
 </td></tr>
 <tr><td style="padding:12px 16px;">
 <div style="color:${TS3};font-size:11px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Unclaimed disputes</div>
-<div style="color:${params.unclaimedDisputes > 0 ? '#F87171' : SU};font-size:16px;font-weight:600;">${params.unclaimedDisputes}</div>
+<div style="color:${params.unclaimedDisputes > 0 ? '#EF4444' : SU};font-size:16px;font-weight:600;">${params.unclaimedDisputes}</div>
 </td></tr></table>
 
 ${params.activeAdmins.length > 0 ? `

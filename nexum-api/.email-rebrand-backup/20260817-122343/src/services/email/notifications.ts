@@ -206,7 +206,7 @@ export async function notifyTradeCompleted(params: {
         timestamp:       Math.floor(Date.now() / 1000),
         type:            'trade',
       })
-      attachments = [{ filename: `nexum-trade-receipt-${params.offerId.slice(0, 8)}.pdf`, content: pdf }]
+      attachments = [{ filename: `afrifx-trade-receipt-${params.offerId.slice(0, 8)}.pdf`, content: pdf }]
     } catch (err: any) {
       console.error('[Notify] receipt PDF generation failed:', err.message)
     }
@@ -326,7 +326,7 @@ export async function notifyInvoicePaid(params: {
       timestamp:       Math.floor(Date.now() / 1000),
       type:            'invoice',
     })
-    attachments = [{ filename: `nexum-invoice-receipt-${params.invoiceRef}.pdf`, content: pdf }]
+    attachments = [{ filename: `afrifx-invoice-receipt-${params.invoiceRef}.pdf`, content: pdf }]
   } catch (err: any) {
     console.error('[Notify] invoice receipt PDF failed:', err.message)
   }
@@ -363,9 +363,9 @@ export async function notifyInvoicePaid(params: {
           <p>Hi ${getDisplayName(payerProfile)},</p>
           <p>Thanks for your payment of ${params.usdcAmount} USDC for invoice
           <strong>${params.invoiceRef}</strong>. Your receipt is attached as a PDF.</p>
-          <p style="color:#8592B0;font-size:13px">Nexum · Stablecoin FX on Arc</p>
+          <p style="color:#6B5F49;font-size:13px">AfriFX · Stablecoin FX on Arc</p>
         </div>`,
-        attachments: [{ filename: `nexum-invoice-receipt-${params.invoiceRef}.pdf`, content: payerPdf }],
+        attachments: [{ filename: `afrifx-invoice-receipt-${params.invoiceRef}.pdf`, content: payerPdf }],
       })
     }
   } catch (err: any) {
