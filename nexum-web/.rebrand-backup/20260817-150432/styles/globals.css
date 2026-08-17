@@ -1,0 +1,176 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Semantic color tokens as "R G B" channel triples so Tailwind can apply
+  opacity modifiers, e.g. bg-app-accent/10.
+
+  BRAND: Indigo + Electric Cyan (global). :root = DARK (deep indigo + cyan);
+  html.light overrides to a cool ivory-blue with a deep teal accent so cyan
+  stays legible on light surfaces. Every component reads these variables, so
+  switching themes is purely a variable swap.
+
+  Accent tokens:
+    --app-accent        cyan fill (buttons, bars, active states)
+    --app-accent-hover  hover state for accent fills
+    --app-accent-text   accent used as READING text (links/labels); deeper in
+                        light mode (deep teal) so it passes AA on ivory-blue
+    --app-on-accent     text/icons that sit ON an accent fill
+
+  All fg/bg pairings verified WCAG AA (>=4.5:1) in both themes.
+*/
+:root {
+  --app-bg:           11 16 32;    /* #0B1020 deep indigo */
+  --app-surface:      20 27 51;    /* #141B33 raised indigo */
+  --app-border:       38 49 79;    /* #26314F */
+  --app-accent:       61 214 224;  /* #3DD6E0 electric cyan */
+  --app-accent-hover: 47 184 194;  /* #2FB8C2 */
+  --app-accent-text:  95 227 236;  /* #5FE3EC bright cyan reads well on indigo */
+  --app-on-accent:    7 18 26;     /* #07121A near-black on cyan fill */
+  --app-text:         232 236 246; /* #E8ECF6 cool off-white */
+  --app-muted:        133 146 176; /* #8592B0 */
+
+  /* Legacy aliases (kept for any direct var() consumers) */
+  --bg:      #0B1020;
+  --card:    #141B33;
+  --border:  #26314F;
+  --accent:  #3DD6E0;
+  --success: #34D399;
+  --danger:  #F87171;
+  --muted:   #8592B0;
+  --text:    #E8ECF6;
+}
+
+html.light {
+  --app-bg:           244 246 252; /* #F4F6FC cool ivory-blue */
+  --app-surface:      255 255 255; /* #FFFFFF */
+  --app-border:       221 227 240; /* #DDE3F0 */
+  --app-accent:       14 124 134;  /* #0E7C86 deep teal, readable as fill+text */
+  --app-accent-hover: 10 98 106;   /* #0A626A */
+  --app-accent-text:  14 124 134;  /* #0E7C86 passes AA on ivory-blue */
+  --app-on-accent:    255 255 255; /* #FFFFFF on teal fill */
+  --app-text:         20 27 51;    /* #141B33 indigo near-black */
+  --app-muted:        92 103 132;  /* #5C6784 passes AA */
+
+  --bg:      #F4F6FC;
+  --card:    #FFFFFF;
+  --border:  #DDE3F0;
+  --accent:  #0E7C86;
+  --success: #0F766E;
+  --danger:  #DC2626;
+  --muted:   #5C6784;
+  --text:    #141B33;
+}
+
+* { box-sizing: border-box; }
+
+/* Smooth the dark <-> light transition (kept subtle; excludes transforms) */
+body, [class*="bg-app-"], [class*="border-app-"], [class*="text-app-"] {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/*
+  Light-mode semantic status color fixes. The -400/-500 status shades are tuned
+  for dark and wash out on light. Under html.light remap the text utilities to
+  darker shades that pass AA. !important wins over Tailwind's own utilities.
+*/
+.light .text-emerald-400,
+.light .text-emerald-500 { color: #047857 !important; }
+.light .text-amber-400,
+.light .text-amber-500  { color: #92400e !important; }
+.light .text-red-400,
+.light .text-red-500    { color: #b91c1c !important; }
+
+/*
+  Brand wordmark gradients. "Nex" uses the deep-indigo->cyan gradient; "um"
+  uses a brighter cyan so the pair reads with a colorful accent while staying
+  on-brand. Works in both themes.
+*/
+.nx-gradient-text {
+  background: linear-gradient(120deg, #5FE3EC 0%, #3DD6E0 45%, #2E8CE0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.nx-gradient-text-bright {
+  background: linear-gradient(120deg, #8CF0F6 0%, #5FE3EC 60%, #3DD6E0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.light .nx-gradient-text {
+  background: linear-gradient(120deg, #2E8CE0 0%, #0E7C86 60%, #0A626A 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.light .nx-gradient-text-bright {
+  background: linear-gradient(120deg, #1C9CB0 0%, #0E7C86 60%, #0A626A 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+
+/* Subtle scrollbar for capped-height lists. */
+.nx-scroll { scrollbar-width: thin; scrollbar-color: var(--app-border) transparent; }
+.nx-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.nx-scroll::-webkit-scrollbar-track { background: transparent; }
+.nx-scroll::-webkit-scrollbar-thumb {
+  background: var(--app-border); border-radius: 9999px;
+}
+.nx-scroll::-webkit-scrollbar-thumb:hover { background: var(--app-muted); }
+
+/* ===================================================================
+   BALANCED MOTION LAYER
+   GPU-cheap (transform/opacity only). All effects no-op under
+   prefers-reduced-motion. Opt-in via utility classes so nothing
+   animates unless a component asks for it.
+   =================================================================== */
+
+@keyframes nx-fade-up   { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes nx-fade-in   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes nx-scale-in  { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes nx-sheen     { 0% { background-position: -150% 0; } 100% { background-position: 250% 0; } }
+
+/* Section / card entrance. Add .nx-enter (optionally with a delay class). */
+.nx-enter    { animation: nx-fade-up 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+.nx-enter-in { animation: nx-fade-in 0.5s ease both; }
+.nx-enter-scale { animation: nx-scale-in 0.4s cubic-bezier(0.22,1,0.36,1) both; }
+.nx-delay-1  { animation-delay: 0.06s; }
+.nx-delay-2  { animation-delay: 0.12s; }
+.nx-delay-3  { animation-delay: 0.18s; }
+.nx-delay-4  { animation-delay: 0.24s; }
+
+/* Primary-button / logo sheen: a slow highlight sweep. Put on a positioned
+   element; pair with overflow-hidden on the parent. */
+.nx-sheen {
+  background-image: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.14) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: nx-sheen 3.2s ease-in-out infinite;
+}
+
+/* Press feedback for interactive fills. */
+.nx-press { transition: transform 0.12s ease; }
+.nx-press:active { transform: scale(0.98); }
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-enter, .nx-enter-in, .nx-enter-scale, .nx-sheen {
+    animation: none !important;
+  }
+  .nx-enter, .nx-enter-in, .nx-enter-scale { opacity: 1 !important; transform: none !important; }
+  .nx-press { transition: none !important; }
+}

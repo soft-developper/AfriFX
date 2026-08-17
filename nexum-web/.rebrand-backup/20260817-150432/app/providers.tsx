@@ -13,15 +13,15 @@ function RainbowKitThemed({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme()
   const rkTheme = theme === 'light'
     ? lightTheme({
-        accentColor:           '#0E7C86',
+        accentColor:           '#8A5E13',
         accentColorForeground: 'white',
         borderRadius:          'large',
         fontStack:             'system',
         overlayBlur:           'small',
       })
     : darkTheme({
-        accentColor:           '#3DD6E0',
-        accentColorForeground: '#07121A',
+        accentColor:           '#D9A441',
+        accentColorForeground: '#12100B',
         borderRadius:          'large',
         fontStack:             'system',
         overlayBlur:           'small',
