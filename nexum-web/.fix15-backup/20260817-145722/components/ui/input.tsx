@@ -3,13 +3,10 @@ import { cn } from '@/lib/utils'
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
-const Input = React.forwardRef<HTMLInputElement, InputProps>(({ className, type, onWheel, ...props }, ref) => {
+const Input = React.forwardRef<HTMLInputElement, InputProps>(({ className, type, ...props }, ref) => {
   return (
     <input
       type={type}
-      onWheel={type === 'number'
-        ? (e) => { (e.currentTarget as HTMLInputElement).blur(); onWheel?.(e) }
-        : onWheel}
       className={cn(
         'flex w-full rounded-md border border-app-border bg-app-bg px-3 py-2 text-sm text-app-text',
         'placeholder:text-app-muted focus:outline-none focus:ring-1 focus:ring-app-accent',

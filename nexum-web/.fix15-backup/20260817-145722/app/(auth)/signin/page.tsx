@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   getSdk, startGoogleLogin, sendEmailCode, openCodeEntry,
-  clearAuthCookies, circleConfigured, stashReturnTo, consumeReturnTo,
+  clearAuthCookies, circleConfigured,
 } from '@/lib/circle'
 import { persistSession, useAuth, type Account } from '@/hooks/useAuth'
 import { provisionWallet } from '@/hooks/useWalletProvisioning'
@@ -39,19 +39,7 @@ function GoogleGlyph() {
  */
 function SignInInner() {
   const router = useRouter()
-  // Where to land after sign-in. A destination can arrive three ways and
-  // we honour them in priority order:
-  //   1. ?returnTo=  — set by pages that send you here (invoice pay, create offer)
-  //   2. ?next=      — set by the AuthGuard when it bounces a guarded route
-  //   3. a cookie    — the only channel that survives Google's OAuth redirect,
-  //                     which returns to a bare /signin with no query string
-  const sp = useSearchParams()
-  // Resolve the destination exactly once. consumeReturnTo() clears its cookie,
-  // so it must not run on every render — a useState initializer runs a single
-  // time and keeps the value stable across the re-renders of the sign-in flow.
-  const [returnTo] = useState(
-    () => sp.get('returnTo') || sp.get('next') || consumeReturnTo() || '/dashboard'
-  )
+  const returnTo = useSearchParams().get('returnTo') || '/dashboard'
   const { account, loading } = useAuth()
 
   // Already signed in (e.g. opened /signin from a bookmark, or bounced
@@ -128,8 +116,6 @@ function SignInInner() {
 
   async function onGoogle() {
     setError(null); setBusy('Opening Google')
-    // Persist the destination across the OAuth redirect (query params are lost).
-    stashReturnTo(returnTo)
     try { await startGoogleLogin('signin') }
     catch (e: any) { setError(e?.message ?? 'Could not start Google sign-in'); setBusy(null) }
   }

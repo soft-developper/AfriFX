@@ -23,7 +23,6 @@ const COOKIE = {
   encryptionKey: 'circle_device_encryption_key',
   /** Set when the user came from the sign-up form, so we know where to send them back. */
   intent:        'circle_auth_intent',
-  returnTo:      'circle_return_to',
 } as const
 
 /**
@@ -194,24 +193,6 @@ export function consumeIntent(): AuthIntent | null {
 }
 
 /**
- * Remember where to send the user after sign-in. The destination cannot
- * ride the URL through Google's OAuth round-trip (the redirect URI is a
- * bare /signin, fixed in Google Cloud Console), so it rides a cookie the
- * same way the auth intent does. Set this immediately before starting any
- * flow that leaves the page.
- */
-export function stashReturnTo(path: string): void {
-  if (path && path !== '/dashboard') setCookie(COOKIE.returnTo, path)
-}
-
-/** Read and clear the stashed post-sign-in destination, if any. */
-export function consumeReturnTo(): string | null {
-  const v = getCookie(COOKIE.returnTo) as string | undefined
-  if (v) deleteCookie(COOKIE.returnTo)
-  return v || null
-}
-
-/**
  * Run a Circle challenge and wait for the user to approve it.
  *
  * Wallet creation happens here, on the user's device. Their keyshare is
@@ -273,8 +254,6 @@ export function clearAuthCookies(): void {
   deleteCookie(COOKIE.deviceToken)
   deleteCookie(COOKIE.encryptionKey)
   deleteCookie(COOKIE.intent)
-  // NOTE: returnTo is intentionally NOT cleared here; it must outlive the
-  // OAuth round-trip and is consumed explicitly by the signin page.
 }
 
 /** True when the app has the config it needs to talk to Circle at all. */
