@@ -26,7 +26,7 @@ const GROUPS: Group[] = [
       {
         icon: ArrowLeftRight,
         name: 'Trade',
-        overview: 'Live rates between USDC and 160+ currencies worldwide, with fees shown upfront before you commit.',
+        overview: 'Live rates between USDC and 13 African currencies, with fees shown upfront before you commit.',
         useCase: 'A freelancer paid in USDC checks the live NGN rate and sees exactly what a conversion would cost.',
       },
       {
@@ -104,7 +104,7 @@ const GROUPS: Group[] = [
       {
         icon: Wallet,
         name: 'Wallet',
-        overview: 'Sign in with Google or email to get a secure Circle wallet, your keys, no seed phrase required. Prefer self-custody? Connect an external wallet instead.',
+        overview: 'Connect with MetaMask or sign in with Google/email to get a secure embedded wallet, your keys, no seed phrase required.',
         useCase: 'A first-time user signs in with Google and starts transacting immediately, no crypto setup.',
       },
       {
@@ -136,7 +136,7 @@ export function LandingFeatures() {
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs font-semibold uppercase tracking-[0.2em] text-app-accent-text">Everything in Nexum</span>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
-            One app for global <span className="nx-gradient-text">money movement</span>
+            One app for African <span className="nx-gradient-text">money movement</span>
           </h2>
           <p className="mt-4 text-app-muted">
             From simple conversions to business payroll, here’s what you can do, and when you’d reach for it.

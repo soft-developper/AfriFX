@@ -12,7 +12,7 @@ import { ShieldCheck, Zap, Coins } from 'lucide-react'
 export const metadata = {
   title: 'Nexum, Stablecoin FX & cross-border payments on Arc',
   description:
-    'Trade USDC for local currency peer-to-peer with on-chain escrow, bridge funds across Arc, Ethereum and Base, and track live FX rates for 160+ currencies worldwide.',
+    'Trade USDC for local currency peer-to-peer with on-chain escrow, bridge funds across Arc, Ethereum and Base, and track live African FX rates.',
 }
 
 export default function LandingPage() {
@@ -65,7 +65,7 @@ function Hero() {
         </span>
 
         <h1 className="mx-auto mt-6 max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
-          Move money across borders,
+          Move money across Africa,
           <br className="hidden sm:block" />
           <span className="nx-gradient-text">settled in seconds.</span>
         </h1>
@@ -73,7 +73,7 @@ function Hero() {
         <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-app-muted sm:text-lg">
           Nexum is a decentralized FX and cross-border payments platform. Trade USDC for
           local currency peer-to-peer with on-chain escrow, move funds between Arc, Ethereum,
-          Base and more, and track live rates across 160+ currencies worldwide.
+          Base and more, and track live rates across 13 African currencies.
         </p>
 
         <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">

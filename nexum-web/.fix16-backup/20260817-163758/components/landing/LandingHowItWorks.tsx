@@ -7,13 +7,13 @@ const STEPS = [
     n: '01',
     icon: Wallet,
     title: 'Connect or sign in',
-    body: 'Sign in with Google or email to get a secure Circle wallet, no seed phrase needed, or connect an external wallet if you prefer self-custody.',
+    body: 'Use MetaMask, or sign in with Google or email to get a secure embedded wallet, no seed phrase needed.',
   },
   {
     n: '02',
     icon: ArrowLeftRight,
     title: 'Check live rates',
-    body: 'See live rates across 160+ currencies worldwide with fees shown upfront, before you commit to anything.',
+    body: 'See live rates across 13 African currencies with fees shown upfront, before you commit to anything.',
   },
   {
     n: '03',
