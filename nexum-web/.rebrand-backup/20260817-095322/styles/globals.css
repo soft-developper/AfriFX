@@ -1,0 +1,141 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Semantic color tokens as "R G B" channel triples so Tailwind can apply
+  opacity modifiers, e.g. bg-app-accent/10.
+
+  :root defines the DARK theme (warm espresso + gold). html.light overrides
+  them with the LIGHT theme (warm ivory + deeper bronze). Every component
+  reads these variables, so switching themes is purely a variable swap.
+
+  Extra accent tokens keep text readable in BOTH themes:
+    --app-accent        gold fill (buttons, bars, active states)
+    --app-accent-hover  hover state for accent fills
+    --app-accent-text   the accent used as READING text (links/labels);
+                        deeper in light mode so it stays legible on ivory
+    --app-on-accent     text/icons that sit ON a gold fill (dark in dark
+                        mode, white in light mode) replaces raw text-white
+*/
+:root {
+  --app-bg:           18 16 11;    /* #12100B */
+  --app-surface:      28 24 16;    /* #1C1810 */
+  --app-border:       51 41 27;    /* #33291B */
+  --app-accent:       217 164 65;  /* #D9A441 */
+  --app-accent-hover: 196 143 46;  /* #C48F2E */
+  --app-accent-text:  217 164 65;  /* #D9A441 bright gold reads well on dark */
+  --app-on-accent:    18 16 11;    /* #12100B dark text on gold fill */
+  --app-text:         242 233 216; /* #F2E9D8 */
+  --app-muted:        156 138 110; /* #9C8A6E */
+
+  /* Legacy aliases (kept for any direct var() consumers) */
+  --bg:      #12100B;
+  --card:    #1C1810;
+  --border:  #33291B;
+  --accent:  #D9A441;
+  --success: #5BAE7B;
+  --danger:  #D9694A;
+  --muted:   #9C8A6E;
+  --text:    #F2E9D8;
+}
+
+html.light {
+  --app-bg:           247 241 230; /* #F7F1E6 warm ivory */
+  --app-surface:      255 253 248; /* #FFFDF8 near-white warm surface */
+  --app-border:       228 217 196; /* #E4D9C4 soft sand */
+  --app-accent:       138 94 19;   /* #8A5E13 deep bronze, readable as fill+text on ivory */
+  --app-accent-hover: 110 74 15;   /* #6E4A0F */
+  --app-accent-text:  138 94 19;   /* #8A5E13 passes AA (5.06:1) for link/label text */
+  --app-on-accent:    255 255 255; /* #FFFFFF white text on bronze fill */
+  --app-text:         43 36 22;    /* #2B2416 warm near-black */
+  --app-muted:        107 95 73;   /* #6B5F49 warm gray-brown, passes AA (5.56:1) */
+
+  --bg:      #F7F1E6;
+  --card:    #FFFDF8;
+  --border:  #E4D9C4;
+  --accent:  #8A5E13;
+  --success: #2E7D53;
+  --danger:  #C0492E;
+  --muted:   #6B5F49;
+  --text:    #2B2416;
+}
+
+* { box-sizing: border-box; }
+
+/* Smooth the dark <-> light transition (kept subtle; excludes transforms) */
+body, [class*="bg-app-"], [class*="border-app-"], [class*="text-app-"] {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/*
+  Light-mode semantic color fixes.
+
+  The status colors (emerald/amber/red at the -400/-500 shades) are tuned for
+  the dark theme and wash out on the light ivory background a light green on
+  near-white has almost no contrast. Under html.light we remap these specific
+  text utilities to darker shades that pass WCAG AA on ivory, without touching
+  the dark theme. Badge FILLS are handled separately via the `light:` variant
+  in components/ui/badge.tsx.
+
+  !important is required to win over Tailwind's own utility classes.
+*/
+.light .text-emerald-400,
+.light .text-emerald-500 { color: #047857 !important; } /* emerald-700 4.88:1 on ivory */
+.light .text-amber-400,
+.light .text-amber-500  { color: #92400e !important; } /* amber-800 passes on ivory */
+.light .text-red-400,
+.light .text-red-500    { color: #b91c1c !important; } /* red-700 5.76:1 on ivory */
+
+/*
+  Brand wordmark gradients (AfriFXLogo). "Afri" uses the warm gold-bronze
+  gradient; "FX" uses a brighter gold so the pair reads with a colorful accent
+  without leaving the brand palette. Works in both themes.
+*/
+.nx-gradient-text {
+  background: linear-gradient(120deg, #EAC15C 0%, #D9A441 45%, #B9822A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.nx-gradient-text-bright {
+  background: linear-gradient(120deg, #F5D77E 0%, #E9B84E 60%, #D9A441 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.light .nx-gradient-text {
+  background: linear-gradient(120deg, #B9822A 0%, #8A5E13 60%, #6E4A0F 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.light .nx-gradient-text-bright {
+  background: linear-gradient(120deg, #C48F2E 0%, #A9741B 60%, #8A5E13 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+
+/* Subtle scrollbar for capped-height lists (live-rates panels, long currency
+   lists). Keeps the scroll area from looking like a heavy OS scrollbar. */
+.nx-scroll { scrollbar-width: thin; scrollbar-color: var(--app-border) transparent; }
+.nx-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.nx-scroll::-webkit-scrollbar-track { background: transparent; }
+.nx-scroll::-webkit-scrollbar-thumb {
+  background: var(--app-border); border-radius: 9999px;
+}
+.nx-scroll::-webkit-scrollbar-thumb:hover { background: var(--app-muted); }

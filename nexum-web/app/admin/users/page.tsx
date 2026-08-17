@@ -154,7 +154,7 @@ export default function AdminUsers() {
                   className="flex cursor-pointer flex-wrap items-center gap-4 p-4 hover:bg-app-bg/40"
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-                    style={{ background: u.avatar_color ?? '#D9A441' }}>
+                    style={{ background: u.avatar_color ?? '#3DD6E0' }}>
                     {(u.display_name ?? u.username ?? '?')[0].toUpperCase()}
                   </div>
 

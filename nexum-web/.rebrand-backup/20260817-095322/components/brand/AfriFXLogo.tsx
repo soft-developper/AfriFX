@@ -24,8 +24,8 @@ export function AfriFXLogo({
         <svg width={dims.mark} height={dims.mark} viewBox="0 0 120 124" fill="none" className="shrink-0">
           <defs>
             <linearGradient id="nx-mark-g" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#5FE3EC" />
-              <stop offset="1" stopColor="#2E8CE0" />
+              <stop offset="0" stopColor="#EAC15C" />
+              <stop offset="1" stopColor="#B9822A" />
             </linearGradient>
           </defs>
           <path d="M60 4 L112 34 L112 90 L60 120 L8 90 L8 34 Z" fill="none" stroke="url(#nx-mark-g)" strokeWidth="7" strokeLinejoin="round" />

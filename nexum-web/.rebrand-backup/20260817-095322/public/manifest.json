@@ -1,11 +1,11 @@
 {
-  "name": "Nexum",
-  "short_name": "Nexum",
-  "description": "Stablecoin FX & cross-border payments on Arc",
+  "name": "AfriFX",
+  "short_name": "AfriFX",
+  "description": "Stablecoin FX on Arc",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0B1020",
-  "theme_color": "#0B1020",
+  "background_color": "#080D1B",
+  "theme_color": "#080D1B",
   "icons": [
     {
       "src": "/favicon.svg",

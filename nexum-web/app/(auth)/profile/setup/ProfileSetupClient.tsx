@@ -33,7 +33,7 @@ export function ProfileSetupClient() {
   const [submitting,    setSubmitting]    = useState(false)
   const [submitError,   setSubmitError]   = useState('')
 
-  const avatarColor = username ? getAvatarColor(username) : '#D9A441'
+  const avatarColor = username ? getAvatarColor(username) : '#3DD6E0'
 
   useEffect(() => {
     if (!username) { setUsernameState('idle'); return }

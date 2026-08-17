@@ -27,7 +27,7 @@ const config: Config = {
           bg:      '#080D1B',
           card:    '#0F1729',
           border:  '#1B2B4B',
-          accent:  '#3DD6E0',
+          accent:  '#378ADD',
           success: '#10B981',
           danger:  '#EF4444',
           muted:   '#64748B',
@@ -39,19 +39,9 @@ const config: Config = {
           '0%':   { transform: 'translateX(0)' },
           '100%': { transform: 'translateX(-50%)' },
         },
-        'fade-up': {
-          '0%':   { opacity: '0', transform: 'translateY(10px)' },
-          '100%': { opacity: '1', transform: 'none' },
-        },
-        'scale-in': {
-          '0%':   { opacity: '0', transform: 'scale(0.97)' },
-          '100%': { opacity: '1', transform: 'none' },
-        },
       },
       animation: {
         ticker: 'ticker 30s linear infinite',
-        'fade-up': 'fade-up 0.5s cubic-bezier(0.22,1,0.36,1) both',
-        'scale-in': 'scale-in 0.4s cubic-bezier(0.22,1,0.36,1) both',
       },
     },
   },

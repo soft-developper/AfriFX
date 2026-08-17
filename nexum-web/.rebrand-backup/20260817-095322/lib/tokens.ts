@@ -22,14 +22,14 @@ export interface Tokens {
   muted:   string
 }
 
-// Must match the :root defaults in styles/globals.css (indigo+cyan palette)
+// Must match the :root defaults in styles/globals.css (warm palette)
 export const DEFAULT_TOKENS: Tokens = {
-  bg:      '#0B1020',
-  surface: '#141B33',
-  border:  '#26314F',
-  accent:  '#3DD6E0',
-  text:    '#E8ECF6',
-  muted:   '#8592B0',
+  bg:      '#12100B',
+  surface: '#1C1810',
+  border:  '#33291B',
+  accent:  '#D9A441',
+  text:    '#F2E9D8',
+  muted:   '#9C8A6E',
 }
 
 const VAR_MAP: Record<keyof Tokens, string> = {
