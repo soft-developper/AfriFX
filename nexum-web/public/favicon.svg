@@ -1,9 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
   <rect width="32" height="32" rx="8" fill="#0B1020"/>
-  <g transform="translate(4.5,3.2) scale(0.19)">
-    <defs><linearGradient id="fg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5FE3EC"/><stop offset="1" stop-color="#2E8CE0"/></linearGradient></defs>
-    <path d="M60 4 L112 34 L112 90 L60 120 L8 90 L8 34 Z" fill="none" stroke="url(#fg)" stroke-width="9" stroke-linejoin="round"/>
-    <g fill="none" stroke="#E8ECF6" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"><path d="M36 88 L52 40 L68 88"/><path d="M43 70 L61 70"/></g>
-    <g fill="none" stroke="url(#fg)" stroke-width="10" stroke-linecap="round"><path d="M74 52 L96 84"/><path d="M96 52 L74 84"/></g>
-  </g>
+  <defs>
+    <linearGradient id="fg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5FE3EC"/>
+      <stop offset="1" stop-color="#2E8CE0"/>
+    </linearGradient>
+  </defs>
+  <path d="M9 23 L9 9 L23 23 L23 9" fill="none" stroke="url(#fg)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

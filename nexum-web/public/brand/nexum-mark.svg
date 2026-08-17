@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <defs>
+    <linearGradient id="nx-mark-g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5FE3EC"/>
+      <stop offset="1" stop-color="#2E8CE0"/>
+    </linearGradient>
+  </defs>
+  <path d="M34 92 L34 30 L86 92 L86 30" fill="none" stroke="url(#nx-mark-g)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -10,7 +10,7 @@ import Link from 'next/link'
 export function AfriFXLogo({
   size = 'sm',
   href = '/',
-  showMark = true, // NEXUM: flow-N mark (indigo+cyan)
+  showMark = false, // NEXUM: hexagon mark dropped pending new design
 }: { size?: 'sm' | 'md' | 'lg'; href?: string; showMark?: boolean }) {
   const dims = {
     sm: { mark: 30, text: 'text-xl',  sub: 'text-[9px]' },
@@ -21,14 +21,20 @@ export function AfriFXLogo({
   const inner = (
     <span className="inline-flex items-center gap-2.5">
       {showMark && (
-        <svg width={dims.mark} height={dims.mark} viewBox="0 0 120 120" fill="none" className="shrink-0">
+        <svg width={dims.mark} height={dims.mark} viewBox="0 0 120 124" fill="none" className="shrink-0">
           <defs>
             <linearGradient id="nx-mark-g" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0" stopColor="#5FE3EC" />
               <stop offset="1" stopColor="#2E8CE0" />
             </linearGradient>
           </defs>
-          <path d="M34 92 L34 30 L86 92 L86 30" fill="none" stroke="url(#nx-mark-g)" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M60 4 L112 34 L112 90 L60 120 L8 90 L8 34 Z" fill="none" stroke="url(#nx-mark-g)" strokeWidth="7" strokeLinejoin="round" />
+          <g fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" className="text-app-text">
+            <path d="M36 88 L52 40 L68 88" /><path d="M43 70 L61 70" />
+          </g>
+          <g fill="none" stroke="url(#nx-mark-g)" strokeWidth="8" strokeLinecap="round">
+            <path d="M74 52 L96 84" /><path d="M96 52 L74 84" />
+          </g>
         </svg>
       )}
       <span className="flex flex-col leading-none">
