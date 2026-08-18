@@ -30,7 +30,7 @@
 import { useState, useCallback } from 'react'
 import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import {
-  executeContractCall, NeedsReauthError, NeedsChainError, UserCancelledError,
+  executeContractCall, NeedsReauthError, NeedsChainError,
 } from '@/hooks/useCircleTx'
 import {
   cctpContracts, irisBase, chainByKey, addressToBytes32, CCTP_ENV,
@@ -244,19 +244,6 @@ export function useBridge() {
       await api(`/bridge/${bridgeId}/completed`, { mintTx })
       setState(s => ({ ...s, step: 'done', mintTx, inFlight: false, note: null }))
     } catch (err: any) {
-      // User dismissed the wallet prompt before anything was submitted.
-      // This is a cancellation, not a failure: record it as such and show
-      // a neutral state instead of the red error path.
-      if (err instanceof UserCancelledError && !burnedYet) {
-        if (bridgeId) {
-          await api(`/bridge/${bridgeId}/cancelled`, {}).catch(() => {})
-        }
-        setState(s => ({
-          ...s, step: 'idle', error: null, inFlight: false, note: null,
-        }))
-        return
-      }
-
       let message = err?.message ?? 'Bridge failed'
 
       if (err instanceof NeedsReauthError) {

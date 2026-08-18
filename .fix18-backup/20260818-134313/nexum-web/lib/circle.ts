@@ -220,22 +220,6 @@ export function consumeReturnTo(): string | null {
  *
  * setAuthentication must be called first or execute silently does nothing.
  */
-/**
- * The user dismissed Circle's signing pop-up. Circle's SDK reports this as
- * error code 155701 (userCanceled). We surface it as a distinct error so
- * callers can record a clean 'cancelled' rather than a 'failed' — nothing
- * was ever submitted on-chain.
- */
-export class UserCancelledError extends Error {
-  constructor() {
-    super('You cancelled the request.')
-    this.name = 'UserCancelledError'
-  }
-}
-
-/** Circle W3S SDK error code for a user-dismissed signing prompt. */
-const CIRCLE_USER_CANCELED = 155701
-
 export async function executeChallenge(
   challengeId: string, userToken: string, encryptionKey: string,
 ): Promise<void> {
@@ -249,10 +233,8 @@ export async function executeChallenge(
 
   await new Promise<void>((resolve, reject) => {
     instance.execute(challengeId, (err: any) => {
-      if (err) {
-        if (Number(err?.code) === CIRCLE_USER_CANCELED) reject(new UserCancelledError())
-        else reject(new Error(err?.message ?? 'You cancelled the request'))
-      } else resolve()
+      if (err) reject(new Error(err?.message ?? 'You cancelled the request'))
+      else resolve()
     })
   })
 }
@@ -278,10 +260,7 @@ export async function executeSigningChallenge(
 
   return new Promise<string>((resolve, reject) => {
     instance.execute(challengeId, (err: any, result: any) => {
-      if (err) {
-        if (Number(err?.code) === CIRCLE_USER_CANCELED) { reject(new UserCancelledError()); return }
-        reject(new Error(err?.message ?? 'You cancelled the request')); return
-      }
+      if (err) { reject(new Error(err?.message ?? 'You cancelled the request')); return }
       const sig = result?.data?.signature ?? result?.signature
       if (!sig) { reject(new Error('No signature was returned by the wallet.')); return }
       resolve(String(sig))

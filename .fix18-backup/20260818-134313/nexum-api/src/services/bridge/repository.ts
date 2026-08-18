@@ -35,7 +35,7 @@ function parseRows(r: any): any[] {
 
 export type BridgeStatus =
   | 'created' | 'burning' | 'attesting' | 'minting'
-  | 'completed' | 'failed' | 'stranded' | 'cancelled'
+  | 'completed' | 'failed' | 'stranded'
 
 export interface BridgeRecord {
   id:             string
@@ -199,24 +199,6 @@ export async function markFailed(id: string, error: string) {
   return burned ? 'stranded' : 'failed'
 }
 
-/*
-  The user dismissed the wallet signing prompt before anything was
-  submitted. Nothing moved on-chain, so this is NOT a failure — it's a
-  clean 'cancelled'. Same burn-safety guard as markFailed: if a burn
-  somehow already landed, the funds are real and this becomes 'stranded',
-  never 'cancelled'. attempts is NOT incremented — the user didn't try and
-  fail, they chose not to proceed.
-*/
-export async function markCancelled(id: string) {
-  const rec = await getBridge(id)
-  const burned = !!rec?.burn_tx
-  await patch(id, {
-    status: burned ? 'stranded' : 'cancelled',
-    error:  null,
-  })
-  return burned ? 'stranded' : 'cancelled'
-}
-
 export async function bumpAttempt(id: string) {
   const rec = await getBridge(id)
   await patch(id, { attempts: (rec?.attempts ?? 0) + 1 })
@@ -236,7 +218,7 @@ export function nextAction(rec: BridgeRecord):
     case 'minting':   return 'mint'
     case 'stranded':  return rec.attestation ? 'mint' : 'await_attestation'
     case 'completed': return 'done'
-    default:          return 'none'   // 'failed' / 'cancelled' -- nothing owed
+    default:          return 'none'   // 'failed' -- nothing owed
   }
 }
 

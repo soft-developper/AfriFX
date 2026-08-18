@@ -8,7 +8,6 @@
 //   POST /bridge/:id/attested     record Circle's attestation
 //   POST /bridge/:id/completed    record the mint
 //   POST /bridge/:id/failed       record a failure (auto-classifies stranded)
-//   POST /bridge/:id/cancelled    user dismissed the wallet prompt; nothing moved
 //   GET  /bridge/meta/unresolved  ops view of anything stuck
 //
 // The user's wallet signs the transactions client-side (non-custodial), so
@@ -20,7 +19,7 @@ import { Router } from 'express'
 import {
   createBridge, getBridge, listBridgesByWallet, listUnresolved,
   markBurning, markBurned, markAttested, markCompleted, markFailed,
-  markCancelled, nextAction, isInFlight,
+  nextAction, isInFlight,
 } from '../services/bridge/repository'
 
 const router = Router()
@@ -110,17 +109,6 @@ router.post('/:id/completed', async (req, res) => {
   if (!mintTx) return res.status(400).json({ error: 'mintTx required' })
   try { await markCompleted(req.params.id, mintTx); res.json({ ok: true, status: 'completed' }) }
   catch (err: any) { res.status(500).json({ error: err.message }) }
-})
-
-// ── User cancelled at the wallet prompt (nothing submitted) ─
-// Distinct from /failed: the user chose not to sign, so this is recorded
-// as 'cancelled', not 'failed'. The repository still guards against a burn
-// having landed (would become 'stranded'), so this can't hide real funds.
-router.post('/:id/cancelled', async (req, res) => {
-  try {
-    const outcome = await markCancelled(req.params.id)
-    res.json({ ok: true, status: outcome })
-  } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
 
 router.post('/:id/failed', async (req, res) => {

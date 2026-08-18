@@ -16,8 +16,7 @@
  * persist on disk.
  */
 
-import { executeChallenge, executeSigningChallenge, UserCancelledError } from '@/lib/circle'
-export { UserCancelledError }
+import { executeChallenge, executeSigningChallenge } from '@/lib/circle'
 import { apiFetch } from '@/hooks/useAuth'
 
 const KEY = 'circle_signing'

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
-import { CheckCircle, Clock, AlertTriangle, ExternalLink, RefreshCw, Loader2, XCircle } from 'lucide-react'
+import { CheckCircle, Clock, AlertTriangle, ExternalLink, RefreshCw, Loader2 } from 'lucide-react'
 import { useCompleteBridge } from '@/hooks/useCompleteBridge'
 import { useAttestationStatus, finalityHint } from '@/hooks/useAttestationStatus'
 import { chainByKey } from '@/lib/cctp-chains'
@@ -77,7 +77,6 @@ export function BridgeHistory() {
   const chip = (status: string) => {
     switch (status) {
       case 'completed': return { icon: CheckCircle,   cls: 'text-emerald-400', label: 'Complete' }
-      case 'cancelled': return { icon: XCircle,       cls: 'text-app-muted',   label: 'Cancelled' }
       case 'failed':    return { icon: AlertTriangle, cls: 'text-red-400',     label: 'Not started' }
       default:          return { icon: Clock,         cls: 'text-amber-400',   label: 'In progress' }
     }

@@ -8,7 +8,7 @@ import { usePaged } from '@/hooks/usePaged'
 import { Pager } from '@/components/ui/pager'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
-type StatusFilter = 'all' | 'settled' | 'pending' | 'failed' | 'cancelled'
+type StatusFilter = 'all' | 'settled' | 'pending' | 'failed'
 
 export default function HistoryPage() {
   const { address }           = useAccount()
@@ -29,7 +29,6 @@ export default function HistoryPage() {
       const bridges = (Array.isArray(brData) ? brData : []).map((b) => {
         const raw = String(b.status ?? 'pending').toLowerCase()
         const status = raw === 'completed' ? 'settled'
-                     : raw === 'cancelled' ? 'cancelled'
                      : (raw === 'failed' || raw === 'error') ? 'failed'
                      : 'pending'
         return {
@@ -79,7 +78,7 @@ export default function HistoryPage() {
           <p className="text-sm text-app-muted">All your Arc transactions</p>
         </div>
         <div className="flex items-center gap-1 rounded-lg border border-app-border bg-app-surface p-1">
-          {(['all','settled','pending','failed','cancelled'] as StatusFilter[]).map(s => (
+          {(['all','settled','pending','failed'] as StatusFilter[]).map(s => (
             <button key={s} onClick={() => setStatus(s)}
               className={`rounded-md px-3 py-1 text-xs capitalize transition-colors
                 ${status === s
@@ -186,9 +185,8 @@ function TxRow({ tx, isCorridorStep = false }: { tx: any; isCorridorStep?: boole
       </div>
       <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
         <Badge variant={
-          status === 'settled'   ? 'success' :
-          status === 'failed'    ? 'danger'  :
-          status === 'cancelled' ? 'default'   : 'warning'
+          status === 'settled' ? 'success' :
+          status === 'failed'  ? 'danger'  : 'warning'
         }>
           {status}
         </Badge>
