@@ -37,10 +37,6 @@ export function WalletContent() {
   const totalUSD   = (data?.tokens ?? []).reduce((s, t) => s + t.usdValue, 0)
   const escrowUSD  = data?.escrow.locked ?? 0
   const grandTotal = totalUSD + escrowUSD
-  // All-chain USDC: sum across every supported chain (Arc included, since
-  // it is chainBalances' home entry). USDC is 1:1 USD, so this is also its
-  // USD value. This is the true cross-chain figure the header now leads with.
-  const allChainUsdc = chainBalances.reduce((sum, b) => sum + b.balance, 0)
 
   // Per-chain USDC palette. Chains beyond this list fall back to indigo, so a
   // newly added chain still gets a slice/legend colour without a code change.
@@ -72,7 +68,7 @@ export function WalletContent() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-app-text">Wallet</h1>
-          <p className="text-sm text-app-muted">Your USDC across all supported chains</p>
+          <p className="text-sm text-app-muted">Your balances on Arc Testnet</p>
         </div>
         <button onClick={() => refetch()}
           className="flex items-center gap-1.5 rounded-lg border border-app-border px-3 py-1.5 text-xs text-app-muted hover:text-app-text">
@@ -88,16 +84,14 @@ export function WalletContent() {
         <div className="lg:col-span-2 rounded-xl border border-app-border bg-app-surface p-6">
           <div className="mb-4 flex items-start justify-between">
             <div>
-              <p className="text-sm text-app-muted">Total USDC · All chains</p>
+              <p className="text-sm text-app-muted">Total portfolio value</p>
               <p className="mt-1 font-mono text-4xl font-bold text-app-text">
                 {isLoading
                   ? <span className="inline-block h-10 w-40 animate-pulse rounded bg-app-border" />
-                  : `$${formatAmount(allChainUsdc)}`
+                  : `$${formatAmount(grandTotal)}`
                 }
               </p>
-              <p className="mt-1 text-xs text-app-muted">
-                USDC across {chainBalances.length} chains · ${formatAmount(grandTotal)} total portfolio (incl. escrow)
-              </p>
+              <p className="mt-1 text-xs text-app-muted">USD equivalent on Arc Testnet</p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-app-accent/10">
               <Wallet className="h-6 w-6 text-app-accent-text" />

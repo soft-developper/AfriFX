@@ -2,7 +2,6 @@
 import { useAccount }        from 'wagmi'
 import Link                  from 'next/link'
 import { useUSDCBalance }    from '@/hooks/useUSDCBalance'
-import { useAllChainUsdcBalances } from '@/hooks/useAllChainUsdcBalances'
 import { useDashboardStats } from '@/hooks/useDashboardStats'
 import { useProfile }        from '@/hooks/useProfile'
 import { formatAmount }      from '@/lib/utils'
@@ -61,31 +60,18 @@ function DashboardContent() {
   const t                      = useTokens()
   const { address }            = useAccount()
   const { formatted: balance } = useUSDCBalance()
-  // All-chain USDC: sum of the wallet's USDC on every supported chain.
-  // chainBalances already includes Arc (its home chain), so this total
-  // is the full cross-chain figure, not Arc plus Arc.
-  const { balances: chainBalances, loading: chainsLoading } = useAllChainUsdcBalances()
-  const allChainUsdc = chainBalances.reduce((sum, b) => sum + b.balance, 0)
   const { data: profile }      = useProfile()
   const { data: stats, isLoading, refetch } =
     useDashboardStats() as { data: DashboardStats | undefined; isLoading: boolean; refetch: () => void }
 
   const statCards = [
     {
-      label: 'Total USDC · All chains',
-      value: chainsLoading ? '…' : `${formatAmount(allChainUsdc)}`,
-      sub:   `across ${chainBalances.length} supported chains`,
-      icon:  Wallet,
-      color: 'text-app-accent-text',
-      highlight: true,
-    },
-    {
-      label: 'USDC · Arc',
+      label: 'USDC balance',
       value: `${balance}`,
       sub:   'on Arc Testnet',
       icon:  Wallet,
       color: 'text-app-accent-text',
-      highlight: false,
+      highlight: true,
     },
     {
       label: 'Send volume',
@@ -153,7 +139,7 @@ function DashboardContent() {
       </div>
 
       {/* Stat cards */}
-      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map(({ label, value, sub, icon: Icon, color, highlight }) => (
           <div
             key={label}
