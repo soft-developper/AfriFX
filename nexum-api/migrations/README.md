@@ -39,7 +39,7 @@ Turso shell, which meant **a fresh database could not be built from this
 repository at all**. They were reconstructed from the `INSERT` statements and
 row normalizers in the route code.
 
-`0004`–`0013` are the former loose `*-schema.sql` files from `afrifx-api/`,
+`0004`–`0013` are the former loose `*-schema.sql` files from `nexum-api/`,
 moved here unchanged and given an order.
 
 ## Writing a migration
