@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import { ClientOnly } from '@/components/ui/client-only'
 import { UserDisplay } from '@/components/profile/UserDisplay'
 import { useP2P } from '@/hooks/useP2P'
-import { useFXRates } from '@/hooks/useFXRate'
 import { arcTestnet } from '@/lib/arc-chain'
 import { Plus, Clock, Zap, ShieldCheck, Loader2, ArrowRight, CheckCircle } from 'lucide-react'
 import type { P2POffer } from '@/types'
@@ -61,10 +60,6 @@ type AcceptState =
 function MarketplacePageInner() {
   const { address }                    = useAccount()
   const router                         = useRouter()
-  const { data: fxRates } = useFXRates()
-  // Look up a live rate (local per USDC) by currency, for float offers.
-  const liveRateFor = (ccy: string) =>
-    Number(fxRates?.find(r => r.pair === `${ccy}/USDC`)?.rate ?? 0)
   const publicClient                   = usePublicClient({ chainId: arcTestnet.id })
   const [offers,   setOffers]          = useState<P2POffer[]>([])
   const [loading,  setLoading]         = useState(true)
@@ -256,16 +251,6 @@ function MarketplacePageInner() {
           const timer  = (offer as any).maker_timer_seconds ?? 1800
           const type   = (offer as any).order_type ?? 'market'
           const isBusy = busyId === offer.id
-          // Float offers show the LIVE local amount while open; the stored
-          // value is only a creation snapshot until a buyer accepts.
-          const isFloatOpen = type === 'float' && offer.status === 'open'
-          const liveRate    = isFloatOpen ? liveRateFor(offer.local_currency) : 0
-          const shownLocal  = isFloatOpen && liveRate > 0
-            ? Number(offer.usdc_amount) * liveRate
-            : Number(offer.local_amount)
-          const shownRate   = isFloatOpen && liveRate > 0
-            ? liveRate
-            : (Number(offer.rate_offered) > 0 ? 1 / Number(offer.rate_offered) : 0)
 
           return (
             <div key={offer.id}
@@ -279,20 +264,12 @@ function MarketplacePageInner() {
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-medium text-app-text">
-                      {shownLocal.toLocaleString(undefined, { maximumFractionDigits: 2 })} {offer.local_currency}
+                      {Number(offer.local_amount).toLocaleString()} {offer.local_currency}
                       <span className="mx-1.5 text-app-muted">→</span>
                       {Number(offer.usdc_amount).toFixed(2)} USDC
                     </p>
                     {isOwn && <Badge variant="arc">Your offer</Badge>}
-                    <Badge variant={type === 'limit' ? 'warning' : 'arc'}>
-                      {type === 'float' ? 'live rate' : type}
-                    </Badge>
-                    {isFloatOpen && (
-                      <span className="inline-flex items-center gap-1 text-xs text-app-accent-text">
-                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-app-accent-text" />
-                        tracking
-                      </span>
-                    )}
+                    <Badge variant={type === 'limit' ? 'warning' : 'arc'}>{type}</Badge>
                   </div>
                   <div className="mt-1.5 flex flex-wrap items-center gap-3">
                     <ClientOnly fallback={<span className="text-xs text-app-muted">…</span>}>
@@ -300,7 +277,9 @@ function MarketplacePageInner() {
                     </ClientOnly>
                     <span className="text-xs text-app-muted">·</span>
                     <span className="text-xs text-app-muted">
-                      1 USDC = {shownRate > 0 ? shownRate.toFixed(2) : '-'} {offer.local_currency}
+                      1 USDC = {Number(offer.rate_offered) > 0
+                        ? (1 / Number(offer.rate_offered)).toFixed(2)
+                        : '-'} {offer.local_currency}
                     </span>
                     <span className="text-xs text-app-muted">·</span>
                     <span className="flex items-center gap-1 text-xs text-app-muted">

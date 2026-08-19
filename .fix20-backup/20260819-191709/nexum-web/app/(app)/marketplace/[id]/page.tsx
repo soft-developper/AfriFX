@@ -10,7 +10,6 @@ import { TimerBanner } from '@/components/p2p/TimerBanner'
 import { ChatWindow } from '@/components/chat/ChatWindow'
 import { OfferParties } from '@/components/p2p/OfferParties'
 import { useP2P } from '@/hooks/useP2P'
-import { useRate } from '@/hooks/useFXRate'
 import {
   ArrowLeft, CheckCircle, ExternalLink,
   Loader2, AlertCircle, ArrowRight, RefreshCw, Flag,
@@ -230,19 +229,9 @@ export default function OfferDetailPage() {
   const takerName = takerProfile?.display_name ?? takerProfile?.username ??
     (offer?.taker_address ? offer.taker_address.slice(0,8) + '…' : 'Buyer')
 
-  // Float offers track the live rate WHILE OPEN; once accepted the server has
-  // frozen local_amount, so we fall back to the stored value automatically.
-  const isFloat = (offer.order_type ?? 'market') === 'float'
-  const { rate: liveFx } = useRate(`${offer.local_currency}/USDC`)
-  const displayLocalAmount =
-    isFloat && offer.status === 'open' && liveFx?.rate
-      ? Number(offer.usdc_amount) * Number(liveFx.rate)
-      : Number(offer.local_amount)
-  const localAmountFormatted = displayLocalAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })
-
   const steps = [
     { n:1, done: offerStatus !== 'open',     label: `${takerName} accepted offer`,               desc: 'USDC locked in vault' },
-    { n:2, done: offerStatus !== 'open',     label: `${takerName} sends ${localAmountFormatted} ${offer.local_currency} to ${makerName}`, desc: 'Off-chain payment' },
+    { n:2, done: offerStatus !== 'open',     label: `${takerName} sends ${Number(offer.local_amount).toLocaleString()} ${offer.local_currency} to ${makerName}`, desc: 'Off-chain payment' },
     { n:3, done: !!offer.taker_confirmed,     label: `${takerName} confirmed: "I sent the money"`, desc: 'Buyer window' },
     { n:4, done: !!offer.maker_confirmed,     label: `${makerName} confirmed: "I received it"`,    desc: 'Seller window' },
     { n:5, done: offerStatus === 'released',  label: 'Platform releases USDC to buyer',     desc: 'Auto within 15s' },
@@ -282,6 +271,7 @@ export default function OfferDetailPage() {
     finally { setDisputing(false) }
   }
 
+  const localAmountFormatted = Number(offer.local_amount).toLocaleString()
   const nowTs = Math.floor(Date.now() / 1000)
 
   return (
@@ -298,14 +288,8 @@ export default function OfferDetailPage() {
             <h1 className="text-xl font-semibold text-app-text">Offer detail</h1>
             <Badge variant={statusBadge}>{offer.status}</Badge>
             <Badge variant={offer.order_type === 'limit' ? 'warning' : 'arc'}>
-              {isFloat ? 'live rate' : (offer.order_type ?? 'market')}
+              {offer.order_type ?? 'market'}
             </Badge>
-            {isFloat && offer.status === 'open' && (
-              <span className="inline-flex items-center gap-1 text-xs text-app-accent-text">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-app-accent-text" />
-                tracking market
-              </span>
-            )}
             {!!offer.dispute_raised && <Badge variant="danger">Disputed</Badge>}
             {isTaker && <Badge variant="success">You are the buyer</Badge>}
           </div>
@@ -376,10 +360,8 @@ export default function OfferDetailPage() {
           <div className="mt-2 flex justify-between text-xs">
             <span className="text-app-muted">Rate</span>
             <span className="font-mono text-app-text">
-              1 USDC = {(isFloat && offer.status === 'open' && liveFx?.rate
-                ? Number(liveFx.rate)
-                : (Number(offer.rate_offered) > 0 ? 1 / Number(offer.rate_offered) : 0)
-              ).toFixed(2)} {offer.local_currency}
+              1 USDC = {Number(offer.rate_offered) > 0
+                ? (1 / Number(offer.rate_offered)).toFixed(2) : '-'} {offer.local_currency}
             </span>
           </div>
 
@@ -435,7 +417,7 @@ export default function OfferDetailPage() {
           {isInvolved && offerStatus !== 'open' && offer.account_number && (
             <div className="mb-4 rounded-lg border border-app-accent/40 bg-app-accent/[0.06] p-4">
               <p className="mb-1 text-sm font-medium text-app-text">
-                {isTaker ? `Send ${localAmountFormatted} ${offer.local_currency} to:` : 'Your payout details (shown to buyer)'}
+                {isTaker ? `Send ${Number(offer.local_amount).toLocaleString()} ${offer.local_currency} to:` : 'Your payout details (shown to buyer)'}
               </p>
               <p className="mb-3 text-xs text-app-muted">
                 {offer.payment_method === 'mobile_money' ? 'Mobile money' : 'Bank transfer'}

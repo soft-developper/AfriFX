@@ -140,34 +140,8 @@ router.patch('/:id', async (req, res) => {
           WHERE id = ${req.params.id}`
     )
     // Fetch offer data for email notification
-    let _offerRows = await db.run(sql`SELECT * FROM p2p_offers WHERE id = ${req.params.id} LIMIT 1`)
-    let _offerData = Array.isArray((_offerRows as any).rows) ? (_offerRows as any).rows[0] : (_offerRows as any)[0]
-
-    // FLOAT OFFERS: freeze the live rate at the moment of acceptance.
-    // While open, a float offer's displayed local amount tracks the live rate
-    // (computed client-side). The instant a taker accepts we lock it in DB so
-    // both parties see ONE fixed number for the off-chain payment and any
-    // dispute. usdc_amount is unchanged (it's what's escrowed on-chain).
-    const _isAccept = status === 'accepted' && !!takerAddress
-    const _otype = _offerData?.order_type ?? _offerData?.[6]
-    if (_offerData && _isAccept && _otype === 'float') {
-      const _usdc = Number(_offerData.usdc_amount ?? _offerData[3] ?? 0)
-      const _ccy  = _offerData.local_currency ?? _offerData[4] ?? ''
-      const _pair = `${_ccy}/USDC`
-      const _rateRows = await db.run(sql`SELECT rate FROM fx_rates WHERE pair = ${_pair} LIMIT 1`)
-      const _rateRow = Array.isArray((_rateRows as any).rows) ? (_rateRows as any).rows[0] : (_rateRows as any)[0]
-      const _liveRate = Number(_rateRow?.rate ?? _rateRow?.[0] ?? 0)
-      if (_liveRate > 0 && _usdc > 0) {
-        const _frozenLocal = _usdc * _liveRate
-        const _rateOffered = _usdc / _frozenLocal   // USDC per local unit, matches creation convention
-        await db.run(sql`UPDATE p2p_offers
-            SET local_amount = ${_frozenLocal}, rate_offered = ${_rateOffered}, updated_at = ${now}
-            WHERE id = ${req.params.id}`)
-        // re-read so the email below carries the frozen amount
-        _offerRows = await db.run(sql`SELECT * FROM p2p_offers WHERE id = ${req.params.id} LIMIT 1`)
-        _offerData = Array.isArray((_offerRows as any).rows) ? (_offerRows as any).rows[0] : (_offerRows as any)[0]
-      }
-    }
+    const _offerRows = await db.run(sql`SELECT * FROM p2p_offers WHERE id = ${req.params.id} LIMIT 1`)
+    const _offerData = Array.isArray((_offerRows as any).rows) ? (_offerRows as any).rows[0] : (_offerRows as any)[0]
     // Fire the "trade accepted" email ONLY on the actual accept transition
     // i.e. when the taker accepts (status -> 'accepted' with a takerAddress).
     // Other PATCHes (takerConfirmed / makerConfirmed / release, etc.) hit this

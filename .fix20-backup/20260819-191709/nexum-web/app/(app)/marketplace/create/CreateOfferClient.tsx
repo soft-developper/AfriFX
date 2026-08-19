@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { useP2P, type OrderType } from '@/hooks/useP2P'
 import { useUSDCBalance } from '@/hooks/useUSDCBalance'
 import { useRate } from '@/hooks/useFXRate'
-import { ArrowLeft, Info, CheckCircle, TrendingUp, Sliders, AlertCircle, Activity } from 'lucide-react'
+import { ArrowLeft, Info, CheckCircle, TrendingUp, Sliders, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { CurrencyCombobox } from '@/components/marketplace/CurrencyCombobox'
 import { NeedsReauthError } from '@/hooks/useCircleTx'
@@ -26,9 +26,6 @@ export function CreateOfferClient() {
   const { formatted: balance }   = useUSDCBalance()
 
   const [orderType,     setOrderType]     = useState<OrderType>('market')
-  // OFF by default: a market order locks the rate at creation, as today.
-  // ON: the offer's local price tracks the live rate until a buyer accepts.
-  const [floatRate,     setFloatRate]     = useState(false)
   const [localCurrency, setLocalCurrency] = useState('NGN')
   const [usdcAmount,    setUsdcAmount]    = useState('')
   const [limitOffset,   setLimitOffset]   = useState(0)
@@ -47,11 +44,6 @@ export function CreateOfferClient() {
   const { createOffer, isLoading, error, note } = useP2P()
   const { rate: fxRate } = useRate(`${localCurrency}/USDC`)
   const marketRate = fxRate?.rate ?? 0
-
-  // The order type actually submitted: a market order with the live-rate
-  // toggle on becomes 'float'. Limit is unaffected (it sets a fixed rate).
-  const submitOrderType: OrderType =
-    orderType === 'market' && floatRate ? 'float' : orderType
 
   const effectiveRate = orderType === 'market'
     ? marketRate
@@ -82,7 +74,7 @@ export function CreateOfferClient() {
         usdcAmount:        parseFloat(usdcAmount),
         localCurrency,
         localAmount,
-        orderType:         submitOrderType,
+        orderType,
         limitRate:         orderType === 'limit' ? effectiveRate : undefined,
         makerTimerSeconds: timerSeconds,
         paymentMethod,
@@ -150,29 +142,6 @@ export function CreateOfferClient() {
               : 'Limit order lets you set a custom rate within ±5% of the market rate.'}
           </div>
         </div>
-
-        {/* Live-rate tracking toggle (market orders only) */}
-        {orderType === 'market' && (
-          <button type="button" onClick={() => setFloatRate(v => !v)}
-            className="flex w-full items-center justify-between rounded-xl border border-app-border bg-app-surface p-3 text-left transition-colors hover:border-app-accent/40">
-            <div className="flex items-start gap-2">
-              <Activity className="mt-0.5 h-4 w-4 shrink-0 text-app-accent-text" />
-              <div>
-                <p className="text-sm font-medium text-app-text">Track live rate</p>
-                <p className="mt-0.5 text-xs text-app-muted">
-                  {floatRate
-                    ? 'On: the price follows the live market rate until a buyer accepts, then locks.'
-                    : 'Off: the price locks at the current rate when you create the offer.'}
-                </p>
-              </div>
-            </div>
-            <span className={`ml-3 flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors
-              ${floatRate ? 'bg-app-accent' : 'bg-app-border'}`}>
-              <span className={`h-5 w-5 rounded-full bg-white transition-transform
-                ${floatRate ? 'translate-x-5' : 'translate-x-0'}`} />
-            </span>
-          </button>
-        )}
 
         {/* USDC + currency */}
         <div className="rounded-xl border border-app-border bg-app-surface p-4">
@@ -247,9 +216,7 @@ export function CreateOfferClient() {
                 </p>
               </div>
               <Badge variant={orderType === 'market' ? 'arc' : 'warning'}>
-                {orderType === 'market'
-                  ? (floatRate ? 'Live rate' : 'Market rate')
-                  : `${limitOffset > 0 ? '+' : ''}${limitOffset}%`}
+                {orderType === 'market' ? 'Market rate' : `${limitOffset > 0 ? '+' : ''}${limitOffset}%`}
               </Badge>
             </div>
           </div>

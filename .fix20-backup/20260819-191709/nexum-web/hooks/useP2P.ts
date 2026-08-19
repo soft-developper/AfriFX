@@ -36,11 +36,7 @@ import {
 const API  = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 const ZERO = '0x0000000000000000000000000000000000000000'
 
-// 'float' is a market order whose local-currency price TRACKS the live rate
-// while the offer is open, and freezes to the live rate the instant a buyer
-// accepts. On-chain it is identical to 'market' (orderN 0) — the floating is
-// purely off-chain (DB + UI), since the fiat leg is off-chain anyway.
-export type OrderType = 'market' | 'limit' | 'float'
+export type OrderType = 'market' | 'limit'
 
 export interface CreateOfferParams {
   usdcAmount:        number
@@ -123,7 +119,6 @@ export function useP2P() {
       // Floor at 1 so high-value fiat (rate < 1/USDC) can't round to 0,
       // which would revert the vault's require(localAmount > 0).
       const localRaw = BigInt(Math.max(1, Math.round(params.localAmount)))
-      // 'float' escrows exactly like 'market' on-chain (orderN 0); only 'limit' is 1.
       const orderN   = params.orderType === 'limit' ? 1 : 0
       const memoId   = buildMemoId(`p2p-create-${address}`)
       const ref      = buildReference()
