@@ -104,11 +104,6 @@ export default function OfferDetailPage() {
   const { data: makerProfile } = useProfileByAddress(offer?.maker_address ?? null)
   const { data: takerProfile } = useProfileByAddress(offer?.taker_address ?? null)
 
-  // Live FX for float offers. MUST run unconditionally (before any early
-  // return) to keep hook order stable — offer may be null on first render,
-  // so guard the pair string; useRate tolerates a non-matching pair.
-  const { rate: liveFx } = useRate(`${offer?.local_currency ?? ''}/USDC`)
-
   const load = useCallback(async () => {
     try {
       const url  = address
@@ -238,6 +233,7 @@ export default function OfferDetailPage() {
   // Float offers track the live rate WHILE OPEN; once accepted the server has
   // frozen local_amount, so we fall back to the stored value automatically.
   const isFloat = (offer.order_type ?? 'market') === 'float'
+  const { rate: liveFx } = useRate(`${offer.local_currency}/USDC`)
   const displayLocalAmount =
     isFloat && offer.status === 'open' && liveFx?.rate
       ? Number(offer.usdc_amount) * Number(liveFx.rate)
