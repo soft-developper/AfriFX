@@ -27,10 +27,8 @@ import broadcastsRouter           from './routes/broadcasts'
 import maintenanceRouter          from './routes/maintenance'
 import transfersRouter, { webhookRouter } from './routes/transfers'
 import bridgeRouter               from './routes/bridge'
-import rampRouter                 from './routes/ramp'
 import { startTransferReconciler } from './services/ramp/reconciler'
 import { startBridgeReconciler }   from './services/bridge/reconciler'
-import { bridgeXyzConfigured, BRIDGE_IS_SANDBOX } from './services/bridgexyz/client'
 import { maintenanceGuard }       from './lib/maintenance'
 import contentRouter              from './routes/content'
 import { startRatePoller }        from './jobs/ratePoller'
@@ -83,7 +81,6 @@ app.use('/admin/broadcasts', broadcastsRouter)
 app.use('/maintenance',    maintenanceRouter)
 app.use('/transfers',      transfersRouter)
 app.use('/bridge',         bridgeRouter)
-app.use('/ramp',           rampRouter)
 app.use('/webhooks',       webhookRouter)
 
 app.use(errorHandler)
@@ -104,14 +101,4 @@ startAdminAuditSummary()
   startDutyScheduler()
   startTransferReconciler()
   startBridgeReconciler()
-
-  // Bridge.xyz fiat ramp — log its config state at boot (mirrors the ramp
-  // provider pattern). Inert when BRIDGE_API_KEY is unset.
-  if (bridgeXyzConfigured()) {
-    console.log('[Ramp] \u2705 Bridge.xyz configured' +
-      (BRIDGE_IS_SANDBOX ? ' (sandbox)' : ' (PRODUCTION)') +
-      ' \u2014 GET /ramp/health to verify the key')
-  } else {
-    console.log('[Ramp] Bridge.xyz not configured (BRIDGE_API_KEY unset)')
-  }
 })
