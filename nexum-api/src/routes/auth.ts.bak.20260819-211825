@@ -246,23 +246,9 @@ router.post('/wallet/add-chains', requireAccount, async (req, res) => {
 // the user approves it on their own device. Nothing is signed here.
 // ══════════════════════════════════════════════════════════
 
-// Resolve which Circle wallet a plain USDC transfer should originate from.
-// No chainKey, or 'arc' -> the primary (Arc home) wallet, exactly as before.
-// Any other supported chainKey -> the user's wallet on that chain, so the
-// transfer moves the native USDC that already lives there (no burn/mint).
-async function resolveTransferWallet(
-  userToken: string, chainKey?: string,
-): Promise<string> {
-  const key = String(chainKey ?? '').toLowerCase()
-  if (!key || key === 'arc') return getPrimaryWalletId(userToken)
-  const blockchain = cctpBlockchainFor(key)
-  if (!blockchain) throw new CircleAuthError(`Unsupported chain: ${key}`, 400)
-  return getWalletIdForChain(userToken, blockchain)
-}
-
 // POST /auth/wallet/tx/transfer  { userToken, to, amount }
 router.post('/wallet/tx/transfer', requireAccount, async (req, res) => {
-  const { userToken, to, amount, chainKey } = req.body ?? {}
+  const { userToken, to, amount } = req.body ?? {}
   if (!userToken) return res.status(400).json({ error: 'userToken is required' })
   if (!/^0x[a-fA-F0-9]{40}$/.test(String(to ?? ''))) {
     return res.status(400).json({ error: 'Enter a valid destination address' })
@@ -273,11 +259,7 @@ router.post('/wallet/tx/transfer', requireAccount, async (req, res) => {
   }
 
   try {
-    // Multichain send: when a chainKey other than the home chain (arc) is
-    // given, resolve the user's Circle wallet ON THAT CHAIN and transfer the
-    // native USDC there directly. No burn/mint. Omitting chainKey (or 'arc')
-    // keeps the original Arc-only behaviour, so existing callers are unaffected.
-    const walletId = await resolveTransferWallet(String(userToken), chainKey)
+    const walletId = await getPrimaryWalletId(String(userToken))
     const tokenId  = await getTokenId(String(userToken), walletId)
     const { challengeId } = await createTransfer({
       userToken: String(userToken),
@@ -302,14 +284,11 @@ router.get('/wallet/tx/find', requireAccount, async (req, res) => {
   const userToken = String(req.query.userToken ?? '')
   const to        = String(req.query.to ?? '')
   const since     = Number(req.query.since ?? 0)
-  const chainKey  = String(req.query.chainKey ?? '')
   if (!userToken) return res.status(400).json({ error: 'userToken is required' })
   if (!to)        return res.status(400).json({ error: 'to is required' })
 
   try {
-    // Look on the SAME chain the transfer was sent on, or the poll would search
-    // the Arc wallet for a Base transfer and never find it.
-    const walletId = await resolveTransferWallet(userToken, chainKey)
+    const walletId = await getPrimaryWalletId(userToken)
     const tx = await findRecentTransfer({
       userToken, walletId, destinationAddress: to, since,
     })

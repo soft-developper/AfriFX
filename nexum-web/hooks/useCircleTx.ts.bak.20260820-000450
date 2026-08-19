@@ -76,7 +76,7 @@ export interface TransferResult {
  * prompt for re-authentication instead of showing a generic failure.
  */
 export async function sendUsdc(
-  params: { to: string; amount: string; chainKey?: string },
+  params: { to: string; amount: string },
   onStep?: (message: string) => void,
 ): Promise<TransferResult> {
   const session = getSigningSession()
@@ -94,7 +94,6 @@ export async function sendUsdc(
       userToken: session.userToken,
       to:        params.to,
       amount:    params.amount,
-      chainKey:  params.chainKey,
     }),
   })
   const data = await res.json().catch(() => ({}))
@@ -123,7 +122,6 @@ export async function sendUsdc(
       userToken: s.userToken,
       to:        params.to,
       since:     String(since),
-      ...(params.chainKey ? { chainKey: params.chainKey } : {}),
     })
     const r2 = await apiFetch(`/auth/wallet/tx/find?${qs}`)
 

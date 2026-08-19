@@ -1,33 +1,29 @@
 'use client'
 import { SectionGuard } from '@/components/layout/SectionGuard'
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useWaitForTransactionReceipt, usePublicClient } from 'wagmi'
 import { useAccountAddress as useAccount } from '@/hooks/useAccountAddress'
 import { sendUsdc, NeedsReauthError } from '@/hooks/useCircleTx'
 import { useWalletReady } from '@/hooks/useWalletReady'
 import { isAddress } from 'viem'
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { ChainCombobox } from '@/components/bridge/ChainCombobox'
-import { useAllChainUsdcBalances } from '@/hooks/useAllChainUsdcBalances'
-import { chainByKey, homeChain } from '@/lib/cctp-chains'
+import { useUSDCBalance } from '@/hooks/useUSDCBalance'
 import { AlertCircle, CheckCircle, Loader2, Zap } from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 
 /*
-  Send moves USDC out of the user's Circle wallet to any address, on any chain
-  their wallet holds USDC on.
+  Send is same-chain (Arc -> Arc) only.
 
-  This is NOT the old Gateway cross-chain path (burn + mint on a destination),
-  which never completed a mint on this testnet. Instead, now that real USDC
-  lives natively on each chain in the Circle wallet, sending is just a plain
-  same-chain token transfer on the chosen chain the simplest Circle op there
-  is, and one the wallet signs fine. If the user has no USDC on the chosen
-  chain, we don't fake a route: we point them at the CCTP bridge to move USDC
-  there first.
+  The cross-chain / unified-balance path was removed: it routed through Circle
+  Gateway, which never completed a mint on this testnet (the destination
+  GatewayMinter rejects the Arc-origin attestation signer), so shipping it as a
+  live option would have been dishonest. Same-chain transfer is the proven path
+  Send has always used, so that is all this page offers for now. The unified
+  balance still exists read-only on the Treasury page; when Gateway cross-chain
+  is genuinely working end to end, sending from it can come back here.
 */
 function SendPageInner() {
   const { address, isConnected }  = useAccount()
@@ -35,11 +31,9 @@ function SendPageInner() {
   const { ready: walletReady }    = useWalletReady()
   const [to,      setTo]          = useState('')
   const [amount,  setAmount]      = useState('')
-  const [chainKey, setChainKey]   = useState<string>(homeChain().key)
 
-  // USDC balance on every supported chain (same hook the wallet cards use).
-  const { balances } = useAllChainUsdcBalances()
-
+  // Wallet balance on Arc (what Send has always used).
+  const { formatted: balance } = useUSDCBalance()
   const [sending, setSending] = useState(false)
   const [txStep,  setTxStep]  = useState<string | null>(null)
   const [txError, setTxError] = useState<string | null>(null)
@@ -47,21 +41,9 @@ function SendPageInner() {
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>()
   const { isSuccess }       = useWaitForTransactionReceipt({ hash: txHash })
 
-  const selectedChain = chainByKey(chainKey)
-  const isHome        = !!selectedChain?.isHome
-
-  // Balance on the selected chain.
-  const chainBalance = useMemo(
-    () => balances.find(b => b.key === chainKey)?.balance ?? 0,
-    [balances, chainKey],
-  )
-  const balanceStr = chainBalance.toFixed(6)
-
-  const availableNum      = chainBalance
+  const availableNum      = parseFloat(balance) || 0
   const amountNum         = parseFloat(amount) || 0
   const insufficientFunds = amountNum > 0 && amountNum > availableNum
-  // No USDC at all on this chain offer the bridge instead of a dead end.
-  const noFundsOnChain    = amountNum > 0 && availableNum <= 0
   const validAddress      = isAddress(to)
   const validAmount       = amountNum > 0 && !insufficientFunds
   const valid             = validAddress && validAmount
@@ -77,11 +59,11 @@ function SendPageInner() {
     // is no connected wallet to sign with.
     setSending(true); setTxError(null); setTxNote(null)
     try {
-      const result = await sendUsdc({ to, amount, chainKey }, setTxStep)
+      const result = await sendUsdc({ to, amount }, setTxStep)
       if (result.txHash) {
         setTxHash(result.txHash as `0x${string}`)
         // Record this send so it appears in History (GET /transactions?wallet=).
-        // Same-asset USDC->USDC movement on the selected chain.
+        // Same-asset USDC→USDC movement on Arc.
         if (address) {
           const hash = result.txHash as `0x${string}`
           fetch(`${API}/transactions`, {
@@ -94,11 +76,8 @@ function SendPageInner() {
               arcTxHash: hash,
             }),
           }).catch(() => {})
-          // Confirm on-chain, then mark settled/failed. Only Arc has a wagmi
-          // public client wired here; on other chains we skip the receipt
-          // wait and let the send record stand (the transfer already returned
-          // a hash, so it is on-chain).
-          if (publicClient && isHome) {
+          // Confirm on-chain, then mark settled/failed.
+          if (publicClient) {
             publicClient.waitForTransactionReceipt({ hash }).then(r => {
               const ok = r.status === 'success'
               fetch(`${API}/transactions/${hash}`, {
@@ -111,6 +90,8 @@ function SendPageInner() {
         }
       } else {
         // Approved and broadcast, but Circle hasn't surfaced the hash yet.
+        // Say so plainly rather than ending in silence, which reads as a
+        // failure even though the money has almost certainly moved.
         setTxNote('Sent. It is confirming on-chain and will appear in your activity shortly.')
       }
       setTo(''); setAmount('')
@@ -123,30 +104,20 @@ function SendPageInner() {
     }
   }
 
-  const chainName = selectedChain?.name ?? chainKey
-
   return (
     <div>
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-app-text">Send</h1>
         <p className="text-sm text-app-muted">
-          Send USDC to any address, on any chain your wallet holds USDC.
+          Send USDC to any address on Arc. Instant, with near-zero fees.
         </p>
       </div>
 
       <div className="w-full max-w-md rounded-2xl border border-app-border bg-app-surface p-5">
-        {/* Destination chain */}
-        <div className="mb-4 space-y-2">
-          <label className="text-xs font-medium uppercase tracking-wider text-app-muted">
-            Network
-          </label>
-          <ChainCombobox value={chainKey} onChange={setChainKey} />
-        </div>
-
-        {/* Balance on the selected chain */}
+        {/* Balance */}
         <div className="mb-4 flex items-center justify-between text-xs">
-          <span className="text-app-muted">Balance on {chainName}</span>
-          <span className="font-mono text-app-text">{balanceStr} USDC</span>
+          <span className="text-app-muted">Wallet balance</span>
+          <span className="font-mono text-app-text">{balance} USDC</span>
         </div>
 
         {/* Recipient */}
@@ -183,24 +154,10 @@ function SendPageInner() {
             className={`font-mono text-lg ${insufficientFunds ? 'border-red-500/50' : ''}`}
           />
 
-          {/* No USDC on this chain: suggest bridging rather than a dead end. */}
-          {noFundsOnChain && (
-            <div className="flex items-start gap-1.5 rounded-lg bg-app-bg px-3 py-2 text-xs text-app-muted">
-              <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
-              <span>
-                You don&rsquo;t have USDC on {chainName} yet.{' '}
-                <Link href="/bridge" className="text-app-accent-text hover:underline">
-                  Bridge USDC to {chainName}
-                </Link>{' '}
-                first, then send.
-              </span>
-            </div>
-          )}
-
-          {insufficientFunds && !noFundsOnChain && (
+          {insufficientFunds && (
             <div className="flex items-center gap-1.5 rounded-lg bg-red-900/20 px-3 py-2 text-xs text-red-400">
               <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-              Insufficient balance, you only have {balanceStr} USDC on {chainName}
+              Insufficient balance, you only have {balance} USDC
             </div>
           )}
 
@@ -215,11 +172,11 @@ function SendPageInner() {
         <div className="mb-4 space-y-1.5 border-t border-app-border pt-3">
           <div className="flex justify-between text-xs">
             <span className="text-app-muted">Network fee</span>
-            <Badge variant="arc"><Zap className="h-2.5 w-2.5" /> network gas</Badge>
+            <Badge variant="arc"><Zap className="h-2.5 w-2.5" /> ~$0.001</Badge>
           </div>
           <div className="flex justify-between text-xs">
             <span className="text-app-muted">Route</span>
-            <span className="text-app-text">{chainName} · direct</span>
+            <span className="text-app-text">Arc Testnet · direct</span>
           </div>
         </div>
 
@@ -229,15 +186,14 @@ function SendPageInner() {
             ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</>
             : !walletReady && isConnected
             ? <><Loader2 className="h-4 w-4 animate-spin" /> Preparing wallet…</>
-            : noFundsOnChain
-            ? `No USDC on ${chainName}`
             : insufficientFunds
             ? 'Insufficient USDC balance'
-            : `Send USDC on ${chainName}`
+            : 'Send USDC'
           }
         </Button>
 
-        {/* Progress */}
+        {/* Progress: approving happens on the user's device, so tell them
+            what they're waiting for at each step. */}
         {txStep && (
           <p className="mt-2 flex items-center gap-1.5 text-[11px] text-app-muted">
             <Loader2 className="h-3 w-3 animate-spin" /> {txStep}…
@@ -278,3 +234,4 @@ export default function SendPage() {
     </SectionGuard>
   )
 }
+
