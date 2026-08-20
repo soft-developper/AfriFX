@@ -27,8 +27,10 @@ export type RampDirection = 'onramp' | 'offramp'
 
 export interface RampCorridor {
   direction:  RampDirection
-  /** Fiat currency, ISO-4217 lower-case (e.g. 'usd'). */
+  /** Fiat currency, ISO-4217 (e.g. 'USD'). */
   currency:   string
+  /** Payment rail label as Bridge names it. */
+  rail:       string
   /** Human label for the UI. */
   label:      string
   /** Minimum amount in the fiat currency, when Bridge enforces one. */
@@ -36,34 +38,21 @@ export interface RampCorridor {
 }
 
 /*
-  ⚠ RUNTIME SOURCE OF TRUTH IS THE ramp_corridors DB TABLE (migration 0019),
-  read via repository.listEnabledOnrampCorridors(). This array is only the
-  documented SEED for that table — keep the two in sync when adding a currency.
-
-  ONE ROW PER CURRENCY, not per fiat rail. Bridge's virtual-account `source`
-  object takes only { currency }; the depositor chooses the rail (ACH vs wire,
-  etc.) at their bank, and Bridge returns the supported rails in the virtual
-  account's source_deposit_instructions.payment_rails[]. So USD (ACH + wire) is
-  a single corridor/virtual account, not two.
-
-  Seeded from Bridge's supported on-ramp currencies (Aug 2026). NO African
-  currencies yet by design — Bridge doesn't support them; add NGN later as one
-  table row (and one line here), no other code change.
+  Seeded from Bridge's supported payment routes (Aug 2026). On-ramp rails only
+  for now (off-ramp arrives in Phase 5). NO African currencies exist here yet
+  by design — Bridge doesn't support them. This is deliberately a plain array;
+  Phase 2 promotes it to a DB table so ops can add corridors without a deploy.
 */
 export const BRIDGE_CORRIDORS: RampCorridor[] = [
-  { direction: 'onramp', currency: 'usd', label: 'US Dollar (ACH / Wire)', minAmount: 1 },
-  { direction: 'onramp', currency: 'eur', label: 'Euro (SEPA)',            minAmount: 1 },
-  { direction: 'onramp', currency: 'gbp', label: 'British Pound (FPS)',    minAmount: 1 },
-  { direction: 'onramp', currency: 'mxn', label: 'Mexican Peso (SPEI)',    minAmount: 50 },
-  { direction: 'onramp', currency: 'brl', label: 'Brazilian Real (Pix)' },
-  { direction: 'onramp', currency: 'cop', label: 'Colombian Peso (Bre-B)', minAmount: 100 },
+  { direction: 'onramp', currency: 'USD', rail: 'ach_push',        label: 'US ACH',            minAmount: 1 },
+  { direction: 'onramp', currency: 'USD', rail: 'wire',            label: 'US Wire',           minAmount: 1 },
+  { direction: 'onramp', currency: 'EUR', rail: 'sepa',            label: 'SEPA (EUR)',        minAmount: 1 },
+  { direction: 'onramp', currency: 'MXN', rail: 'spei',            label: 'SPEI (MXN)',        minAmount: 50 },
+  { direction: 'onramp', currency: 'BRL', rail: 'pix',            label: 'Pix (BRL)' },
+  { direction: 'onramp', currency: 'GBP', rail: 'faster_payments', label: 'Faster Payments (GBP)' },
+  { direction: 'onramp', currency: 'COP', rail: 'bre_b',          label: 'Bre-B (COP)',       minAmount: 100 },
 ]
 
-/**
- * Fallback view of the seed array (onramp only). Prefer the DB-backed
- * repository.listEnabledOnrampCorridors() at runtime; this stays as a
- * compile-time reference and a safety net for any code path without DB access.
- */
 export function onrampCorridors(): RampCorridor[] {
   return BRIDGE_CORRIDORS.filter(c => c.direction === 'onramp')
 }

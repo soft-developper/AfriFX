@@ -17,23 +17,14 @@
 import { Router } from 'express'
 import { requireAccount } from '../lib/accountAuth'
 import { bridgeXyzConfigured, bridgePing, BRIDGE_IS_SANDBOX } from '../services/bridgexyz/client'
-import {
-  BRIDGE_LANDING_CHAIN, BRIDGE_LANDING_CHAIN_BRIDGE_ID,
-} from '../services/bridgexyz/config'
+import { onrampCorridors, BRIDGE_LANDING_CHAIN } from '../services/bridgexyz/config'
 import {
   createKycLink, getKycLink, simulateKycApproval,
   type BridgeCustomerType,
 } from '../services/bridgexyz/customers'
 import {
-  createVirtualAccount, getVirtualAccountActivity,
-  type VirtualAccountActivity,
-} from '../services/bridgexyz/virtualAccounts'
-import {
   getRampCustomerByAccount, createRampCustomer, updateRampCustomerStatus,
-  listEnabledOnrampCorridors, getEnabledOnrampCorridor,
-  getVirtualAccountsByAccount, getVirtualAccountByAccountCurrency,
-  createVirtualAccountRow,
-  type RampCustomerRow, type RampVirtualAccountRow,
+  type RampCustomerRow,
 } from '../services/bridgexyz/repository'
 
 const router = Router()
@@ -63,19 +54,9 @@ router.get('/health', async (_req, res) => {
   }
 })
 
-// GET /ramp/corridors — enabled on-ramp corridors, from the DB table.
-router.get('/corridors', async (_req, res) => {
-  try {
-    const rows = await listEnabledOnrampCorridors()
-    const onramp = rows.map(r => ({
-      currency:  r.currency,
-      label:     r.label,
-      minAmount: r.min_amount ?? undefined,
-    }))
-    res.json({ onramp })
-  } catch (err: any) {
-    res.status(500).json({ error: err?.message ?? 'Failed to load corridors' })
-  }
+// GET /ramp/corridors
+router.get('/corridors', (_req, res) => {
+  res.json({ onramp: onrampCorridors() })
 })
 
 // ---- Phase 1: customer + hosted KYC ----------------------------------------
@@ -210,148 +191,6 @@ router.post('/customer/simulate-approve', requireAccount, async (req, res) => {
     res.json({ exists: true, ...toClient(updated as RampCustomerRow) })
   } catch (err: any) {
     res.status(err?.status ?? 502).json({ error: err?.message ?? 'Simulate approval failed' })
-  }
-})
-
-// ---- Phase 2: virtual accounts (on-ramp deposit rails) ---------------------
-
-// Shape a stored virtual-account row for the client: enough to render deposit
-// instructions and the status tracker, no internal ids the UI doesn't need.
-function vaToClient(row: RampVirtualAccountRow) {
-  return {
-    currency:            row.currency,
-    virtualAccountId:    row.virtual_account_id,
-    destinationAddress:  row.destination_address,
-    destinationChain:    row.destination_chain,
-    status:              row.status,
-    depositInstructions: row.deposit_instructions
-      ? safeParse(row.deposit_instructions) : null,
-    createdAt:           row.created_at,
-  }
-}
-
-// Guard: the account must be a verified Bridge customer before any rail.
-async function requireVerifiedCustomer(accountId: string): Promise<
-  { ok: true; customer: RampCustomerRow } | { ok: false; status: number; error: string }
-> {
-  const customer = await getRampCustomerByAccount(accountId)
-  if (!customer) {
-    return { ok: false, status: 409, error: 'Verify your identity before setting up deposits' }
-  }
-  if (!(customer.kyc_status === 'approved' && customer.tos_status === 'approved')) {
-    return { ok: false, status: 409, error: 'Your verification isn’t approved yet' }
-  }
-  if (!customer.customer_id) {
-    return { ok: false, status: 409, error: 'Your verification is still finalizing — try again shortly' }
-  }
-  return { ok: true, customer }
-}
-
-// GET /ramp/virtual-accounts — this account's deposit rails.
-router.get('/virtual-accounts', requireAccount, async (req, res) => {
-  const account = (req as any).account
-  try {
-    const rows = await getVirtualAccountsByAccount(account.id)
-    res.json({ virtualAccounts: rows.map(vaToClient) })
-  } catch (err: any) {
-    res.status(500).json({ error: err?.message ?? 'Failed to load deposit accounts' })
-  }
-})
-
-// POST /ramp/virtual-account — lazily create (or return) the deposit rail for a
-// currency. Body: { currency: string }. Mirrors the lazy ramp_customers create:
-// one virtual account per account+currency, idempotent per that pair.
-router.post('/virtual-account', requireAccount, async (req, res) => {
-  const account = (req as any).account
-  if (!bridgeXyzConfigured()) {
-    return res.status(503).json({ error: 'On/off-ramp is not available right now' })
-  }
-
-  const currency = String(req.body?.currency ?? '').trim().toLowerCase()
-  if (!currency) return res.status(400).json({ error: 'A currency is required' })
-
-  try {
-    // Currency must be an enabled corridor.
-    const corridor = await getEnabledOnrampCorridor(currency)
-    if (!corridor) {
-      return res.status(400).json({ error: 'That currency isn’t available for deposits' })
-    }
-
-    // Already provisioned for this currency? Return it (idempotent).
-    const existing = await getVirtualAccountByAccountCurrency(account.id, currency)
-    if (existing) return res.json({ virtualAccount: vaToClient(existing) })
-
-    // Must be a verified customer.
-    const gate = await requireVerifiedCustomer(account.id)
-    if (!gate.ok) return res.status(gate.status).json({ error: gate.error })
-
-    // Destination = the user's Circle wallet on Base. Circle user-controlled
-    // wallets share ONE address across EVM chains, so the account's stored
-    // wallet address is the Base address.
-    const destinationAddress = account.walletAddress
-    if (!destinationAddress) {
-      return res.status(409).json({
-        error: 'Your wallet isn’t ready yet — please try again in a moment',
-      })
-    }
-
-    const va = await createVirtualAccount({
-      customerId:         gate.customer.customer_id as string,
-      sourceCurrency:     currency,
-      destinationAddress,
-      destinationChain:   BRIDGE_LANDING_CHAIN_BRIDGE_ID,
-      developerFeePercent: '0',
-      idempotencyKey:     `ramp-va-${account.id}-${currency}`,
-    })
-
-    const row = await createVirtualAccountRow({
-      accountId:           account.id,
-      currency,
-      bridgeCustomerId:    gate.customer.customer_id as string,
-      virtualAccountId:    va.id,
-      destinationAddress,
-      destinationChain:    BRIDGE_LANDING_CHAIN,
-      depositInstructions: va.source_deposit_instructions
-        ? JSON.stringify(va.source_deposit_instructions) : null,
-      status:              va.status ?? 'activated',
-    })
-
-    res.json({ virtualAccount: vaToClient(row) })
-  } catch (err: any) {
-    res.status(err?.status ?? 502).json({ error: err?.message ?? 'Could not set up deposits' })
-  }
-})
-
-// GET /ramp/virtual-account/:currency/activity — deposit -> delivered events.
-// Polled by the status tracker. Returns Bridge's event list as-is (normalized
-// lightly) so the UI can drive the stepper.
-router.get('/virtual-account/:currency/activity', requireAccount, async (req, res) => {
-  const account = (req as any).account
-  const currency = String(req.params.currency ?? '').trim().toLowerCase()
-  try {
-    const row = await getVirtualAccountByAccountCurrency(account.id, currency)
-    if (!row) return res.status(404).json({ error: 'No deposit account for that currency' })
-
-    const gate = await requireVerifiedCustomer(account.id)
-    if (!gate.ok) return res.status(gate.status).json({ error: gate.error })
-
-    let activity: VirtualAccountActivity
-    try {
-      activity = await getVirtualAccountActivity(
-        gate.customer.customer_id as string, row.virtual_account_id)
-    } catch (err: any) {
-      return res.status(err?.status ?? 502).json({
-        error: err?.message ?? 'Could not load deposit activity',
-      })
-    }
-
-    res.json({
-      currency,
-      count:  activity?.count ?? (activity?.data?.length ?? 0),
-      events: Array.isArray(activity?.data) ? activity.data : [],
-    })
-  } catch (err: any) {
-    res.status(500).json({ error: err?.message ?? 'Could not load deposit activity' })
   }
 })
 

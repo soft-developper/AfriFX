@@ -1,0 +1,5 @@
+NEW|migrations/0019_ramp_corridors_and_virtual_accounts.sql
+NEW|src/services/bridgexyz/virtualAccounts.ts
+EDIT|src/services/bridgexyz/repository.ts
+EDIT|src/services/bridgexyz/config.ts
+EDIT|src/routes/ramp.ts
