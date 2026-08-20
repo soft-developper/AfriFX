@@ -264,7 +264,7 @@ type Stage = 'pick' | 'confirm' | 'details'
 
 function OnrampFlow() {
   const {
-    corridors, corridorsLoading, findVirtualAccount, endorsementFor,
+    corridors, corridorsLoading, findVirtualAccount,
     creating, error, createVirtualAccount, loadVirtualAccounts,
   } = useOnramp()
 
@@ -273,8 +273,6 @@ function OnrampFlow() {
   const [account, setAccount]   = useState<RampVirtualAccount | null>(null)
 
   const pick = (currency: string) => {
-    // Only enabled (approved) currencies are selectable; guard anyway.
-    if (endorsementFor(currency) !== 'approved') return
     setSelected(currency)
     // If a rail already exists for this currency, jump straight to details.
     const existing = findVirtualAccount(currency)
@@ -360,44 +358,22 @@ function OnrampFlow() {
           {corridors.map((c: RampCorridor) => {
             const m = meta(c.currency)
             const has = !!findVirtualAccount(c.currency)
-            const endo = endorsementFor(c.currency)
-            const enabled = endo === 'approved'
             return (
-              <button key={c.currency}
-                onClick={() => pick(c.currency)}
-                disabled={!enabled}
-                aria-disabled={!enabled}
-                className={`group relative flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent/50 ${
-                  enabled
-                    ? 'border-app-border bg-app-surface hover:border-app-accent/60 hover:bg-app-bg cursor-pointer'
-                    : 'border-app-border/60 bg-app-surface/50 cursor-not-allowed'}`}>
-                <span className={`text-2xl leading-none ${enabled ? '' : 'opacity-40 grayscale'}`} aria-hidden>{m.flag}</span>
-                <span className={`text-sm font-medium ${enabled ? 'text-app-text' : 'text-app-muted'}`}>{c.currency.toUpperCase()}</span>
+              <button key={c.currency} onClick={() => pick(c.currency)}
+                className="group relative flex flex-col items-start gap-2 rounded-xl border border-app-border bg-app-surface p-4 text-left transition-all hover:border-app-accent/60 hover:bg-app-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent/50">
+                <span className="text-2xl leading-none" aria-hidden>{m.flag}</span>
+                <span className="text-sm font-medium text-app-text">{c.currency.toUpperCase()}</span>
                 <span className="text-[11px] leading-tight text-app-muted">{m.name}</span>
-                {enabled && has && (
+                {has && (
                   <span className="absolute right-2 top-2 flex items-center gap-0.5 rounded-full bg-emerald-900/40 px-1.5 py-0.5 text-[9px] font-medium text-emerald-400">
                     <Check className="h-2.5 w-2.5" /> Ready
                   </span>
                 )}
-                {enabled && !has && (
-                  <ArrowRight className="absolute bottom-3 right-3 h-4 w-4 text-app-muted opacity-0 transition-opacity group-hover:opacity-100" />
-                )}
-                {!enabled && (
-                  <span className="absolute right-2 top-2 rounded-full bg-app-border px-1.5 py-0.5 text-[9px] font-medium text-app-muted">
-                    {endo === 'pending' ? 'In review' : 'Soon'}
-                  </span>
-                )}
+                <ArrowRight className="absolute bottom-3 right-3 h-4 w-4 text-app-muted opacity-0 transition-opacity group-hover:opacity-100" />
               </button>
             )
           })}
         </div>
-      )}
-
-      {!corridorsLoading && corridors.some(c => endorsementFor(c.currency) !== 'approved') && (
-        <p className="mt-3 flex items-start gap-1.5 text-[11px] text-app-muted">
-          <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" />
-          Greyed-out currencies need extra approval from our payments partner before you can deposit them. We&rsquo;re working on it.
-        </p>
       )}
     </div>
   )
@@ -555,18 +531,13 @@ function CopyRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-// Ordered happy-path lifecycle. Bridge event types map onto these stages.
-// Edge states (in_review / refund* / microdeposit) are handled separately
-// below — they are NOT steps, they change the whole status of the deposit.
+// Ordered lifecycle for the tracker. Bridge event types map onto these stages.
 const TRACKER_STEPS = [
   { key: 'awaiting',  label: 'Waiting for your deposit', match: [] as string[] },
-  { key: 'received',  label: 'Funds received',           match: ['funds_received'] },
+  { key: 'received',  label: 'Funds received',           match: ['funds_received', 'funds_scheduled'] },
   { key: 'submitted', label: 'Converting to USDC',       match: ['payment_submitted'] },
   { key: 'delivered', label: 'USDC delivered',           match: ['payment_processed'] },
 ]
-
-// Event types that describe the ACCOUNT, not a deposit's progress — ignored.
-const LIFECYCLE_TYPES = ['account_update', 'deactivation', 'activation']
 
 function stageIndexFor(events: RampActivityEvent[]): number {
   let idx = 0
@@ -576,58 +547,6 @@ function stageIndexFor(events: RampActivityEvent[]): number {
     }
   }
   return idx
-}
-
-// The deposit's overall disposition, derived from the events present. A refund
-// (in any form) or an in_review hold overrides the happy stepper, because the
-// funds won't simply proceed to delivery.
-type Disposition =
-  | { kind: 'normal' }
-  | { kind: 'in_review' }
-  | { kind: 'returned'; failed: boolean; reason?: string }
-  | { kind: 'microdeposit' }
-
-function dispositionFor(events: RampActivityEvent[]): Disposition {
-  const has = (t: string) => events.some(e => e.type === t)
-  // A completed delivery always wins — even if an earlier review cleared.
-  if (has('payment_processed')) return { kind: 'normal' }
-  if (has('refund') || has('refund_in_flight') || has('refund_failed')) {
-    const failed = has('refund_failed')
-    const refundEv = [...events].reverse().find(e =>
-      e.type === 'refund' || e.type === 'refund_in_flight' || e.type === 'refund_failed')
-    const reason = (refundEv as any)?.refund?.reason ?? (refundEv as any)?.reason
-    return { kind: 'returned', failed, reason: typeof reason === 'string' ? reason : undefined }
-  }
-  if (has('in_review')) return { kind: 'in_review' }
-  // Only microdeposits and nothing else → verification, not a real deposit.
-  const meaningful = events.filter(e => !LIFECYCLE_TYPES.includes(e.type))
-  if (meaningful.length > 0 && meaningful.every(e => e.type === 'microdeposit')) {
-    return { kind: 'microdeposit' }
-  }
-  return { kind: 'normal' }
-}
-
-function StatusBanner({ tone, title, body }: {
-  tone: 'review' | 'returned' | 'failed' | 'info'
-  title: string
-  body: string
-}) {
-  const styles: Record<string, string> = {
-    review:   'border-amber-500/40 bg-amber-900/15 text-amber-300',
-    returned: 'border-orange-500/40 bg-orange-900/15 text-orange-300',
-    failed:   'border-red-500/40 bg-red-900/15 text-red-300',
-    info:     'border-app-border bg-app-bg text-app-muted',
-  }
-  const Icon = tone === 'failed' ? AlertCircle : tone === 'review' ? Clock : ArrowDownUp
-  return (
-    <div className={`flex items-start gap-2.5 rounded-xl border px-3 py-3 text-sm ${styles[tone]}`}>
-      <Icon className="mt-0.5 h-4 w-4 shrink-0" />
-      <div>
-        <p className="font-medium">{title}</p>
-        <p className="mt-0.5 text-[13px] opacity-90">{body}</p>
-      </div>
-    </div>
-  )
 }
 
 function DepositTracker({ currency }: { currency: string }) {
@@ -660,7 +579,7 @@ function DepositTracker({ currency }: { currency: string }) {
 
   const idx = stageIndexFor(events)
   const delivered = idx >= TRACKER_STEPS.length - 1
-  const disposition = dispositionFor(events)
+  // The most recent processed event, for the receipt link.
   const processed = [...events].reverse().find(e => e.type === 'payment_processed')
 
   return (
@@ -678,65 +597,42 @@ function DepositTracker({ currency }: { currency: string }) {
 
       {loading ? (
         <div className="h-28 animate-pulse rounded-lg bg-app-bg" />
-      ) : disposition.kind === 'returned' ? (
-        <StatusBanner
-          tone={disposition.failed ? 'failed' : 'returned'}
-          title={disposition.failed ? 'Return failed' : 'Deposit returned to sender'}
-          body={disposition.failed
-            ? `We couldn’t complete the return of this deposit. Please contact support so we can help.${disposition.reason ? ` Reason: ${disposition.reason}.` : ''}`
-            : `This deposit is being returned to the bank account it came from${disposition.reason ? ` (${disposition.reason})` : ''}. No USDC will be delivered for it.`}
-        />
-      ) : disposition.kind === 'microdeposit' ? (
-        <StatusBanner
-          tone="info"
-          title="Verification deposit received"
-          body="This was a small verification deposit (under $1), not a full deposit — it won’t be converted to USDC on its own. Send your full amount to complete an on-ramp."
-        />
       ) : (
-        <>
-          {disposition.kind === 'in_review' && (
-            <StatusBanner
-              tone="review"
-              title="Deposit under review"
-              body="Your deposit arrived and is going through a routine compliance check. This usually clears on its own — no action needed. We’ll update the status here."
-            />
-          )}
-          <ol className="relative space-y-4">
-            {TRACKER_STEPS.map((step, i) => {
-              const done    = i < idx || (delivered && i <= idx)
-              const current = i === idx && !delivered && disposition.kind === 'normal'
-              return (
-                <li key={step.key} className="flex items-start gap-3">
-                  <span className="relative flex flex-col items-center">
-                    <span className={`flex h-6 w-6 items-center justify-center rounded-full border text-[11px] ${
-                      done
-                        ? 'border-emerald-500 bg-emerald-500 text-white'
-                        : current
-                          ? 'border-app-accent bg-app-accent/15 text-app-accent-text'
-                          : 'border-app-border text-app-muted'}`}>
-                      {done ? <Check className="h-3.5 w-3.5" />
-                            : current ? <Loader2 className="h-3 w-3 animate-spin" />
-                            : i + 1}
-                    </span>
-                    {i < TRACKER_STEPS.length - 1 && (
-                      <span className={`mt-1 h-6 w-px ${i < idx ? 'bg-emerald-500/60' : 'bg-app-border'}`} />
-                    )}
+        <ol className="relative space-y-4">
+          {TRACKER_STEPS.map((step, i) => {
+            const done    = i < idx || delivered && i <= idx
+            const current = i === idx && !delivered
+            return (
+              <li key={step.key} className="flex items-start gap-3">
+                <span className="relative flex flex-col items-center">
+                  <span className={`flex h-6 w-6 items-center justify-center rounded-full border text-[11px] ${
+                    done
+                      ? 'border-emerald-500 bg-emerald-500 text-white'
+                      : current
+                        ? 'border-app-accent bg-app-accent/15 text-app-accent-text'
+                        : 'border-app-border text-app-muted'}`}>
+                    {done ? <Check className="h-3.5 w-3.5" />
+                          : current ? <Loader2 className="h-3 w-3 animate-spin" />
+                          : i + 1}
                   </span>
-                  <div className="pt-0.5">
-                    <p className={`text-sm ${done || current ? 'text-app-text' : 'text-app-muted'}`}>
-                      {step.label}
+                  {i < TRACKER_STEPS.length - 1 && (
+                    <span className={`mt-1 h-6 w-px ${i < idx ? 'bg-emerald-500/60' : 'bg-app-border'}`} />
+                  )}
+                </span>
+                <div className="pt-0.5">
+                  <p className={`text-sm ${done || current ? 'text-app-text' : 'text-app-muted'}`}>
+                    {step.label}
+                  </p>
+                  {current && i === 0 && (
+                    <p className="text-[11px] text-app-muted">
+                      Send {currency.toUpperCase()} using the details above — this updates on its own.
                     </p>
-                    {current && i === 0 && (
-                      <p className="text-[11px] text-app-muted">
-                        Send {currency.toUpperCase()} using the details above — this updates on its own.
-                      </p>
-                    )}
-                  </div>
-                </li>
-              )
-            })}
-          </ol>
-        </>
+                  )}
+                </div>
+              </li>
+            )
+          })}
+        </ol>
       )}
 
       {delivered && processed?.receipt?.url && (

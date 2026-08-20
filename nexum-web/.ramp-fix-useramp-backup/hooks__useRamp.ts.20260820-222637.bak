@@ -168,7 +168,6 @@ export function useOnramp() {
   const [corridors, setCorridors]           = useState<RampCorridor[]>([])
   const [corridorsLoading, setCorridorsLoading] = useState(true)
   const [virtualAccounts, setVirtualAccounts] = useState<RampVirtualAccount[]>([])
-  const [endorsements, setEndorsements]     = useState<Record<string, { status: string; approved: boolean }>>({})
   const [creating, setCreating]             = useState(false)
   const [error, setError]                   = useState<string | null>(null)
 
@@ -182,16 +181,6 @@ export function useOnramp() {
     finally { setCorridorsLoading(false) }
   }, [])
 
-  const loadEndorsements = useCallback(async () => {
-    try {
-      const res = await apiFetch('/ramp/endorsements')
-      const data = await res.json().catch(() => ({}))
-      if (res.ok && data.endorsements && typeof data.endorsements === 'object') {
-        setEndorsements(data.endorsements)
-      }
-    } catch { /* non-fatal; grid falls back to "checking" */ }
-  }, [])
-
   const loadVirtualAccounts = useCallback(async () => {
     try {
       const res = await apiFetch('/ramp/virtual-accounts')
@@ -202,9 +191,7 @@ export function useOnramp() {
     } catch { /* non-fatal */ }
   }, [])
 
-  useEffect(() => {
-    loadCorridors(); loadVirtualAccounts(); loadEndorsements()
-  }, [loadCorridors, loadVirtualAccounts, loadEndorsements])
+  useEffect(() => { loadCorridors(); loadVirtualAccounts() }, [loadCorridors, loadVirtualAccounts])
 
   // Create (or fetch existing) the deposit account for a currency. Returns the
   // virtual account, or null on error (error state is set).
@@ -248,24 +235,11 @@ export function useOnramp() {
     [virtualAccounts],
   )
 
-  // Endorsement status for a currency: 'approved' | 'pending' | 'unavailable'.
-  // 'pending' = the customer has the endorsement record but it isn't approved
-  // yet; 'unavailable' = no endorsement record at all for that currency.
-  const endorsementFor = useCallback(
-    (currency: string): 'approved' | 'pending' | 'unavailable' => {
-      const e = endorsements[currency]
-      if (!e) return 'unavailable'
-      return e.approved ? 'approved' : 'pending'
-    },
-    [endorsements],
-  )
-
   return {
     corridors, corridorsLoading,
     virtualAccounts, findVirtualAccount,
-    endorsements, endorsementFor,
     creating, error,
-    loadCorridors, loadVirtualAccounts, loadEndorsements,
+    loadCorridors, loadVirtualAccounts,
     createVirtualAccount, getActivity,
   }
 }
