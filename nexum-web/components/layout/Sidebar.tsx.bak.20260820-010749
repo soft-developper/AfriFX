@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  ArrowLeftRight, ArrowDownUp, Send, History, LayoutDashboard,
+  ArrowLeftRight, Send, History, LayoutDashboard,
   TrendingUp, Globe, Store, ClipboardList, User,
   Wallet, Building2, Shield, FileText, BarChart3,
   CreditCard,
@@ -15,7 +15,6 @@ const nav = [
     { href: '/convert',  icon: ArrowLeftRight, label: 'Trade'    },
     { href: '/bridge',   icon: Globe,          label: 'Bridge'   },
     { href: '/send',     icon: Send,           label: 'Send'     },
-    { href: '/ramp',     icon: ArrowDownUp,    label: 'On/Off-ramp' },
   ]},
   { label: 'P2P Market', items: [
     { href: '/marketplace',        icon: Store,         label: 'Marketplace'  },
