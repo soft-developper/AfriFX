@@ -28,6 +28,58 @@ export interface RampCustomer {
   verified?:    boolean
 }
 
+// ── Phase 2: corridors + virtual accounts ──────────────────────────────────
+
+export interface RampCorridor {
+  currency:  string           // lower-case ISO ('usd')
+  label:     string
+  minAmount?: number
+}
+
+// Bridge's source_deposit_instructions: field set varies by currency, so this
+// is intentionally open. The UI renders whichever fields are present.
+export interface DepositInstructions {
+  currency?:               string
+  payment_rail?:           string
+  payment_rails?:          string[]
+  bank_name?:              string
+  bank_address?:           string
+  bank_routing_number?:    string
+  bank_account_number?:    string
+  bank_beneficiary_name?:  string
+  bank_beneficiary_address?: string
+  iban?:                   string
+  bic?:                    string
+  account_holder_name?:    string
+  clabe?:                  string
+  br_code?:                string
+  account_number?:         string
+  sort_code?:              string
+  [key: string]: unknown
+}
+
+export interface RampVirtualAccount {
+  currency:            string
+  virtualAccountId:    string
+  destinationAddress:  string
+  destinationChain:    string
+  status:              string
+  depositInstructions: DepositInstructions | null
+  createdAt:           number
+}
+
+export interface RampActivityEvent {
+  id:                  string
+  type:                string
+  amount?:             string
+  currency?:           string
+  created_at?:         string
+  deposit_id?:         string
+  destination_tx_hash?: string
+  receipt?: { url?: string; final_amount?: string; [k: string]: unknown }
+  [key: string]: unknown
+}
+
 /*
   Bridge.xyz onboarding state for the signed-in account. KYC is hosted (the
   user completes tos_link + kyc_link in a new tab), so this hook's job is to
@@ -105,4 +157,89 @@ export function useRamp() {
   const verified = !!customer?.verified
 
   return { customer, loading, busy, error, verified, load, startVerification, refresh, simulateApprove }
+}
+
+/*
+  Phase 2 on-ramp hook: corridors, virtual-account creation, and deposit
+  activity. Kept separate from useRamp() so the KYC-gate surface is untouched.
+  All calls go through apiFetch, which attaches the session automatically.
+*/
+export function useOnramp() {
+  const [corridors, setCorridors]           = useState<RampCorridor[]>([])
+  const [corridorsLoading, setCorridorsLoading] = useState(true)
+  const [virtualAccounts, setVirtualAccounts] = useState<RampVirtualAccount[]>([])
+  const [creating, setCreating]             = useState(false)
+  const [error, setError]                   = useState<string | null>(null)
+
+  const loadCorridors = useCallback(async () => {
+    setCorridorsLoading(true)
+    try {
+      const res = await apiFetch('/ramp/corridors')
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && Array.isArray(data.onramp)) setCorridors(data.onramp)
+    } catch { /* leave empty; the page shows an empty state */ }
+    finally { setCorridorsLoading(false) }
+  }, [])
+
+  const loadVirtualAccounts = useCallback(async () => {
+    try {
+      const res = await apiFetch('/ramp/virtual-accounts')
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && Array.isArray(data.virtualAccounts)) {
+        setVirtualAccounts(data.virtualAccounts)
+      }
+    } catch { /* non-fatal */ }
+  }, [])
+
+  useEffect(() => { loadCorridors(); loadVirtualAccounts() }, [loadCorridors, loadVirtualAccounts])
+
+  // Create (or fetch existing) the deposit account for a currency. Returns the
+  // virtual account, or null on error (error state is set).
+  const createVirtualAccount = useCallback(async (currency: string) => {
+    setCreating(true); setError(null)
+    try {
+      const res = await apiFetch('/ramp/virtual-account', {
+        method: 'POST',
+        body: JSON.stringify({ currency }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error ?? 'Could not set up deposits')
+      const va = data.virtualAccount as RampVirtualAccount
+      setVirtualAccounts(prev => {
+        const rest = prev.filter(v => v.currency !== va.currency)
+        return [...rest, va]
+      })
+      return va
+    } catch (err: any) {
+      setError(err?.message ?? 'Could not set up deposits')
+      return null
+    } finally {
+      setCreating(false)
+    }
+  }, [])
+
+  const getActivity = useCallback(async (currency: string) => {
+    try {
+      const res = await apiFetch(`/ramp/virtual-account/${currency}/activity`)
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) return null
+      return {
+        count:  Number(data.count ?? 0),
+        events: Array.isArray(data.events) ? (data.events as RampActivityEvent[]) : [],
+      }
+    } catch { return null }
+  }, [])
+
+  const findVirtualAccount = useCallback(
+    (currency: string) => virtualAccounts.find(v => v.currency === currency) ?? null,
+    [virtualAccounts],
+  )
+
+  return {
+    corridors, corridorsLoading,
+    virtualAccounts, findVirtualAccount,
+    creating, error,
+    loadCorridors, loadVirtualAccounts,
+    createVirtualAccount, getActivity,
+  }
 }
