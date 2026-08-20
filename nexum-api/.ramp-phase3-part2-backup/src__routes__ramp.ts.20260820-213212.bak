@@ -22,7 +22,6 @@ import {
 } from '../services/bridgexyz/config'
 import {
   createKycLink, getKycLink, simulateKycApproval,
-  getCustomerEndorsements, ENDORSEMENT_CURRENCY,
   type BridgeCustomerType,
 } from '../services/bridgexyz/customers'
 import {
@@ -34,7 +33,6 @@ import {
   listEnabledOnrampCorridors, getEnabledOnrampCorridor,
   getVirtualAccountsByAccount, getVirtualAccountByAccountCurrency,
   createVirtualAccountRow,
-  getDepositEventsByVirtualAccount, upsertDepositEvent,
   type RampCustomerRow, type RampVirtualAccountRow,
 } from '../services/bridgexyz/repository'
 
@@ -77,38 +75,6 @@ router.get('/corridors', async (_req, res) => {
     res.json({ onramp })
   } catch (err: any) {
     res.status(500).json({ error: err?.message ?? 'Failed to load corridors' })
-  }
-})
-
-// GET /ramp/endorsements — which currencies this account is approved to deposit.
-// Bridge gates each currency behind a per-customer endorsement (base=USD,
-// sepa=EUR, spei=MXN, pix=BRL, faster_payments=GBP, cop=COP). We map the
-// customer's endorsements onto currencies so the UI can enable only the ready
-// ones and explain the rest. Returns { endorsements: { [currency]: {status, approved} } }.
-router.get('/endorsements', requireAccount, async (req, res) => {
-  const account = (req as any).account
-  try {
-    const customer = await getRampCustomerByAccount(account.id)
-    if (!customer?.customer_id) {
-      return res.json({ endorsements: {} })
-    }
-    let list
-    try {
-      list = await getCustomerEndorsements(customer.customer_id)
-    } catch (err: any) {
-      return res.status(err?.status ?? 502).json({
-        error: err?.message ?? 'Could not load endorsements',
-      })
-    }
-    const endorsements: Record<string, { status: string; approved: boolean }> = {}
-    for (const e of list) {
-      const currency = ENDORSEMENT_CURRENCY[e.name]
-      if (!currency) continue
-      endorsements[currency] = { status: e.status, approved: e.status === 'approved' }
-    }
-    res.json({ endorsements })
-  } catch (err: any) {
-    res.status(500).json({ error: err?.message ?? 'Could not load endorsements' })
   }
 })
 
@@ -352,29 +318,13 @@ router.post('/virtual-account', requireAccount, async (req, res) => {
 
     res.json({ virtualAccount: vaToClient(row) })
   } catch (err: any) {
-    // Bridge rejects currencies the customer isn't endorsed for with a message
-    // like "Customer does not have an appropriate endorsement to transact."
-    // Surface that as a clear, currency-specific message instead of the raw text.
-    const raw = String(err?.message ?? '')
-    if (/endorsement/i.test(raw)) {
-      return res.status(409).json({
-        error: `${currency.toUpperCase()} deposits aren’t enabled on your account yet. This currency needs additional approval from our partner.`,
-        code:  'endorsement_required',
-        currency,
-      })
-    }
     res.status(err?.status ?? 502).json({ error: err?.message ?? 'Could not set up deposits' })
   }
 })
 
 // GET /ramp/virtual-account/:currency/activity — deposit -> delivered events.
-// Polled by the status tracker. MERGES two sources:
-//   • Bridge's /history poll — GROUND TRUTH, always authoritative.
-//   • ramp_deposit_events   — the webhook mirror, which may be fresher (a
-//     webhook can land before the next 15s poll). Used only to fill in event
-//     types the poll hasn't returned yet, so the stepper advances instantly.
-// If Bridge's /history call fails, we still return the mirror so the tracker
-// degrades gracefully rather than erroring.
+// Polled by the status tracker. Returns Bridge's event list as-is (normalized
+// lightly) so the UI can drive the stepper.
 router.get('/virtual-account/:currency/activity', requireAccount, async (req, res) => {
   const account = (req as any).account
   const currency = String(req.params.currency ?? '').trim().toLowerCase()
@@ -385,73 +335,20 @@ router.get('/virtual-account/:currency/activity', requireAccount, async (req, re
     const gate = await requireVerifiedCustomer(account.id)
     if (!gate.ok) return res.status(gate.status).json({ error: gate.error })
 
-    // Ground truth: Bridge /history. Tolerate failure (fall back to mirror).
-    let pollEvents: any[] = []
-    let pollFailed = false
+    let activity: VirtualAccountActivity
     try {
-      const activity = await getVirtualAccountActivity(
+      activity = await getVirtualAccountActivity(
         gate.customer.customer_id as string, row.virtual_account_id)
-      pollEvents = Array.isArray(activity?.data) ? activity.data : []
-    } catch {
-      pollFailed = true
-    }
-
-    // Webhook mirror (may be fresher). Reconcile: anything only the mirror knows
-    // gets written back into the mirror as 'poll' source when the poll catches
-    // up — but for the response we just union by event type.
-    let mirrorEvents: any[] = []
-    try {
-      const rows = await getDepositEventsByVirtualAccount(row.virtual_account_id)
-      mirrorEvents = rows.map(r => ({
-        id:                  r.id,
-        type:                r.event_type,
-        deposit_id:          r.deposit_id,
-        amount:              r.amount ?? undefined,
-        currency:            r.currency ?? undefined,
-        destination_tx_hash: r.destination_tx_hash ?? undefined,
-        receipt:             r.receipt_url ? { url: r.receipt_url } : undefined,
-        _source:             r.source,
-      }))
-    } catch { /* mirror is best-effort */ }
-
-    // Union: start from the poll (authoritative), then add any mirror event
-    // whose (deposit_id,type) the poll hasn't reported yet.
-    const seen = new Set(
-      pollEvents.map(e => `${e.deposit_id ?? ''}:${e.type ?? ''}`))
-    const merged = [...pollEvents]
-    for (const m of mirrorEvents) {
-      const key = `${m.deposit_id ?? ''}:${m.type ?? ''}`
-      if (!seen.has(key)) { merged.push(m); seen.add(key) }
-    }
-
-    // Reconcile the other direction: poll events the mirror is missing get
-    // written into the mirror (source 'poll') so a webhook that never arrived
-    // doesn't leave a gap. Best-effort, never blocks the response.
-    if (!pollFailed) {
-      const mirrorKeys = new Set(
-        mirrorEvents.map(m => `${m.deposit_id ?? ''}:${m.type ?? ''}`))
-      for (const e of pollEvents) {
-        const key = `${e.deposit_id ?? ''}:${e.type ?? ''}`
-        if (!mirrorKeys.has(key) && e.type) {
-          upsertDepositEvent({
-            virtualAccountId:  row.virtual_account_id,
-            depositId:         e.deposit_id ?? null,
-            eventType:         e.type,
-            currency:          e.currency ?? null,
-            amount:            e.amount ?? null,
-            destinationTxHash: e.destination_tx_hash ?? e.receipt?.destination_tx_hash ?? null,
-            receiptUrl:        e.receipt?.url ?? null,
-            source:            'poll',
-          }).catch(() => { /* best-effort reconcile */ })
-        }
-      }
+    } catch (err: any) {
+      return res.status(err?.status ?? 502).json({
+        error: err?.message ?? 'Could not load deposit activity',
+      })
     }
 
     res.json({
       currency,
-      count:  merged.length,
-      events: merged,
-      source: pollFailed ? 'mirror' : 'merged',
+      count:  activity?.count ?? (activity?.data?.length ?? 0),
+      events: Array.isArray(activity?.data) ? activity.data : [],
     })
   } catch (err: any) {
     res.status(500).json({ error: err?.message ?? 'Could not load deposit activity' })
