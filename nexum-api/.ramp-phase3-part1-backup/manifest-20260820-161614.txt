@@ -1,0 +1,4 @@
+NEW|src/services/bridgexyz/webhooks.ts
+NEW|migrations/0020_ramp_webhook_events.sql
+EDIT|src/services/bridgexyz/repository.ts
+EDIT|src/routes/transfers.ts

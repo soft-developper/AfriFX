@@ -21,13 +21,6 @@ import { compareProviders, providerCapabilities } from '../services/ramp/compare
 import { startCashOut } from '../services/cashout'
 import { flutterwaveConfigured } from '../services/ramp/providers/flutterwave-auth'
 import type { SenderMode, PayoutMethod, ChainKey } from '../services/ramp/types'
-import {
-  verifyWebhookSignature, parseWebhookEvent, extractActivityDetail,
-  bridgeWebhookPublicKey, bridgeWebhookConfigured, WebhookSignatureError,
-} from '../services/bridgexyz/webhooks'
-import {
-  recordWebhookEvent, upsertDepositEvent,
-} from '../services/bridgexyz/repository'
 
 const router = Router()
 
@@ -280,73 +273,6 @@ webhookRouter.post('/flutterwave', async (req: any, res) => {
       return res.status(401).json({ error: 'Invalid signature' })
     }
     console.error('[Webhook] Flutterwave error:', err?.message)
-    res.status(200).json({ received: true, error: err?.message })
-  }
-})
-
-// Bridge.xyz webhook. Verifies the RSA-SHA256 signature against req.rawBody
-// (captured by the express.json({ verify }) hook in index.ts), dedupes on
-// event_id, and mirrors virtual-account activity into ramp_deposit_events so
-// the /ramp tracker updates instantly. The 15s /history poll remains ground
-// truth and reconciles anything missed — this handler is an optimisation.
-//
-// Responses: 200 on accept/dupe (so Bridge stops retrying), 400 on bad/old
-// signature (Bridge retries with a fresh timestamp per its replay guidance).
-webhookRouter.post('/bridgexyz', async (req: any, res) => {
-  const rawBody = typeof req.rawBody === 'string' ? req.rawBody : JSON.stringify(req.body ?? {})
-  const sigHeader = req.headers['x-webhook-signature'] as string | undefined
-
-  // If the public key isn't configured yet, don't 200 (that would silently
-  // drop real events). 503 tells Bridge to retry once we're set up.
-  if (!bridgeWebhookConfigured()) {
-    console.warn('[Webhook] Bridge webhook received but BRIDGE_WEBHOOK_PUBLIC_KEY not set')
-    return res.status(503).json({ error: 'Webhook not configured' })
-  }
-
-  // Verify signature first — never parse/trust an unverified body.
-  try {
-    verifyWebhookSignature(rawBody, sigHeader, bridgeWebhookPublicKey())
-  } catch (err: any) {
-    if (err instanceof WebhookSignatureError) {
-      console.warn('[Webhook] REJECTED Bridge webhook:', err.message)
-      return res.status(400).json({ error: 'Invalid signature' })
-    }
-    console.error('[Webhook] Bridge verify error:', err?.message)
-    return res.status(400).json({ error: 'Invalid signature' })
-  }
-
-  // Parse, dedupe, mirror. Any handling error still returns 200 (signature was
-  // valid — retrying won't help) but is logged.
-  try {
-    const event = parseWebhookEvent(rawBody)
-
-    const isNew = await recordWebhookEvent({
-      eventId:        event.event_id,
-      eventCategory:  event.event_category,
-      eventType:      event.event_type,
-      eventCreatedAt: event.event_created_at,
-      raw:            rawBody,
-    })
-    if (!isNew) return res.status(200).json({ received: true, duplicate: true })
-
-    const detail = extractActivityDetail(event)
-    if (detail && detail.virtualAccountId) {
-      await upsertDepositEvent({
-        virtualAccountId:  detail.virtualAccountId,
-        depositId:         detail.depositId,
-        eventId:           event.event_id,
-        eventType:         detail.eventType,
-        currency:          detail.currency,
-        amount:            detail.amount,
-        destinationTxHash: detail.destinationTxHash,
-        receiptUrl:        detail.receiptUrl,
-        source:            'webhook',
-      })
-    }
-
-    res.status(200).json({ received: true })
-  } catch (err: any) {
-    console.error('[Webhook] Bridge handling error:', err?.message)
     res.status(200).json({ received: true, error: err?.message })
   }
 })
