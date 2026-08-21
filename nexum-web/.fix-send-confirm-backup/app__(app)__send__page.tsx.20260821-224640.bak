@@ -45,7 +45,6 @@ function SendPageInner() {
   const [txError, setTxError] = useState<string | null>(null)
   const [txNote,  setTxNote]  = useState<string | null>(null)
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>()
-  const [sent, setSent]     = useState(false)  // cross-chain success: sendUsdc confirmed the hash on its own chain
   const { isSuccess }       = useWaitForTransactionReceipt({ hash: txHash })
 
   const selectedChain = chainByKey(chainKey)
@@ -76,16 +75,11 @@ function SendPageInner() {
 
     // A Circle wallet transfer. The user approves it on their device, so there
     // is no connected wallet to sign with.
-    setSending(true); setTxError(null); setTxNote(null); setSent(false)
+    setSending(true); setTxError(null); setTxNote(null)
     try {
       const result = await sendUsdc({ to, amount, chainKey }, setTxStep)
       if (result.txHash) {
         setTxHash(result.txHash as `0x${string}`)
-        // sendUsdc's per-chain /tx/find poll already confirmed the hash on its
-        // own chain, so mark success now — works on every chain, not just Arc
-        // (the wagmi receipt hook below only watches the home chain).
-        const st = String(result.state ?? '').toUpperCase()
-        if (st !== 'FAILED' && st !== 'DENIED') setSent(true)
         // Record this send so it appears in History (GET /transactions?wallet=).
         // Same-asset USDC->USDC movement on the selected chain.
         if (address) {
@@ -278,12 +272,12 @@ function SendPageInner() {
           </div>
         )}
 
-        {/* Success — shows on every chain (sent), with the Arc receipt as a bonus confirm */}
-        {(isSuccess || sent) && txHash && (
-          <a href={`${selectedChain?.explorer ?? 'https://testnet.arcscan.app'}/tx/${txHash}`}
+        {/* Success */}
+        {isSuccess && txHash && (
+          <a href={`https://testnet.arcscan.app/tx/${txHash}`}
             target="_blank" rel="noopener noreferrer"
             className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-900/20 px-3 py-2 text-xs text-emerald-400 hover:underline">
-            <CheckCircle className="h-3.5 w-3.5" /> Sent · View on {selectedChain?.name ?? 'explorer'}
+            <CheckCircle className="h-3.5 w-3.5" /> Sent · View on ArcScan
           </a>
         )}
       </div>
