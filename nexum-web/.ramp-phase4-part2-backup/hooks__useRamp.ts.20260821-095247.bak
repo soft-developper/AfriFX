@@ -75,20 +75,8 @@ export interface RampActivityEvent {
   currency?:           string
   created_at?:         string
   deposit_id?:         string
-  developer_fee_amount?: string
-  exchange_fee_amount?:  string
-  subtotal_amount?:      string
-  gas_fee?:              string
   destination_tx_hash?: string
-  receipt?: {
-    url?:            string
-    final_amount?:   string
-    developer_fee?:  string
-    exchange_fee?:   string
-    subtotal_amount?: string
-    gas_fee?:        string
-    [k: string]: unknown
-  }
+  receipt?: { url?: string; final_amount?: string; [k: string]: unknown }
   [key: string]: unknown
 }
 

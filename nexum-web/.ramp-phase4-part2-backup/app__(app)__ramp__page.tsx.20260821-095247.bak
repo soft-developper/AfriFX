@@ -630,91 +630,6 @@ function StatusBanner({ tone, title, body }: {
   )
 }
 
-// Format a Bridge decimal-string amount for display. Returns null if absent.
-function fmtAmount(v: unknown): string | null {
-  if (typeof v !== 'string' || !v.trim()) return null
-  const n = Number(v)
-  if (!Number.isFinite(n)) return null
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
-function sumFees(ev?: RampActivityEvent): number {
-  if (!ev) return 0
-  const dev = Number(ev.developer_fee_amount ?? ev.receipt?.developer_fee ?? 0)
-  const exc = Number(ev.exchange_fee_amount ?? ev.receipt?.exchange_fee ?? 0)
-  return (Number.isFinite(dev) ? dev : 0) + (Number.isFinite(exc) ? exc : 0)
-}
-
-// Live sent → fees → received breakdown. Fills in as events arrive. `sent`
-// comes from the source-currency event (funds_received); `received` from the
-// destination event (payment_processed, whose amount is the USDC delivered).
-function DepositBreakdown({ events, currency }: { events: RampActivityEvent[]; currency: string }) {
-  const received = [...events].reverse().find(e => e.type === 'payment_processed')
-  // Any source-side event carries the pre-fee fiat amount.
-  const sourceEv = [...events].reverse().find(e =>
-    e.type === 'funds_received' || e.type === 'payment_submitted' || e.type === 'in_review')
-  const feeCarrier = received ?? sourceEv
-
-  const sent      = fmtAmount(sourceEv?.amount)
-  const recvAmt   = fmtAmount(received?.amount ?? received?.receipt?.final_amount)
-  const fees      = feeCarrier ? sumFees(feeCarrier) : 0
-  const gas       = Number(received?.gas_fee ?? received?.receipt?.gas_fee ?? 0)
-
-  // Nothing to show until at least a source amount exists.
-  if (!sent && !recvAmt) return null
-
-  const cur = (currency || sourceEv?.currency || 'usd').toUpperCase()
-
-  return (
-    <div className="space-y-2 rounded-xl border border-app-border/60 bg-app-bg p-3.5 text-sm">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-app-muted">Breakdown</p>
-
-      <Row label="You send" value={sent ? `${sent} ${cur}` : 'Waiting…'} muted={!sent} />
-
-      <Row
-        label="Fees"
-        value={
-          <span className="inline-flex items-center gap-1.5">
-            <span>{fees > 0 ? `${fmtAmount(String(fees))} ${cur}` : `0.00 ${cur}`}</span>
-            <span className="rounded-full bg-emerald-900/40 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
-              0% at launch
-            </span>
-          </span>
-        }
-      />
-
-      {gas > 0 && (
-        <Row label="Network fee" value={`${fmtAmount(String(gas))} USDC`} />
-      )}
-
-      <div className="my-1 h-px bg-app-border/60" />
-
-      <Row
-        label="You receive"
-        value={recvAmt ? `${recvAmt} USDC` : 'Pending…'}
-        muted={!recvAmt}
-        emphasis={!!recvAmt}
-      />
-      {recvAmt && (
-        <p className="text-[11px] text-app-muted">Delivered to your wallet on Base.</p>
-      )}
-    </div>
-  )
-}
-
-function Row({ label, value, muted, emphasis }: {
-  label: string; value: React.ReactNode; muted?: boolean; emphasis?: boolean
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-app-muted">{label}</span>
-      <span className={`${emphasis ? 'font-semibold text-app-text' : muted ? 'text-app-muted' : 'text-app-text'}`}>
-        {value}
-      </span>
-    </div>
-  )
-}
-
 function DepositTracker({ currency }: { currency: string }) {
   const { getActivity } = useOnramp()
   const [events, setEvents]   = useState<RampActivityEvent[]>([])
@@ -821,7 +736,6 @@ function DepositTracker({ currency }: { currency: string }) {
               )
             })}
           </ol>
-          <DepositBreakdown events={events} currency={currency} />
         </>
       )}
 
