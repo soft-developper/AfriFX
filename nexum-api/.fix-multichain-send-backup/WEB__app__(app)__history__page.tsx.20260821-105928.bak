@@ -156,10 +156,6 @@ function TxRow({ tx, isCorridorStep = false }: { tx: any; isCorridorStep?: boole
   const ref       = tx.reference     ?? tx.memo_id        ?? ''
   const hash      = tx.arc_tx_hash   ?? tx.arcTxHash      ?? ''
   const status    = tx.status        ?? 'pending'
-  // Explorer for a send: the chain the send happened on (from_chain), falling
-  // back to Arc for legacy rows that predate multichain send.
-  const sendChainKey = tx.from_chain ?? tx.fromChain ?? 'arc'
-  const sendExplorer = chainByKey(sendChainKey)?.explorer ?? 'https://testnet.arcscan.app'
 
   return (
     <div className={`flex items-center gap-3 px-4 py-3.5
@@ -197,7 +193,7 @@ function TxRow({ tx, isCorridorStep = false }: { tx: any; isCorridorStep?: boole
           {status}
         </Badge>
         {hash && !isBridge && (
-          <a href={`${sendExplorer}/tx/${hash}`}
+          <a href={`https://testnet.arcscan.app/tx/${hash}`}
             target="_blank" rel="noopener noreferrer">
             <ExternalLink className="h-3 w-3 text-app-muted hover:text-app-accent-text" />
           </a>

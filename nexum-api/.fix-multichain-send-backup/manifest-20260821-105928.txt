@@ -1,0 +1,4 @@
+NEW|API|migrations/0022_transactions_from_chain.sql
+EDIT|API|src/routes/transactions.ts
+EDIT|WEB|app/(app)/send/page.tsx
+EDIT|WEB|app/(app)/history/page.tsx

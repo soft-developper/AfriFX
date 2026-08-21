@@ -92,35 +92,21 @@ function SendPageInner() {
               fromCurrency: 'USDC', toCurrency: 'USDC',
               fromAmount: Number(amount), toAmount: Number(amount),
               arcTxHash: hash,
-              fromChain: chainKey,   // which chain this send happened on
             }),
           }).catch(() => {})
-
-          // Settle the record. sendUsdc already polled the RIGHT chain
-          // (/tx/find?chainKey=…) and returned the confirmed state, so we can
-          // settle on EVERY chain from that result — not just Arc. A COMPLETE/
-          // CONFIRMED state means the transfer landed; a bare hash without a
-          // terminal state still means it's on-chain (settled). On Arc we also
-          // have a wagmi public client, so we can additionally wait on the
-          // receipt for a definitive success/failure.
-          const settle = (status: 'settled' | 'failed') => {
-            fetch(`${API}/transactions/${hash}`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status }),
+          // Confirm on-chain, then mark settled/failed. Only Arc has a wagmi
+          // public client wired here; on other chains we skip the receipt
+          // wait and let the send record stand (the transfer already returned
+          // a hash, so it is on-chain).
+          if (publicClient && isHome) {
+            publicClient.waitForTransactionReceipt({ hash }).then(r => {
+              const ok = r.status === 'success'
+              fetch(`${API}/transactions/${hash}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: ok ? 'settled' : 'failed' }),
+              }).catch(() => {})
             }).catch(() => {})
-          }
-          const state = String(result.state ?? '').toUpperCase()
-          if (state === 'FAILED' || state === 'DENIED') {
-            settle('failed')
-          } else if (publicClient && isHome) {
-            // Arc: confirm definitively via receipt.
-            publicClient.waitForTransactionReceipt({ hash })
-              .then(r => settle(r.status === 'success' ? 'settled' : 'failed'))
-              .catch(() => settle('settled')) // hash exists → on-chain; don't strand as pending
-          } else {
-            // Other chains: the per-chain poll already confirmed the hash.
-            settle('settled')
           }
         }
       } else {

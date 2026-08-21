@@ -31,7 +31,6 @@ router.post('/', async (req, res) => {
     walletAddress, fromCurrency, toCurrency,
     fromAmount, toAmount, spreadFee, networkFee,
     arcTxHash, memoId, reference, corridorId, corridorStep,
-    fromChain,
   } = req.body
 
   const now = Math.floor(Date.now() / 1000)
@@ -43,12 +42,12 @@ router.post('/', async (req, res) => {
           (id, wallet_address, from_currency, to_currency,
            from_amount, to_amount, spread_fee, network_fee,
            arc_tx_hash, memo_id, reference,
-           corridor_id, corridor_step, from_chain, status, created_at)
+           corridor_id, corridor_step, status, created_at)
           VALUES
           (${id}, ${walletAddress.toLowerCase()}, ${fromCurrency}, ${toCurrency},
            ${fromAmount}, ${toAmount}, ${spreadFee ?? 0}, ${networkFee ?? 0.001},
            ${arcTxHash ?? null}, ${memoId ?? null}, ${reference ?? null},
-           ${corridorId ?? null}, ${corridorStep ?? null}, ${fromChain ?? null}, 'pending', ${now})`
+           ${corridorId ?? null}, ${corridorStep ?? null}, 'pending', ${now})`
     )
     res.status(201).json({ id })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
