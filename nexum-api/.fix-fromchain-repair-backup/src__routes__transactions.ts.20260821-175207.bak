@@ -11,23 +11,6 @@ function parseRows(r: any): any[] {
   return []
 }
 
-// Whether the transactions table has the from_chain column. Detected once and
-// cached. This makes the insert resilient: if the 0022/0023 migration hasn't
-// landed on this database yet, we simply omit the column instead of throwing
-// (which would drop the whole send record). Re-checked lazily until found.
-let _fromChainCol: boolean | null = null
-async function hasFromChainColumn(): Promise<boolean> {
-  if (_fromChainCol === true) return true
-  try {
-    const info = await db.run(sql`PRAGMA table_info(transactions)`)
-    const cols = parseRows(info).map((c: any) => c.name)
-    _fromChainCol = cols.includes('from_chain')
-  } catch {
-    _fromChainCol = false
-  }
-  return _fromChainCol === true
-}
-
 // GET /transactions?wallet=0x
 router.get('/', async (req, res) => {
   const wallet = (req.query.wallet as string)?.toLowerCase()
@@ -55,35 +38,18 @@ router.post('/', async (req, res) => {
   const id  = arcTxHash ?? `tx-${now}-${Math.random().toString(36).slice(2,8)}`
 
   try {
-    // Include from_chain only if the column exists on this DB (see 0023). This
-    // keeps sends recording even if the column migration hasn't landed yet.
-    if (await hasFromChainColumn()) {
-      await db.run(
-        sql`INSERT OR IGNORE INTO transactions
-            (id, wallet_address, from_currency, to_currency,
-             from_amount, to_amount, spread_fee, network_fee,
-             arc_tx_hash, memo_id, reference,
-             corridor_id, corridor_step, from_chain, status, created_at)
-            VALUES
-            (${id}, ${walletAddress.toLowerCase()}, ${fromCurrency}, ${toCurrency},
-             ${fromAmount}, ${toAmount}, ${spreadFee ?? 0}, ${networkFee ?? 0.001},
-             ${arcTxHash ?? null}, ${memoId ?? null}, ${reference ?? null},
-             ${corridorId ?? null}, ${corridorStep ?? null}, ${fromChain ?? null}, 'pending', ${now})`
-      )
-    } else {
-      await db.run(
-        sql`INSERT OR IGNORE INTO transactions
-            (id, wallet_address, from_currency, to_currency,
-             from_amount, to_amount, spread_fee, network_fee,
-             arc_tx_hash, memo_id, reference,
-             corridor_id, corridor_step, status, created_at)
-            VALUES
-            (${id}, ${walletAddress.toLowerCase()}, ${fromCurrency}, ${toCurrency},
-             ${fromAmount}, ${toAmount}, ${spreadFee ?? 0}, ${networkFee ?? 0.001},
-             ${arcTxHash ?? null}, ${memoId ?? null}, ${reference ?? null},
-             ${corridorId ?? null}, ${corridorStep ?? null}, 'pending', ${now})`
-      )
-    }
+    await db.run(
+      sql`INSERT OR IGNORE INTO transactions
+          (id, wallet_address, from_currency, to_currency,
+           from_amount, to_amount, spread_fee, network_fee,
+           arc_tx_hash, memo_id, reference,
+           corridor_id, corridor_step, from_chain, status, created_at)
+          VALUES
+          (${id}, ${walletAddress.toLowerCase()}, ${fromCurrency}, ${toCurrency},
+           ${fromAmount}, ${toAmount}, ${spreadFee ?? 0}, ${networkFee ?? 0.001},
+           ${arcTxHash ?? null}, ${memoId ?? null}, ${reference ?? null},
+           ${corridorId ?? null}, ${corridorStep ?? null}, ${fromChain ?? null}, 'pending', ${now})`
+    )
     res.status(201).json({ id })
   } catch (err: any) { res.status(500).json({ error: err.message }) }
 })
