@@ -1,0 +1,5 @@
+EDIT|src/services/email/templates.ts
+NEW|src/services/bridgexyz/depositNotify.ts
+NEW|migrations/0021_ramp_deposit_notifications.sql
+EDIT|src/services/bridgexyz/repository.ts
+EDIT|src/routes/transfers.ts

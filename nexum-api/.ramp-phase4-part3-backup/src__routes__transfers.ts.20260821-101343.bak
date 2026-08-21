@@ -28,7 +28,6 @@ import {
 import {
   recordWebhookEvent, upsertDepositEvent,
 } from '../services/bridgexyz/repository'
-import { maybeSendDepositEmail } from '../services/bridgexyz/depositNotify'
 
 const router = Router()
 
@@ -343,9 +342,6 @@ webhookRouter.post('/bridgexyz', async (req: any, res) => {
         receiptUrl:        detail.receiptUrl,
         source:            'webhook',
       })
-      // Fire a branded email on terminal states (landed / returned / failed).
-      // Best-effort + deduped; never blocks the 200 response.
-      await maybeSendDepositEmail(detail)
     }
 
     res.status(200).json({ received: true })
