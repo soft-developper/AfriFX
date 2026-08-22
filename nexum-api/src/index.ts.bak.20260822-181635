@@ -31,7 +31,6 @@ import rampRouter                 from './routes/ramp'
 import { startTransferReconciler } from './services/ramp/reconciler'
 import { startBridgeReconciler }   from './services/bridge/reconciler'
 import { bridgeXyzConfigured, BRIDGE_IS_SANDBOX } from './services/bridgexyz/client'
-import { ensureTransactionsSchema } from './services/ensureTransactionsSchema'
 import { ensureOfframpSchema } from './services/bridgexyz/ensureOfframp'
 import { maintenanceGuard }       from './lib/maintenance'
 import contentRouter              from './routes/content'
@@ -105,9 +104,6 @@ startAdminAuditSummary()
   startTxSettler()
   startDutyScheduler()
   startTransferReconciler()
-
-  // Self-heal transactions.from_chain (migrations 0022/0023 did not run on prod).
-  await ensureTransactionsSchema()
   startBridgeReconciler()
 
   // Self-heal the off-ramp corridor seed (migration 0024 did not run on prod Turso).
