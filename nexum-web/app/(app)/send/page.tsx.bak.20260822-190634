@@ -125,23 +125,16 @@ function SendPageInner() {
             }).catch(() => {})
           }
           const state = String(result.state ?? '').toUpperCase()
-          const CONFIRMED = state === 'COMPLETE' || state === 'CONFIRMED'
           if (state === 'FAILED' || state === 'DENIED') {
             settle('failed')
           } else if (publicClient && isHome) {
-            // Arc: confirm definitively via the on-chain receipt.
+            // Arc: confirm definitively via receipt.
             publicClient.waitForTransactionReceipt({ hash })
               .then(r => settle(r.status === 'success' ? 'settled' : 'failed'))
-              .catch(() => { /* leave pending; the send reconciler confirms by receipt */ })
-          } else if (CONFIRMED) {
-            // Other chains: settle ONLY when Circle reports the tx CONFIRMED/
-            // COMPLETE on-chain — never on a bare hash that could still revert.
-            settle('settled')
+              .catch(() => settle('settled')) // hash exists → on-chain; don't strand as pending
           } else {
-            // Hash exists but not yet confirmed on-chain. Leave it 'pending';
-            // the server-side send reconciler polls the chain's own receipt and
-            // settles it on ground truth. This avoids marking a send verified
-            // that could still fail on-chain.
+            // Other chains: the per-chain poll already confirmed the hash.
+            settle('settled')
           }
         }
       } else {
