@@ -31,7 +31,6 @@ import rampRouter                 from './routes/ramp'
 import { startTransferReconciler } from './services/ramp/reconciler'
 import { startBridgeReconciler }   from './services/bridge/reconciler'
 import { bridgeXyzConfigured, BRIDGE_IS_SANDBOX } from './services/bridgexyz/client'
-import { ensureOfframpSchema } from './services/bridgexyz/ensureOfframp'
 import { maintenanceGuard }       from './lib/maintenance'
 import contentRouter              from './routes/content'
 import { startRatePoller }        from './jobs/ratePoller'
@@ -105,9 +104,6 @@ startAdminAuditSummary()
   startDutyScheduler()
   startTransferReconciler()
   startBridgeReconciler()
-
-  // Self-heal the off-ramp corridor seed (migration 0024 did not run on prod Turso).
-  await ensureOfframpSchema()
 
   // Bridge.xyz fiat ramp — log its config state at boot (mirrors the ramp
   // provider pattern). Inert when BRIDGE_API_KEY is unset.
