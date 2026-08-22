@@ -90,25 +90,17 @@ function SendPageInner() {
         // Same-asset USDC->USDC movement on the selected chain.
         if (address) {
           const hash = result.txHash as `0x${string}`
-          // Record this send FIRST and AWAIT it, so the row is guaranteed to
-          // exist before we PATCH its status. The settle PATCH matches on
-          // arc_tx_hash; if it raced ahead of this insert (as it did on
-          // non-Arc chains, where settle fired synchronously) the UPDATE hit
-          // zero rows and the send was stranded "pending". Awaiting the insert
-          // removes that race on every chain.
-          try {
-            await fetch(`${API}/transactions`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                walletAddress: address,
-                fromCurrency: 'USDC', toCurrency: 'USDC',
-                fromAmount: Number(amount), toAmount: Number(amount),
-                arcTxHash: hash,
-                fromChain: chainKey,   // which chain this send happened on
-              }),
-            })
-          } catch { /* insert best-effort; settle below still attempts */ }
+          fetch(`${API}/transactions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              walletAddress: address,
+              fromCurrency: 'USDC', toCurrency: 'USDC',
+              fromAmount: Number(amount), toAmount: Number(amount),
+              arcTxHash: hash,
+              fromChain: chainKey,   // which chain this send happened on
+            }),
+          }).catch(() => {})
 
           // Settle the record. sendUsdc already polled the RIGHT chain
           // (/tx/find?chainKey=…) and returned the confirmed state, so we can
